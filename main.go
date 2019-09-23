@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Iexplorer interface {
@@ -23,10 +21,9 @@ func main() {
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
-	siteMux.Handle("/Lic", promhttp.Handler())
 
 	metric := new(Metrics)
-	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))
+	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10))
 	for _, ex := range metric.explorers {
 		go ex.StartExplore()
 	}

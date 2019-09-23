@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type ExplorerClientLic struct {
@@ -19,7 +21,9 @@ type ExplorerClientLic struct {
 	timerNotyfy time.Duration
 }
 
-func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration) *ExplorerClientLic {
+func (this *ExplorerClientLic) Construct(mux *http.ServeMux, timerNotyfy time.Duration) *ExplorerClientLic {
+	mux.Handle("/Lic", promhttp.Handler())
+
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ClientLic",
