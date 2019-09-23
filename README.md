@@ -11,7 +11,7 @@
   - job_name: '1C_Lic'
     metrics_path: '/Lic' 
     static_configs:
-    - targets: ['host1:9091', 'host2:9091', 'host2:9091', 'host2:9091']
+    - targets: ['host1:9091', 'host2:9091', 'host3:9091', 'host4:9091']
 ```
 ```golang
 end:
