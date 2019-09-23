@@ -1,0 +1,20 @@
+run:
+  tests: true
+  skip-dirs:
+    - bin
+    - vendor
+    - var
+    - tmp
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable-all: true
+  disable:
+    - gochecknoglobals
+    - errcheck
+    - gosimple
+    - lll
