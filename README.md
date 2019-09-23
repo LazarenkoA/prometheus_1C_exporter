@@ -4,14 +4,14 @@
 
 **Запуск** 
 ./ClientLic -port=9095
-по дефолну порт 9091
+по дефолту порт 9091
 
 в конфииге прометеуса (prometheus.yml) нужно указать хосты на которых запущен explorer
 ```yaml
   - job_name: '1C_Lic'
     metrics_path: '/Lic' 
     static_configs:
-    - targets: ['host1:9091', 'host2:9091', 'host2:9091', 'host2:9091']
+    - targets: ['host1:9091', 'host2:9091', 'host3:9091', 'host4:9091']
 ```
 ```golang
 end:
@@ -23,7 +23,7 @@ end:
 
 
 Если захотите развить explorer, что бы собирались другие метрики, нужно:
-1. Создать файл [name metrics].go в котором будет описан объект метрики, объхект должен имплементировать интерфейс Iexplorer, после чего добавляем экземпляр класса к метрикам:
+Создать файл [name metrics].go в котором будет описан класс метрики, класс должен имплементировать интерфейс Iexplorer, после чего добавляем экземпляр класса к метрикам:
 ```golang
 metric := new(Metrics)
 	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))
