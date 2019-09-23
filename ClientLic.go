@@ -41,16 +41,18 @@ func (this *ExplorerClientLic) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for range t.C {
-		this.summary.WithLabelValues(host).Observe(float64(this.getLic()))
+		licCount, _ := this.getLic()
+		this.summary.WithLabelValues(host).Observe(float64(licCount))
 	}
 }
 
-func (this *ExplorerClientLic) getLic() int {
+func (this *ExplorerClientLic) getLic() (count int, err error) {
 	cmdCommand := exec.Command("/opt/1C/v8.3/x86_64/rac", "cluster", "list") // TODO: вынести путь к rac в конфиг
 
 	cluster := make(map[string]string)
 	if result, err := run(cmdCommand); err != nil {
 		log.Println("Произошла ошибка выполнения: ", err.Error())
+		return 0, err
 	} else {
 		cluster = this.formatResult(result)
 	}
@@ -70,16 +72,19 @@ func (this *ExplorerClientLic) getLic() int {
 	cmdCommand = exec.Command("/opt/1C/v8.3/x86_64/rac", param...)
 	if result, err := run(cmdCommand); err != nil {
 		log.Println("Произошла ошибка выполнения: ", err.Error())
+		return 0, err
 	} else {
-		reg := regexp.MustCompile(`(?m)^$`)
-		for _, part := range reg.Split(result, -1) {
-			licData = append(licData, this.formatResult(part)) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
-		}
-
-		//fmt.Println(licData)
+		this.formatMultiResult(result, &licData)
 	}
 
-	return len(licData)
+	return len(licData), nil
+}
+
+func (this *ExplorerClientLic) formatMultiResult(data string, licData *[]map[string]string) {
+	reg := regexp.MustCompile(`(?m)^$`)
+	for _, part := range reg.Split(data, -1) {
+		*licData = append(*licData, this.formatResult(part)) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
+	}
 }
 
 func (this *ExplorerClientLic) formatResult(strIn string) map[string]string {

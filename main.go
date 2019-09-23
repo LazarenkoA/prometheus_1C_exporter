@@ -21,7 +21,6 @@ func main() {
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
-
 	metric := new(Metrics)
 	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10))
 	for _, ex := range metric.explorers {
