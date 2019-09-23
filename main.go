@@ -38,3 +38,5 @@ func main() {
 func (this *Metrics) append(ex Iexplorer) {
 	this.explorers = append(this.explorers, ex)
 }
+
+// go build -ldflags "-s -w" - билд чутка меньше размером
