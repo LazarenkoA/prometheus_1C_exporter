@@ -125,3 +125,7 @@ func (this *ExplorerAvailablePerformance) formatResult(strIn string) map[string]
 
 	return result
 }
+
+func (this *ExplorerAvailablePerformance) GetName() string {
+	return "aperf"
+}

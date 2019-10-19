@@ -105,3 +105,7 @@ func (this *ExplorerClientLic) formatResult(strIn string) map[string]string {
 
 	return result
 }
+
+func (this *ExplorerClientLic) GetName() string {
+	return "lic"
+}

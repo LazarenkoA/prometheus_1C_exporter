@@ -3,32 +3,40 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 
-	. "prometheus_lic_exporter/explorers"
+	. "prometheus_1C_exporter/explorers"
 	"time"
 )
 
 type Iexplorer interface {
 	StartExplore()
+	GetName() string
 }
 
 type Metrics struct {
 	explorers []Iexplorer
+	metrics   []string
 }
 
 func main() {
-	var port string
+	var metrics, port string
+	flag.StringVar(&metrics, "metrics", "", "Метрика, через запятую (доступны: lic,aperf)")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
-	metric := new(Metrics)
-	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10)) // Клиентские лицензии
+	metric := new(Metrics).Construct(metrics)
+	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10))            // Клиентские лицензии
 	metric.append(new(ExplorerAvailablePerformance).Construct(siteMux, time.Second*10)) // Доступная производительность
 
 	for _, ex := range metric.explorers {
-		go ex.StartExplore()
+		if metric.contains(ex.GetName()) {
+			log.Println("Старт ", ex.GetName())
+			go ex.StartExplore()
+		}
 	}
 
 	fmt.Println("starting server at :", port)
@@ -37,6 +45,27 @@ func main() {
 
 func (this *Metrics) append(ex Iexplorer) {
 	this.explorers = append(this.explorers, ex)
+}
+
+func (this *Metrics) Construct(metrics string) *Metrics {
+	if metrics != "" {
+		this.metrics = strings.Split(metrics, ",")
+	}
+
+	return this
+}
+
+func (this *Metrics) contains(name string) bool {
+	if len(this.metrics) == 0 {
+		return true // Если не задали метрики через парамет, то используем все метрики
+	}
+	for _, item := range this.metrics {
+		if strings.Trim(item, " ") == strings.Trim(name, " ") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // go build -ldflags "-s -w" - билд чутка меньше размером
