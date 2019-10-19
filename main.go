@@ -24,7 +24,7 @@ func main() {
 
 	siteMux := http.NewServeMux()
 	metric := new(Metrics)
-	//metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10)) // Клиентские лицензии
+	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10)) // Клиентские лицензии
 	metric.append(new(ExplorerAvailablePerformance).Construct(siteMux, time.Second*10)) // Доступная производительность
 
 	for _, ex := range metric.explorers {
