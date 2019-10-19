@@ -9,6 +9,8 @@ import (
 
 	. "prometheus_1C_exporter/explorers"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Iexplorer interface {
@@ -28,9 +30,11 @@ func main() {
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
+	siteMux.Handle("/1С_Metrics", promhttp.Handler())
+
 	metric := new(Metrics).Construct(metrics)
-	metric.append(new(ExplorerClientLic).Construct(siteMux, time.Second*10))            // Клиентские лицензии
-	metric.append(new(ExplorerAvailablePerformance).Construct(siteMux, time.Second*10)) // Доступная производительность
+	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))            // Клиентские лицензии
+	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second * 10)) // Доступная производительность
 
 	for _, ex := range metric.explorers {
 		if metric.contains(ex.GetName()) {

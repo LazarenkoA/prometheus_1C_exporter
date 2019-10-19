@@ -17,7 +17,7 @@ func Test_ClientLic(t *testing.T) {
 
 func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
-	object := new(ExplorerClientLic).Construct(siteMux, time.Second*10)
+	object := new(ExplorerClientLic).Construct(time.Second * 10)
 
 	return []func(*testing.T){
 		func(t *testing.T) {
@@ -45,8 +45,8 @@ func initests() []func(*testing.T) {
 
 			var resp *http.Response
 			var err error
-			if resp, err = http.Get("http://localhost:9999/Lic"); err != nil {
-				t.Error("Ошибка при обращении к http://localhost:9999/Lic")
+			if resp, err = http.Get("http://localhost:9999/Lic1С_Metrics"); err != nil {
+				t.Error("Ошибка при обращении к http://localhost:9999/1С_Metrics")
 				return
 			}
 			defer resp.Body.Close()

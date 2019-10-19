@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type ExplorerAvailablePerformance struct {
@@ -21,9 +19,7 @@ type ExplorerAvailablePerformance struct {
 	clusterID string
 }
 
-func (this *ExplorerAvailablePerformance) Construct(mux *http.ServeMux, timerNotyfy time.Duration) *ExplorerAvailablePerformance {
-	mux.Handle("/AvPerf", promhttp.Handler())
-
+func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration) *ExplorerAvailablePerformance {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "AvailablePerformance",

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type ExplorerClientLic struct {
@@ -21,9 +19,7 @@ type ExplorerClientLic struct {
 	clusterID string
 }
 
-func (this *ExplorerClientLic) Construct(mux *http.ServeMux, timerNotyfy time.Duration) *ExplorerClientLic {
-	mux.Handle("/Lic", promhttp.Handler())
-
+func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration) *ExplorerClientLic {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ClientLic",
@@ -89,7 +85,9 @@ func (this *ExplorerClientLic) getLic() (count int, err error) {
 func (this *ExplorerClientLic) formatMultiResult(data string, licData *[]map[string]string) {
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
-		*licData = append(*licData, this.formatResult(part)) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
+		if mapResult := this.formatResult(part); len(mapResult) > 0 {
+			*licData = append(*licData, mapResult) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
+		}
 	}
 }
 
