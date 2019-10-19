@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func Test_ClientLic(t *testing.T) {
@@ -17,6 +19,7 @@ func Test_ClientLic(t *testing.T) {
 
 func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
+	siteMux.Handle("/1С_Metrics", promhttp.Handler())
 	object := new(ExplorerClientLic).Construct(time.Second * 10)
 
 	return []func(*testing.T){
@@ -45,7 +48,7 @@ func initests() []func(*testing.T) {
 
 			var resp *http.Response
 			var err error
-			if resp, err = http.Get("http://localhost:9999/Lic1С_Metrics"); err != nil {
+			if resp, err = http.Get("http://localhost:9999/1С_Metrics"); err != nil {
 				t.Error("Ошибка при обращении к http://localhost:9999/1С_Metrics")
 				return
 			}
