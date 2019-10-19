@@ -54,6 +54,11 @@ func initests() []func(*testing.T) {
 			}
 			defer resp.Body.Close()
 
+			if resp.StatusCode != 200 {
+				t.Error("Код ответа должен быть 200, имеем ", resp.StatusCode)
+				return
+			}
+
 			if body, err := ioutil.ReadAll(resp.Body); err != nil {
 				t.Error(err)
 			} else if str := string(body); strings.Index(str, "ClientLic") < 0 {
