@@ -105,7 +105,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 func (this *ExplorerAvailablePerformance) formatMultiResult(data string, licData *[]map[string]string) {
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
-		*licData = append(*licData, this.formatResult(part)) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
+		*licData = append(*licData, this.formatResult(part)) 
 	}
 }
 
