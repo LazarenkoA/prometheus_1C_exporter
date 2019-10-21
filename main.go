@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
-	siteMux.Handle("/1С_Metrics", promhttp.Handler())
+	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 
 	metric := new(Metrics).Construct(metrics)
 	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))            // Клиентские лицензии
