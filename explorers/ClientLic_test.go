@@ -19,7 +19,7 @@ func Test_ClientLic(t *testing.T) {
 
 func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
-	siteMux.Handle("/1С_Metrics", promhttp.Handler())
+	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	object := new(ExplorerClientLic).Construct(time.Second * 10)
 
 	return []func(*testing.T){
@@ -48,8 +48,8 @@ func initests() []func(*testing.T) {
 
 			var resp *http.Response
 			var err error
-			if resp, err = http.Get("http://localhost:9999/1С_Metrics"); err != nil {
-				t.Error("Ошибка при обращении к http://localhost:9999/1С_Metrics")
+			if resp, err = http.Get("http://localhost:9999/1C_Metrics"); err != nil {
+				t.Error("Ошибка при обращении к http://localhost:9999/1C_Metrics")
 				return
 			}
 			defer resp.Body.Close()
