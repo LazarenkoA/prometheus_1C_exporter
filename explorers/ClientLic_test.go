@@ -48,8 +48,8 @@ func initests() []func(*testing.T) {
 
 			var resp *http.Response
 			var err error
-			if resp, err = http.Get("http://localhost:9999/1C_Metrics"); err != nil {
-				t.Error("Ошибка при обращении к http://localhost:9999/1C_Metrics")
+			if resp, err = http.Get("http://localhost:" + port + "/1C_Metrics"); err != nil {
+				t.Error("Ошибка при обращении к http://localhost:" + port + "/1C_Metrics")
 				return
 			}
 			defer resp.Body.Close()

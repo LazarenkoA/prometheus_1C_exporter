@@ -41,6 +41,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 				this.summary.WithLabelValues(key).Observe(value)
 			}
 		} else {
+			this.summary.WithLabelValues("").Observe(0) // Для того что бы в ответе был AvailablePerformance, нужно дл атотестов
 			log.Println("Произошла ошибка: ", err.Error())
 		}
 
@@ -55,9 +56,9 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 		cmdCommand := exec.Command("/opt/1C/v8.3/x86_64/rac", "cluster", "list") // TODO: вынести путь к rac в конфиг
 
 		cluster := make(map[string]string)
-		if result, err := this.run(cmdCommand); err != nil {
-			log.Println("Произошла ошибка выполнения: ", err.Error())
-			return data, err
+		if result, e := this.run(cmdCommand); e != nil {
+			fmt.Println("Произошла ошибка выполнения: ", e.Error())
+			return data, e
 		} else {
 			cluster = this.formatResult(result)
 		}
@@ -105,7 +106,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 func (this *ExplorerAvailablePerformance) formatMultiResult(data string, licData *[]map[string]string) {
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
-		*licData = append(*licData, this.formatResult(part)) 
+		*licData = append(*licData, this.formatResult(part))
 	}
 }
 
