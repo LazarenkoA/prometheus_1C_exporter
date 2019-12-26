@@ -36,3 +36,9 @@ metric := new(Metrics)
 ```golang
 goto end
 ```
+
+**Примеры дажбордов**
+
+![](doc/img/browser_FCaSoFVBDe.png "Доступная производительность")
+
+![](doc/img/browser_LnTYeIKxgG.png "Клиентские лицензии")
