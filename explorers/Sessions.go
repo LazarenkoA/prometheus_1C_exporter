@@ -35,7 +35,6 @@ func (this *ExplorerSessions) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.summary.Reset()
 		ses, _ := this.getSessions()
 		groupByDB := map[string]int{}
 

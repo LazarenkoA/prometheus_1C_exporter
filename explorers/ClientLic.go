@@ -34,7 +34,6 @@ func (this *ExplorerClientLic) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.summary.Reset()
 		lic, _ := this.getLic()
 		if len(lic) > 0 {
 			// в кластере может быть только один сервер лицензирования. Поэтому берем из первого элемента

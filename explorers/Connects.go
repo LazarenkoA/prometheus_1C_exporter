@@ -35,7 +35,6 @@ func (this *ExplorerConnects) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.summary.Reset()
 		connects, _ := this.getConnects()
 		groupByDB := map[string]int{}
 

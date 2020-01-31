@@ -32,7 +32,6 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.summary.Reset()
 		ses, _ := this.getSessions()
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
@@ -40,9 +39,10 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 			continue
 		}
 
+		this.summary.Reset()
 		for _, item := range ses {
 			basename := this.findBaseName(item["infobase"])
-			if currentMemory, err := strconv.Atoi(item["memory-current"]); err == nil {
+			if currentMemory, err := strconv.Atoi(item["memory-current"]); err == nil && currentMemory > 0 {
 				this.summary.WithLabelValues(host, basename, item["session-id"]).Observe(float64(currentMemory))
 			}
 		}

@@ -35,7 +35,6 @@ func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Iset
 func (this *ExplorerCheckSheduleJob) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	for {
-		this.gauge.Reset()
 		if listCheck, err := this.getData(); err == nil {
 			for key, value := range listCheck {
 				if value {
