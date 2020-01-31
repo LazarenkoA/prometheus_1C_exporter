@@ -20,7 +20,7 @@ func Test_ClientLic(t *testing.T) {
 func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
-	object := new(ExplorerClientLic).Construct(time.Second * 10)
+	object := new(ExplorerClientLic).Construct(time.Second * 10, new(settings))
 
 	return []func(*testing.T){
 		func(t *testing.T) {

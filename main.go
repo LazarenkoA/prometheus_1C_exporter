@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 
@@ -25,16 +26,23 @@ type Metrics struct {
 
 func main() {
 	var metrics, port string
-	flag.StringVar(&metrics, "metrics", "", "Метрика, через запятую (доступны: lic,aperf)")
+
+	rand.Seed(time.Now().Unix())
+	flag.StringVar(&metrics, "metrics", "", "Метрика, через запятую (доступны: lic,aperf,sjob,ses,con,sesmem)")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 
+	s := new(settings).Init()
 	metric := new(Metrics).Construct(metrics)
-	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))            // Клиентские лицензии
-	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second * 10)) // Доступная производительность
+	metric.append(new(ExplorerClientLic).Construct(time.Second*10, s))            // Клиентские лицензии
+	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second*10, s)) // Доступная производительность
+	metric.append(new(ExplorerCheckSheduleJob).Construct(time.Second*10, s))      // Проверка галки "блокировка регламентных заданий"
+	metric.append(new(ExplorerSessions).Construct(time.Second*10, s))             // Сеансы
+	metric.append(new(ExplorerConnects).Construct(time.Second*10, s))             // Соединения
+	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s))       // текущая память
 
 	for _, ex := range metric.explorers {
 		if metric.contains(ex.GetName()) {
@@ -43,8 +51,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("starting server at :", port)
-	http.ListenAndServe(":"+port, siteMux)
+
+	fmt.Println("Сервер запущен на порту :", port)
+	if err := http.ListenAndServe(":"+port, siteMux); err != nil {
+		fmt.Printf("Произошла ошибка: %v\n", err)
+	}
 }
 
 func (this *Metrics) append(ex Iexplorer) {

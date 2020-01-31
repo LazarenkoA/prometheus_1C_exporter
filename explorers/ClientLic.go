@@ -1,34 +1,31 @@
 package explorer
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExplorerClientLic struct {
-	BaseExplorer
+	BaseRACExplorer
 
-	clusterID string
 }
 
-func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration) *ExplorerClientLic {
+func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings) *ExplorerClientLic {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ClientLic",
 			Help: "Киентские лицензии 1С",
 		},
-		[]string{"host"},
+		[]string{"host", "base"},
 	)
 
 	this.timerNotyfy = timerNotyfy
+	this.settings = s
 	prometheus.MustRegister(this.summary)
 	return this
 }
@@ -37,71 +34,35 @@ func (this *ExplorerClientLic) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		licCount, _ := this.getLic()
-		this.summary.WithLabelValues(host).Observe(float64(licCount))
-
+		this.summary.Reset()
+		lic, _ := this.getLic()
+		if len(lic) > 0 {
+			// в кластере может быть только один сервер лицензирования. Поэтому берем из первого элемента
+			licSrv := lic[0]["rmngr-address"]
+			this.summary.WithLabelValues(host, licSrv).Observe(float64(len(lic)))
+		}
 		<-t.C
 	}
 }
 
-func (this *ExplorerClientLic) getLic() (count int, err error) {
-	if this.clusterID == "" {
-		cmdCommand := exec.Command("/opt/1C/v8.3/x86_64/rac", "cluster", "list") // TODO: вынести путь к rac в конфиг
-		cluster := make(map[string]string)
-		if result, err := this.run(cmdCommand); err != nil {
-			log.Println("Произошла ошибка выполнения: ", err.Error())
-			return 0, err
-		} else {
-			cluster = this.formatResult(result)
-		}
-
-		if id, ok := cluster["cluster"]; !ok {
-			err = errors.New("Не удалось получить идентификатор кластера")
-			return 0, err
-		} else {
-			this.clusterID = id
-		}
-	}
-
-	licData := []map[string]string{}
+func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
+	licData = []map[string]string{}
 
 	param := []string{}
 	param = append(param, "session")
 	param = append(param, "list")
 	param = append(param, "--licenses")
-	param = append(param, fmt.Sprintf("--cluster=%v", this.clusterID))
+	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
-	cmdCommand := exec.Command("/opt/1C/v8.3/x86_64/rac", param...)
+	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
 		log.Println("Произошла ошибка выполнения: ", err.Error())
-		return 0, err
+		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &licData)
 	}
 
-	return len(licData), nil
-}
-
-func (this *ExplorerClientLic) formatMultiResult(data string, licData *[]map[string]string) {
-	reg := regexp.MustCompile(`(?m)^$`)
-	for _, part := range reg.Split(data, -1) {
-		if mapResult := this.formatResult(part); len(mapResult) > 0 {
-			*licData = append(*licData, mapResult) // в принципе нам нужно всего кол-во лицензий, но на перспективу собираем все данные в мапу
-		}
-	}
-}
-
-func (this *ExplorerClientLic) formatResult(strIn string) map[string]string {
-	result := make(map[string]string)
-
-	for _, line := range strings.Split(strIn, "\n") {
-		parts := strings.Split(line, ":")
-		if len(parts) == 2 {
-			result[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
-		}
-	}
-
-	return result
+	return licData, nil
 }
 
 func (this *ExplorerClientLic) GetName() string {
