@@ -44,7 +44,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 				}
 			}
 		} else {
-			//this.summary.WithLabelValues("").Observe(0)
+			this.gauge.WithLabelValues("").Set(0) // для теста
 			log.Println("Произошла ошибка: ", err.Error())
 		}
 		<-t.C

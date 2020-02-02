@@ -13,10 +13,9 @@ import (
 type ExplorerConnects struct {
 	BaseRACExplorer
 	ExplorerCheckSheduleJob
-
 }
 
-func (this *ExplorerConnects) Construct(timerNotyfy time.Duration,  s Isettings) *ExplorerConnects {
+func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings) *ExplorerConnects {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "Connect",
@@ -36,8 +35,11 @@ func (this *ExplorerConnects) StartExplore() {
 	host, _ := os.Hostname()
 	for {
 		connects, _ := this.getConnects()
-		groupByDB := map[string]int{}
+		if len(connects) == 0 {
+			this.summary.WithLabelValues("", "").Observe(0) // для тестов
+		}
 
+		groupByDB := map[string]int{}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
 			<-t.C

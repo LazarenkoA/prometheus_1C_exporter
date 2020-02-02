@@ -39,6 +39,8 @@ func (this *ExplorerClientLic) StartExplore() {
 			// в кластере может быть только один сервер лицензирования. Поэтому берем из первого элемента
 			licSrv := lic[0]["rmngr-address"]
 			this.summary.WithLabelValues(host, licSrv).Observe(float64(len(lic)))
+		} else {
+			this.summary.WithLabelValues("", "").Observe(0) // нужно дл атотестов
 		}
 		<-t.C
 	}
