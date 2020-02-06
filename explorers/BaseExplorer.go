@@ -22,6 +22,7 @@ type Isettings interface {
 
 // базовый класс для всех метрик
 type BaseExplorer struct {
+	mx          *sync.RWMutex
 	summary     *prometheus.SummaryVec
 	сounter     *prometheus.CounterVec
 	gauge       *prometheus.GaugeVec
@@ -34,9 +35,8 @@ type BaseRACExplorer struct {
 	BaseExplorer
 
 	clusterID string
-	one sync.Once
+	one       sync.Once
 }
-
 
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	cmd.Stdout = new(bytes.Buffer)
@@ -78,8 +78,21 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	return result
 }
 
-func (this *BaseRACExplorer) GetClusterID() string {
+func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 	this.one.Do(func() {
+		this.mx = new(sync.RWMutex)
+	})
+	return this.mx
+}
+
+func (this *BaseRACExplorer) GetClusterID() string {
+	this.mutex().Lock()
+	defer this.mutex().Unlock()
+
+	update := func() {
+		//this.mutex().Lock()
+		//defer this.mutex().Unlock()
+
 		cmdCommand := exec.Command(this.settings.RAC_Path(), "cluster", "list")
 		cluster := make(map[string]string)
 		if result, err := this.run(cmdCommand); err != nil {
@@ -93,7 +106,12 @@ func (this *BaseRACExplorer) GetClusterID() string {
 		} else {
 			this.clusterID = id
 		}
-	})
+	}
+
+	if this.clusterID == "" {
+		// обновляем
+		update()
+	}
 
 	return this.clusterID
 }
