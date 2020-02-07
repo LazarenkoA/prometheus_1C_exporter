@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -28,6 +27,7 @@ type BaseExplorer struct {
 	gauge       *prometheus.GaugeVec
 	timerNotyfy time.Duration
 	settings    Isettings
+	cerror chan error
 }
 
 // базовый класс для всех метрик собираемых через RAC
@@ -96,13 +96,13 @@ func (this *BaseRACExplorer) GetClusterID() string {
 		cmdCommand := exec.Command(this.settings.RAC_Path(), "cluster", "list")
 		cluster := make(map[string]string)
 		if result, err := this.run(cmdCommand); err != nil {
-			log.Println("Произошла ошибка выполнения: ", err.Error())
+			this.cerror <- fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error()) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
 		} else {
 			cluster = this.formatResult(result)
 		}
 
 		if id, ok := cluster["cluster"]; !ok {
-			log.Println("Не удалось получить идентификатор кластера")
+			this.cerror <- errors.New("Не удалось получить идентификатор кластера")
 		} else {
 			this.clusterID = id
 		}

@@ -15,7 +15,7 @@ type ExplorerAvailablePerformance struct {
 
 }
 
-func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  s Isettings) *ExplorerAvailablePerformance {
+func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  s Isettings, cerror chan error) *ExplorerAvailablePerformance {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "AvailablePerformance",
@@ -26,6 +26,7 @@ func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  
 
 	this.timerNotyfy = timerNotyfy
 	this.settings = s
+	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
 	return this
 }

@@ -27,6 +27,8 @@ type Metrics struct {
 func main() {
 	var metrics, port string
 
+	cerror := make(chan error)
+
 	rand.Seed(time.Now().Unix())
 	flag.StringVar(&metrics, "metrics", "", "Метрика, через запятую (доступны: lic,aperf,sjob,ses,con,sesmem)")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
@@ -37,12 +39,12 @@ func main() {
 
 	s := new(settings).Init()
 	metric := new(Metrics).Construct(metrics)
-	metric.append(new(ExplorerClientLic).Construct(time.Second*10, s))            // Клиентские лицензии
-	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second*10, s)) // Доступная производительность
-	metric.append(new(ExplorerCheckSheduleJob).Construct(time.Second*10, s))      // Проверка галки "блокировка регламентных заданий"
-	metric.append(new(ExplorerSessions).Construct(time.Second*10, s))             // Сеансы
-	metric.append(new(ExplorerConnects).Construct(time.Second*10, s))             // Соединения
-	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s))       // текущая память
+	metric.append(new(ExplorerClientLic).Construct(time.Second*10, s, cerror))            // Клиентские лицензии
+	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second*10, s, cerror)) // Доступная производительность
+	metric.append(new(ExplorerCheckSheduleJob).Construct(time.Second*10, s, cerror))      // Проверка галки "блокировка регламентных заданий"
+	metric.append(new(ExplorerSessions).Construct(time.Second*10, s, cerror))             // Сеансы
+	metric.append(new(ExplorerConnects).Construct(time.Second*10, s, cerror))             // Соединения
+	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s, cerror))       // текущая память
 
 	for _, ex := range metric.explorers {
 		if metric.contains(ex.GetName()) {
@@ -51,11 +53,18 @@ func main() {
 		}
 	}
 
+	go func() {
+		fmt.Println("port :", port)
+		if err := http.ListenAndServe(":"+port, siteMux); err != nil {
+			cerror <- err
+		}
+	}()
 
-	fmt.Println("Сервер запущен на порту :", port)
-	if err := http.ListenAndServe(":"+port, siteMux); err != nil {
-		fmt.Printf("Произошла ошибка: %v\n", err)
+	for err := range cerror {
+		fmt.Printf("Произошла ошибка:\n\t%v", err)
+		break
 	}
+
 }
 
 func (this *Metrics) append(ex Iexplorer) {

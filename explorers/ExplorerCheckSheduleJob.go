@@ -17,7 +17,7 @@ type ExplorerCheckSheduleJob struct {
 	baseList []map[string]string
 }
 
-func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Isettings) *ExplorerCheckSheduleJob {
+func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "SheduleJob",
@@ -28,6 +28,7 @@ func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Iset
 
 	this.timerNotyfy = timerNotyfy
 	this.settings = s
+	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
 	return this
 }

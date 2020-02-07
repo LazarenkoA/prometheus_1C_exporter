@@ -13,7 +13,7 @@ type ExplorerSessionsMemory struct {
 
 }
 
-func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isettings) *ExplorerSessionsMemory {
+func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerSessionsMemory {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "SessionsMemory",
@@ -24,6 +24,7 @@ func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isett
 
 	this.timerNotyfy = timerNotyfy
 	this.settings = s
+	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
 	return this
 }

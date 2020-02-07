@@ -15,7 +15,7 @@ type ExplorerConnects struct {
 	ExplorerCheckSheduleJob
 }
 
-func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings) *ExplorerConnects {
+func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerConnects {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "Connect",
@@ -26,6 +26,7 @@ func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings) 
 
 	this.timerNotyfy = timerNotyfy
 	this.settings = s
+	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
 	return this
 }

@@ -15,7 +15,7 @@ type ExplorerClientLic struct {
 
 }
 
-func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings) *ExplorerClientLic {
+func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings, cerror chan error) *ExplorerClientLic {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ClientLic",
@@ -26,6 +26,7 @@ func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings
 
 	this.timerNotyfy = timerNotyfy
 	this.settings = s
+	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
 	return this
 }
