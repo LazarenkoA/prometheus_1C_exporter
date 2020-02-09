@@ -19,7 +19,7 @@ func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isett
 			Name: "SessionsMemory",
 			Help: "текущая память из кластера 1С",
 		},
-		[]string{"host", "base", "session"},
+		[]string{"host", "base", "user"},
 	)
 
 	this.timerNotyfy = timerNotyfy
@@ -47,7 +47,7 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 		for _, item := range ses {
 			basename := this.findBaseName(item["infobase"])
 			if currentMemory, err := strconv.Atoi(item["memory-current"]); err == nil && currentMemory > 0 {
-				this.summary.WithLabelValues(host, basename, item["session-id"]).Observe(float64(currentMemory))
+				this.summary.WithLabelValues(host, basename, item["user-name"]).Observe(float64(currentMemory))
 			}
 		}
 
