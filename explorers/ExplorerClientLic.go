@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,12 +35,23 @@ func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings
 func (this *ExplorerClientLic) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
+	var group map[string]int
 	for {
 		lic, _ := this.getLic()
 		if len(lic) > 0 {
-			// в кластере может быть только один сервер лицензирования. Поэтому берем из первого элемента
-			licSrv := lic[0]["rmngr-address"]
-			this.summary.WithLabelValues(host, licSrv).Observe(float64(len(lic)))
+			group = map[string]int{}
+			for _, item := range lic {
+				key := item["rmngr-address"]
+				if strings.Trim(key, " ") == "" {
+					key = item["license-type"] // Клиентские лиц могет быть HASP, если сервер лиц. не задан, группируем по license-type
+				}
+				group[key]++
+			}
+
+			for k, v := range group {
+				this.summary.WithLabelValues(host, k).Observe(float64(v))
+			}
+
 		} else {
 			this.summary.WithLabelValues("", "").Observe(0) // нужно дл атотестов
 		}

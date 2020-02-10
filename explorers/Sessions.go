@@ -35,13 +35,14 @@ func (this *ExplorerSessions) Construct(timerNotyfy time.Duration, s Isettings, 
 func (this *ExplorerSessions) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
+	var groupByDB map[string]int
 	for {
 		ses, _ := this.getSessions()
 		if len(ses) == 0 {
 			this.summary.WithLabelValues("", "").Observe(0) // для тестов
 		}
 
-		groupByDB := map[string]int{}
+		groupByDB = map[string]int{}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
 			<-t.C
