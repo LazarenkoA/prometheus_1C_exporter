@@ -21,7 +21,7 @@ func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings
 			Name: "ClientLic",
 			Help: "Киентские лицензии 1С",
 		},
-		[]string{"host", "base"},
+		[]string{"host", "licSRV"},
 	)
 
 	this.timerNotyfy = timerNotyfy

@@ -17,7 +17,7 @@ func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isett
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "SessionsMemory",
-			Help: "текущая память из кластера 1С",
+			Help: "Память за 5 минут (из кластера 1С)",
 		},
 		[]string{"host", "base", "user"},
 	)
