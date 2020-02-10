@@ -55,12 +55,19 @@ func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	s := new(settings)
-	objectlic := new(ExplorerClientLic).Construct(time.Second * 10, s)
-	objectPerf := new(ExplorerAvailablePerformance).Construct(time.Second * 10, s)
-	objectMem := new(ExplorerSessionsMemory).Construct(time.Second * 10, s)
-	objectSes := new(ExplorerSessions).Construct(time.Second * 10, s)
-	objectCon := new(ExplorerConnects).Construct(time.Second * 10, s)
-	objectCSJ := new(ExplorerCheckSheduleJob).Construct(time.Second * 10, s)
+	cerror := make(chan error)
+	go func() {
+		for range cerror {
+
+		}
+	}()
+
+	objectlic := new(ExplorerClientLic).Construct(time.Second * 10, s, cerror)
+	objectPerf := new(ExplorerAvailablePerformance).Construct(time.Second * 10, s, cerror)
+	objectMem := new(ExplorerSessionsMemory).Construct(time.Second * 10, s, cerror)
+	objectSes := new(ExplorerSessions).Construct(time.Second * 10, s, cerror)
+	objectCon := new(ExplorerConnects).Construct(time.Second * 10, s, cerror)
+	objectCSJ := new(ExplorerCheckSheduleJob).Construct(time.Second * 10, s, cerror)
 
 	port := "9999"
 	go http.ListenAndServe(":"+port, siteMux)

@@ -46,8 +46,10 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 		this.summary.Reset()
 		for _, item := range ses {
 			basename := this.findBaseName(item["infobase"])
-			if currentMemory, err := strconv.Atoi(item["memory-current"]); err == nil && currentMemory > 0 {
+			if currentMemory, err := strconv.Atoi(item["memory-last-5min"]); err == nil && currentMemory > 0 {
 				this.summary.WithLabelValues(host, basename, item["user-name"]).Observe(float64(currentMemory))
+			} else {
+				this.summary.WithLabelValues(host, basename, item["user-name"]).Observe(0)
 			}
 		}
 

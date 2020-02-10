@@ -37,8 +37,11 @@ func (this *ExplorerSessions) StartExplore() {
 	host, _ := os.Hostname()
 	for {
 		ses, _ := this.getSessions()
-		groupByDB := map[string]int{}
+		if len(ses) == 0 {
+			this.summary.WithLabelValues("", "").Observe(0) // для тестов
+		}
 
+		groupByDB := map[string]int{}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
 			<-t.C
