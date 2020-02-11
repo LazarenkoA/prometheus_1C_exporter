@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -101,7 +102,7 @@ func (s *settings) getMSdata() {
 		}
 	}
 
-	timer := time.NewTicker(time.Minute * 30)
+	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(8-2)+2)) // разброс по задержке (8-2 часа), что бы не получилось так, что все эксплореры разом ломануться в МС
 	get()
 
 	go func() {
