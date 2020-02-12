@@ -39,11 +39,11 @@ func main() {
 
 	s := new(settings).Init()
 	metric := new(Metrics).Construct(metrics)
-	metric.append(new(ExplorerClientLic).Construct(time.Second*10, s, cerror))            // Клиентские лицензии
+	metric.append(new(ExplorerClientLic).Construct(time.Minute, s, cerror))               // Клиентские лицензии
 	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second*10, s, cerror)) // Доступная производительность
 	metric.append(new(ExplorerCheckSheduleJob).Construct(time.Second*10, s, cerror))      // Проверка галки "блокировка регламентных заданий"
-	metric.append(new(ExplorerSessions).Construct(time.Second*10, s, cerror))             // Сеансы
-	metric.append(new(ExplorerConnects).Construct(time.Second*10, s, cerror))             // Соединения
+	metric.append(new(ExplorerSessions).Construct(time.Minute, s, cerror))                // Сеансы
+	metric.append(new(ExplorerConnects).Construct(time.Minute, s, cerror))                // Соединения
 	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s, cerror))       // текущая память
 
 	for _, ex := range metric.explorers {

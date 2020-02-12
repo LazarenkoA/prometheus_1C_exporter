@@ -37,6 +37,8 @@ func (this *ExplorerClientLic) StartExplore() {
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {
+		this.summary.Reset()
+
 		lic, _ := this.getLic()
 		if len(lic) > 0 {
 			group = map[string]int{}
@@ -53,13 +55,14 @@ func (this *ExplorerClientLic) StartExplore() {
 			}
 
 		} else {
-			this.summary.WithLabelValues("", "").Observe(0) // нужно дл атотестов
+			this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
 		}
 		<-t.C
 	}
 }
 
 func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
+	// /opt/1C/v8.3/x86_64/rac session list --licenses --cluster=5c4602fc-f704-11e8-fa8d-005056031e96
 	licData = []map[string]string{}
 
 	param := []string{}
