@@ -37,8 +37,6 @@ func (this *ExplorerClientLic) StartExplore() {
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {
-		this.summary.Reset()
-
 		lic, _ := this.getLic()
 		if len(lic) > 0 {
 			group = map[string]int{}
@@ -50,6 +48,7 @@ func (this *ExplorerClientLic) StartExplore() {
 				group[key]++
 			}
 
+			this.summary.Reset()
 			for k, v := range group {
 				this.summary.WithLabelValues(host, k).Observe(float64(v))
 			}

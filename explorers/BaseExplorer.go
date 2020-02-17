@@ -17,6 +17,7 @@ type Isettings interface {
 	GetBaseUser(string) string
 	GetBasePass(string) string
 	RAC_Path() string
+	GetExplorers() map[string]map[string]interface{}
 }
 
 // базовый класс для всех метрик

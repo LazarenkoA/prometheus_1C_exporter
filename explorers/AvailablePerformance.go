@@ -35,6 +35,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	for {
 		if licCount, err := this.getData(); err == nil {
+			this.summary.Reset()
 			for key, value := range licCount {
 				this.summary.WithLabelValues(key).Observe(value)
 			}

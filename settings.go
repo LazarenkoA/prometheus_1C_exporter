@@ -2,19 +2,31 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 )
 
 type settings struct {
-	mx          *sync.RWMutex
-	login, pass string
-	bases       []Bases
+	mx          *sync.RWMutex `yaml:"-"`
+	login, pass string        `yaml:"-"`
+	bases       []Bases       `yaml:"-"`
+
+	Explorers [] *struct {
+		Name     string                 `yaml:"Name"`
+		Property map[string]interface{} `yaml:"Property"`
+	} `yaml:"Explorers"`
+
+	MSURL  string `yaml:"MSURL"`
+	MSUSER string `yaml:"MSUSER"`
+	MSPAS  string `yaml:"MSPAS"`
 }
 
 type Bases struct {
@@ -33,19 +45,32 @@ type Bases struct {
 
 // TODO: хранить настройки подключения к МС в конфиге
 const (
-	MSURL  string = "http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase" // "http://ca-t1-web-1/tfresh/int/sm/hs/PTG_SysExchange/GetDatabase"
-	MSUSER string = "RemoteAccess"
-	MSPAS  string = "dvt45hn"
+	//MSURL  string = "http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase" // "http://ca-t1-web-1/tfresh/int/sm/hs/PTG_SysExchange/GetDatabase"
+	//MSUSER string = "RemoteAccess"
+	//MSPAS  string = "dvt45hn"
 )
 
-func (s *settings) Init() *settings {
+func loadSettings(filePath string) *settings {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		panic(fmt.Sprintf("Файл настроек %q не найден", filePath))
+	}
+	file, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(fmt.Sprintf("Ошибка чтения файла %q\n%v", filePath, err))
+	}
+
+	s := new(settings)
+	if err := yaml.Unmarshal(file, s); err != nil {
+		panic("Ошибка десириализации настроек")
+	}
+
 	s.mx = new(sync.RWMutex)
 	s.getMSdata()
 
 	return s
 }
 
-func (s *settings)  findUser(ibname string)  {
+func (s *settings) findUser(ibname string) {
 	s.pass = ""
 	s.login = ""
 
@@ -83,9 +108,13 @@ func (s *settings) getMSdata() {
 		s.mx.Lock()
 		defer s.mx.Unlock()
 
+		if s.MSURL == "" {
+			return
+		}
+
 		cl := &http.Client{Timeout: time.Second * 10}
-		req, _ := http.NewRequest(http.MethodGet, MSURL, nil)
-		req.SetBasicAuth(MSUSER, MSPAS)
+		req, _ := http.NewRequest(http.MethodGet, s.MSURL, nil)
+		req.SetBasicAuth(s.MSUSER, s.MSPAS)
 		if resp, err := cl.Do(req); err != nil {
 			log.Println("Произошла ошибка при обращении к МС", err)
 		} else {
@@ -110,4 +139,13 @@ func (s *settings) getMSdata() {
 			get()
 		}
 	}()
+}
+
+func (s *settings) GetExplorers()map[string]map[string]interface{}  {
+	result := make(map[string]map[string]interface{}, 0)
+	for _, item := range s.Explorers {
+		result[item.Name] = item.Property
+	}
+
+	return result
 }

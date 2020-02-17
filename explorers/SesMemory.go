@@ -1,6 +1,7 @@
 package explorer
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -39,18 +40,27 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 		}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
+			log.Println("Ошибка: ", err)
 			<-t.C
 			continue
 		}
 
-		this.summary.Reset()
+		type key struct {
+			user string
+			db string
+		}
+
+		groupByUser := map[key]int{}
 		for _, item := range ses {
-			basename := this.findBaseName(item["infobase"])
-			if currentMemory, err := strconv.Atoi(item["memory-last-5min"]); err == nil && currentMemory > 0 {
-				this.summary.WithLabelValues(host, basename, item["user-name"]).Observe(float64(currentMemory))
-			} else {
-				this.summary.WithLabelValues(host, basename, item["user-name"]).Observe(0)
+			if currentMemory, err := strconv.Atoi(item["memory-last-5min"]); err == nil {
+				groupByUser[key{ user:item["user-name"], db:item["infobase"]}] += currentMemory
 			}
+		}
+
+		this.summary.Reset()
+		for k, v := range groupByUser {
+			basename := this.findBaseName(k.db)
+			this.summary.WithLabelValues(host, basename, k.user).Observe(float64(v))
 		}
 
 		<-t.C

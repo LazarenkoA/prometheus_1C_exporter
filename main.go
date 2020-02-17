@@ -25,30 +25,32 @@ type Metrics struct {
 }
 
 func main() {
-	var metrics, port string
+	var settingsPath, port string
 
 	cerror := make(chan error)
 
 	rand.Seed(time.Now().Unix())
-	flag.StringVar(&metrics, "metrics", "", "Метрика, через запятую (доступны: lic,aperf,sjob,ses,con,sesmem)")
+	flag.StringVar(&settingsPath, "settings", "", "Путь к файлу настроек")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.Parse()
 
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 
-	s := new(settings).Init()
-	metric := new(Metrics).Construct(metrics)
+	//settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml"
+	s := loadSettings(settingsPath)
+	metric := new(Metrics).Construct(s)
 	metric.append(new(ExplorerClientLic).Construct(time.Minute, s, cerror))               // Клиентские лицензии
 	metric.append(new(ExplorerAvailablePerformance).Construct(time.Second*10, s, cerror)) // Доступная производительность
 	metric.append(new(ExplorerCheckSheduleJob).Construct(time.Second*10, s, cerror))      // Проверка галки "блокировка регламентных заданий"
 	metric.append(new(ExplorerSessions).Construct(time.Minute, s, cerror))                // Сеансы
 	metric.append(new(ExplorerConnects).Construct(time.Minute, s, cerror))                // Соединения
-	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s, cerror))       // текущая память
+	metric.append(new(ExplorerSessionsMemory).Construct(time.Second*10, s, cerror))       // текущая память сеанса
+	metric.append(new(ExplorerProc).Construct(time.Second*10, s, cerror))                 // текущая память поцесса
 
+	log.Println("Сбор метрик:", strings.Join(metric.metrics, ","))
 	for _, ex := range metric.explorers {
 		if metric.contains(ex.GetName()) {
-			log.Println("Старт ", ex.GetName())
 			go ex.StartExplore()
 		}
 	}
@@ -71,9 +73,9 @@ func (this *Metrics) append(ex Iexplorer) {
 	this.explorers = append(this.explorers, ex)
 }
 
-func (this *Metrics) Construct(metrics string) *Metrics {
-	if metrics != "" {
-		this.metrics = strings.Split(metrics, ",")
+func (this *Metrics) Construct(set *settings) *Metrics {
+	for _, s := range set.Explorers {
+		this.metrics = append(this.metrics, s.Name)
 	}
 
 	return this
@@ -93,3 +95,4 @@ func (this *Metrics) contains(name string) bool {
 }
 
 // go build -ldflags "-s -w" - билд чутка меньше размером
+//ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/Explorer_1C /usr/local/bin/1c_exporter &&  yes | cp /mnt/share/GO/prometheus_1C_exporter/settings.yaml /usr/local/bin/settings.yaml  && systemctl daemon-reload && systemctl start 1c_exporter.service"

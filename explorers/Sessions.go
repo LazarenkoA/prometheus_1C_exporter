@@ -53,6 +53,7 @@ func (this *ExplorerSessions) StartExplore() {
 			groupByDB[this.findBaseName(item["infobase"])]++
 		}
 
+		this.summary.Reset()
 		// с разбивкой по БД
 		for k, v := range groupByDB {
 			this.summary.WithLabelValues(host, k).Observe(float64(v))

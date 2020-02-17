@@ -1,0 +1,30 @@
+# Доступные зачеия Explorers:
+  # lic - Клиентские лицензии
+  # aperf - Доступная производительность (через RAC)
+  # sjob - Проверка галки "блокировка регламентных заданий"
+  # ses - Сеансы
+  # con - Соединения
+  # sesmem - текущая память сеанса (через RAC)
+  # procmem - текущая память поцесса (получается из ОС, пока поддерживается только linux)
+Explorers:
+- Name: lic
+  Property: {}
+- Name: aperf
+  Property: {}
+- Name: sjob
+  Property: {}
+- Name: ses
+  Property: {}
+- Name: con
+  Property: {}
+- Name: sesmem
+  Property: {}
+- Name: procmem
+  Property:
+    processes:
+      - rphost
+      - ragent
+      - rmngr
+MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
+MSUSER: 
+MSPAS: 

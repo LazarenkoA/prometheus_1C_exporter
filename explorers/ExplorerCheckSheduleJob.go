@@ -37,6 +37,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	t := time.NewTicker(this.timerNotyfy)
 	for {
 		if listCheck, err := this.getData(); err == nil {
+			this.gauge.Reset()
 			for key, value := range listCheck {
 				if value {
 					this.gauge.WithLabelValues(key).Set(1)
