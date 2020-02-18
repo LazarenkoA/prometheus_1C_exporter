@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -12,10 +13,9 @@ import (
 
 type ExplorerAvailablePerformance struct {
 	BaseRACExplorer
-
 }
 
-func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  s Isettings, cerror chan error) *ExplorerAvailablePerformance {
+func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "AvailablePerformance",
@@ -24,7 +24,7 @@ func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  
 		[]string{"host"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -32,7 +32,7 @@ func (this *ExplorerAvailablePerformance) Construct(timerNotyfy time.Duration,  
 }
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	for {
 		if licCount, err := this.getData(); err == nil {
 			this.summary.Reset()
@@ -44,7 +44,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 			log.Println("Произошла ошибка: ", err.Error())
 		}
 
-		<-t.C
+		<-this.ticker.C
 	}
 }
 

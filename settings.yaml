@@ -6,25 +6,35 @@
   # con - Соединения
   # sesmem - текущая память сеанса (через RAC)
   # procmem - текущая память поцесса (получается из ОС, пока поддерживается только linux)
+# Property - доп. свойства, у каждой метрики свои могут быть.
+  # procmem доп. свойство processes определяет список процессов которые нужно мониторить
+  # у всех метрик доп. свойство timerNotyfy время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
 Explorers:
 - Name: lic
-  Property: {}
+  Property:
+    timerNotyfy: 60
 - Name: aperf
-  Property: {}
+  Property:
+    timerNotyfy: 10
 - Name: sjob
-  Property: {}
+  Property:
+    timerNotyfy: 10
 - Name: ses
-  Property: {}
+  Property:
+    timerNotyfy: 60
 - Name: con
-  Property: {}
+  Property:
+    timerNotyfy: 60
 - Name: sesmem
-  Property: {}
+  Property:
+    timerNotyfy: 10
 - Name: procmem
   Property:
     processes:
       - rphost
       - ragent
       - rmngr
-MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
+    timerNotyfy: 10
+MSURL: 
 MSUSER: 
 MSPAS: 

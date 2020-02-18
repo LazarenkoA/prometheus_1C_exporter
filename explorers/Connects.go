@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"reflect"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,7 +16,7 @@ type ExplorerConnects struct {
 	ExplorerCheckSheduleJob
 }
 
-func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerConnects {
+func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "Connect",
@@ -24,7 +25,7 @@ func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings, 
 		[]string{"host", "base"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -32,7 +33,8 @@ func (this *ExplorerConnects) Construct(timerNotyfy time.Duration, s Isettings, 
 }
 
 func (this *ExplorerConnects) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
 		connects, _ := this.getConnects()
@@ -43,7 +45,7 @@ func (this *ExplorerConnects) StartExplore() {
 		groupByDB := map[string]int{}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
-			<-t.C
+			<-this.ticker.C
 			continue
 		}
 
@@ -59,7 +61,7 @@ func (this *ExplorerConnects) StartExplore() {
 		// общее кол-во по хосту
 		//this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
 
-		<-t.C
+		<-this.ticker.C
 	}
 }
 

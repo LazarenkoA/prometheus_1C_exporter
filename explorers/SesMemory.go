@@ -3,6 +3,7 @@ package explorer
 import (
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -11,10 +12,9 @@ import (
 
 type ExplorerSessionsMemory struct {
 	ExplorerSessions
-
 }
 
-func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerSessionsMemory {
+func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *ExplorerSessionsMemory {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "SessionsMemory",
@@ -23,7 +23,7 @@ func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isett
 		[]string{"host", "base", "user"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -31,7 +31,7 @@ func (this *ExplorerSessionsMemory) Construct(timerNotyfy time.Duration, s Isett
 }
 
 func (this *ExplorerSessionsMemory) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	for {
 		ses, _ := this.getSessions()
@@ -41,19 +41,19 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
 			log.Println("Ошибка: ", err)
-			<-t.C
+			<-this.ticker.C
 			continue
 		}
 
 		type key struct {
 			user string
-			db string
+			db   string
 		}
 
 		groupByUser := map[key]int{}
 		for _, item := range ses {
 			if currentMemory, err := strconv.Atoi(item["memory-last-5min"]); err == nil {
-				groupByUser[key{ user:item["user-name"], db:item["infobase"]}] += currentMemory
+				groupByUser[key{user: item["user-name"], db: item["infobase"]}] += currentMemory
 			}
 		}
 
@@ -63,7 +63,7 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 			this.summary.WithLabelValues(host, basename, k.user).Observe(float64(v))
 		}
 
-		<-t.C
+		<-this.ticker.C
 	}
 }
 

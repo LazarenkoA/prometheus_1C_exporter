@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"reflect"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,10 +14,9 @@ import (
 type ExplorerSessions struct {
 	BaseRACExplorer
 	ExplorerCheckSheduleJob
-
 }
 
-func (this *ExplorerSessions) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerSessions {
+func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *ExplorerSessions {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "Session",
@@ -25,7 +25,7 @@ func (this *ExplorerSessions) Construct(timerNotyfy time.Duration, s Isettings, 
 		[]string{"host", "base"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -33,7 +33,7 @@ func (this *ExplorerSessions) Construct(timerNotyfy time.Duration, s Isettings, 
 }
 
 func (this *ExplorerSessions) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 	for {
@@ -45,7 +45,7 @@ func (this *ExplorerSessions) StartExplore() {
 		groupByDB = map[string]int{}
 		this.ExplorerCheckSheduleJob.settings = this.settings
 		if err := this.fillBaseList(); err != nil {
-			<-t.C
+			<-this.ticker.C
 			continue
 		}
 
@@ -61,7 +61,7 @@ func (this *ExplorerSessions) StartExplore() {
 		// общее кол-во по хосту
 		//this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
 
-		<-t.C
+		<-this.ticker.C
 	}
 }
 

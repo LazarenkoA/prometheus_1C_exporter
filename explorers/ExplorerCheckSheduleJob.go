@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"reflect"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ type ExplorerCheckSheduleJob struct {
 	baseList []map[string]string
 }
 
-func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
+func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "SheduleJob",
@@ -26,7 +27,7 @@ func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Iset
 		[]string{"base"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
@@ -34,7 +35,7 @@ func (this *ExplorerCheckSheduleJob) Construct(timerNotyfy time.Duration, s Iset
 }
 
 func (this *ExplorerCheckSheduleJob) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	for {
 		if listCheck, err := this.getData(); err == nil {
 			this.gauge.Reset()
@@ -49,7 +50,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 			this.gauge.WithLabelValues("").Set(0) // для теста
 			log.Println("Произошла ошибка: ", err.Error())
 		}
-		<-t.C
+		<-this.ticker.C
 	}
 }
 

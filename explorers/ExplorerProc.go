@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func (this *ExplorerProc) Construct(timerNotyfy time.Duration, s Isettings, cerror chan error) *ExplorerProc {
+func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerProc {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ProcData",
@@ -26,7 +26,7 @@ func (this *ExplorerProc) Construct(timerNotyfy time.Duration, s Isettings, cerr
 		[]string{"host", "name", "pid", "metrics"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -34,7 +34,7 @@ func (this *ExplorerProc) Construct(timerNotyfy time.Duration, s Isettings, cerr
 }
 
 func (this *ExplorerProc) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	proc := newProcData()
 	for {
@@ -45,13 +45,13 @@ func (this *ExplorerProc) StartExplore() {
 				this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
 			}
 		}
-		<-t.C
+		<-this.ticker.C
 	}
 }
 
 func (this *ExplorerProc) ContainsProc(procname string) bool {
 	explorers := this.settings.GetExplorers()
-	if v, ok := explorers["procmem"]["processes"]; ok {
+	if v, ok := explorers[this.GetName()]["processes"]; ok {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Array && rv.Kind() != reflect.Slice {
 			return false
@@ -65,7 +65,6 @@ func (this *ExplorerProc) ContainsProc(procname string) bool {
 	}
 	return false
 }
-
 
 func (this *ExplorerProc) GetName() string {
 	return "procmem"

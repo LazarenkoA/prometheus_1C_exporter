@@ -43,13 +43,6 @@ type Bases struct {
 	URL string `json:"URL"`
 }
 
-// TODO: хранить настройки подключения к МС в конфиге
-const (
-	//MSURL  string = "http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase" // "http://ca-t1-web-1/tfresh/int/sm/hs/PTG_SysExchange/GetDatabase"
-	//MSUSER string = "RemoteAccess"
-	//MSPAS  string = "dvt45hn"
-)
-
 func loadSettings(filePath string) *settings {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		panic(fmt.Sprintf("Файл настроек %q не найден", filePath))
@@ -139,6 +132,14 @@ func (s *settings) getMSdata() {
 			get()
 		}
 	}()
+}
+
+func (s *settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
+	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {
+		return v
+	} else {
+		return defaultValue
+	}
 }
 
 func (s *settings) GetExplorers()map[string]map[string]interface{}  {

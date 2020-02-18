@@ -2,6 +2,7 @@ package explorer
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -18,6 +19,11 @@ type Isettings interface {
 	GetBasePass(string) string
 	RAC_Path() string
 	GetExplorers() map[string]map[string]interface{}
+	GetProperty(string, string, interface{}) interface{}
+}
+
+type IExplorers interface {
+	StartExplore()
 }
 
 // базовый класс для всех метрик
@@ -26,9 +32,12 @@ type BaseExplorer struct {
 	summary     *prometheus.SummaryVec
 	сounter     *prometheus.CounterVec
 	gauge       *prometheus.GaugeVec
+	ticker      *time.Ticker
 	timerNotyfy time.Duration
 	settings    Isettings
-	cerror chan error
+	cerror      chan error
+	ctx         context.Context
+	ctxFunc     context.CancelFunc
 }
 
 // базовый класс для всех метрик собираемых через RAC
@@ -53,6 +62,32 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 		return "", errors.New(errText)
 	}
 	return cmd.Stdout.(*bytes.Buffer).String(), err
+}
+
+// Своеобразный middleware
+func (this *BaseExplorer) Start(exp IExplorers) {
+	this.ctx, this.ctxFunc = context.WithCancel(context.Background())
+
+	go func() {
+		<-this.ctx.Done()
+		if this.ticker != nil {
+			this.ticker.Stop()
+		}
+		if this.summary != nil {
+			this.summary.Reset()
+		}
+		if this.gauge != nil {
+			this.gauge.Reset()
+		}
+	}()
+
+	exp.StartExplore()
+}
+
+func (this *BaseExplorer) Stop() {
+	if this.ctxFunc != nil {
+		this.ctxFunc()
+	}
 }
 
 func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[string]string) {

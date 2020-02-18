@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"time"
 
@@ -13,10 +14,9 @@ import (
 
 type ExplorerClientLic struct {
 	BaseRACExplorer
-
 }
 
-func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings, cerror chan error) *ExplorerClientLic {
+func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *ExplorerClientLic {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "ClientLic",
@@ -25,7 +25,7 @@ func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings
 		[]string{"host", "licSRV"},
 	)
 
-	this.timerNotyfy = timerNotyfy
+	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -33,7 +33,7 @@ func (this *ExplorerClientLic) Construct(timerNotyfy time.Duration,  s Isettings
 }
 
 func (this *ExplorerClientLic) StartExplore() {
-	t := time.NewTicker(this.timerNotyfy)
+	this.ticker = time.NewTicker(this.timerNotyfy)
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {
@@ -56,7 +56,7 @@ func (this *ExplorerClientLic) StartExplore() {
 		} else {
 			this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
 		}
-		<-t.C
+		<-this.ticker.C
 	}
 }
 
