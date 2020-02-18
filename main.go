@@ -36,7 +36,7 @@ func main() {
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.Parse()
 
-	settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
+	//settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
 	s := loadSettings(settingsPath)
 
 	cerror := make(chan error)
