@@ -44,7 +44,7 @@ func main() {
 	start := func() {
 		for _, ex := range metric.explorers {
 			ex.Stop()
-			time.Sleep(time.Millisecond*100) // ждем что б завешился exporter
+			time.Sleep(time.Millisecond * 100) // ждем что б завешился exporter
 			if metric.contains(ex.GetName()) {
 				go ex.Start(ex)
 			}
@@ -67,11 +67,11 @@ func main() {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 
-	metric.append(new(ExplorerClientLic).Construct(s, cerror))               // Клиентские лицензии
+	metric.append(new(ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
 	metric.append(new(ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
 	metric.append(new(ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
-	metric.append(new(ExplorerSessions).Construct(s, cerror))                // Сеансы
-	metric.append(new(ExplorerConnects).Construct(s, cerror))                // Соединения
+	metric.append(new(ExplorerSessions).Construct(s, cerror))             // Сеансы
+	metric.append(new(ExplorerConnects).Construct(s, cerror))             // Соединения
 	metric.append(new(ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
 	metric.append(new(ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
 
