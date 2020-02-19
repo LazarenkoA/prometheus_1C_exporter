@@ -26,7 +26,6 @@ func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerPro
 		[]string{"host", "name", "pid", "metrics"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -34,7 +33,8 @@ func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerPro
 }
 
 func (this *ExplorerProc) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	proc := newProcData()
 	for {

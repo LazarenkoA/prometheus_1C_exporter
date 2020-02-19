@@ -44,7 +44,6 @@ func main() {
 	start := func() {
 		for _, ex := range metric.explorers {
 			ex.Stop()
-			time.Sleep(time.Millisecond * 100) // ждем что б завешился exporter
 			if metric.contains(ex.GetName()) {
 				go ex.Start(ex)
 			}

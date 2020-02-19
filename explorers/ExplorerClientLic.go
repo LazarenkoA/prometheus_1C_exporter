@@ -25,7 +25,6 @@ func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *Explor
 		[]string{"host", "licSRV"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -33,7 +32,8 @@ func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *Explor
 }
 
 func (this *ExplorerClientLic) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {

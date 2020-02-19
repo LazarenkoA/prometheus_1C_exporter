@@ -2,6 +2,7 @@ package explorer
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -13,9 +14,18 @@ import (
 )
 
 type settings struct {
-	mx          *sync.RWMutex
-	login, pass string
-	bases       []Bases
+	mx          *sync.RWMutex `yaml:"-"`
+	login, pass string        `yaml:"-"`
+	bases       []Bases       `yaml:"-"`
+
+	Explorers [] *struct {
+		Name     string                 `yaml:"Name"`
+		Property map[string]interface{} `yaml:"Property"`
+	} `yaml:"Explorers"`
+
+	MSURL  string `yaml:"MSURL"`
+	MSUSER string `yaml:"MSUSER"`
+	MSPAS  string `yaml:"MSPAS"`
 }
 
 type Bases struct {
@@ -44,6 +54,24 @@ func (s *settings) RAC_Path() string {
 	return "/opt/1C/v8.3/x86_64/rac"
 }
 
+func (s *settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
+	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {
+		return v
+	} else {
+		return defaultValue
+	}
+}
+
+func (s *settings) GetExplorers()map[string]map[string]interface{}  {
+	result := make(map[string]map[string]interface{}, 0)
+	for _, item := range s.Explorers {
+		result[item.Name] = item.Property
+	}
+
+	return result
+}
+
+//////////////////////////////////////////
 
 func Test_ClientLic(t *testing.T) {
 	for id, test := range initests() {
@@ -54,7 +82,12 @@ func Test_ClientLic(t *testing.T) {
 func initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
+
 	s := new(settings)
+	if err := yaml.Unmarshal([]byte(settingstext()), s); err != nil {
+		panic("Ошибка десириализации настроек")
+	}
+
 	cerror := make(chan error)
 	go func() {
 		for range cerror {
@@ -62,12 +95,12 @@ func initests() []func(*testing.T) {
 		}
 	}()
 
-	objectlic := new(ExplorerClientLic).Construct(time.Second * 10, s, cerror)
-	objectPerf := new(ExplorerAvailablePerformance).Construct(time.Second * 10, s, cerror)
-	objectMem := new(ExplorerSessionsMemory).Construct(time.Second * 10, s, cerror)
-	objectSes := new(ExplorerSessions).Construct(time.Second * 10, s, cerror)
-	objectCon := new(ExplorerConnects).Construct(time.Second * 10, s, cerror)
-	objectCSJ := new(ExplorerCheckSheduleJob).Construct(time.Second * 10, s, cerror)
+	objectlic := new(ExplorerClientLic).Construct(s, cerror)
+	objectPerf := new(ExplorerAvailablePerformance).Construct(s, cerror)
+	objectMem := new(ExplorerSessionsMemory).Construct(s, cerror)
+	objectSes := new(ExplorerSessions).Construct(s, cerror)
+	objectCon := new(ExplorerConnects).Construct(s, cerror)
+	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 
 	port := "9999"
 	go http.ListenAndServe(":"+port, siteMux)
@@ -178,4 +211,36 @@ func initests() []func(*testing.T) {
 			}
 		},
 	}
+}
+
+func settingstext() string  {
+	return `Explorers:
+- Name: lic
+  Property:
+    timerNotyfy: 60
+- Name: aperf
+  Property:
+    timerNotyfy: 10
+- Name: sjob
+  Property:
+    timerNotyfy: 10
+- Name: ses
+  Property:
+    timerNotyfy: 60
+- Name: con
+  Property:
+    timerNotyfy: 60
+- Name: sesmem
+  Property:
+    timerNotyfy: 10
+- Name: procmem
+  Property:
+    processes:
+      - rphost
+      - ragent
+      - rmngr
+    timerNotyfy: 10
+MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
+MSUSER: RemoteAccess
+MSPAS: dvt45hn`
 }

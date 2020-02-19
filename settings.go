@@ -77,17 +77,17 @@ func (s *settings) findUser(ibname string) {
 }
 
 func (s *settings) GetBaseUser(ibname string) string {
-	s.mx.RLock()
-	defer s.mx.RUnlock()
+	s.mx.Lock()
+	defer s.mx.Unlock()
 
 	s.findUser(ibname)
 	return s.login
 }
 
 func (s *settings) GetBasePass(ibname string) string {
-	s.mx.RLock()
-	defer s.mx.RUnlock()
-
+	s.mx.Lock()
+	defer s.mx.Unlock()
+	
 	s.findUser(ibname)
 	return s.pass
 }

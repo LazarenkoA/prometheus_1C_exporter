@@ -27,7 +27,6 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 		[]string{"base"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
@@ -35,7 +34,8 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 }
 
 func (this *ExplorerCheckSheduleJob) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	for {
 		if listCheck, err := this.getData(); err == nil {
 			this.gauge.Reset()

@@ -24,7 +24,6 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 		[]string{"host"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -32,7 +31,8 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 }
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	for {
 		if licCount, err := this.getData(); err == nil {
 			this.summary.Reset()

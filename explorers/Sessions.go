@@ -25,7 +25,6 @@ func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *Explore
 		[]string{"host", "base"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -33,7 +32,8 @@ func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *Explore
 }
 
 func (this *ExplorerSessions) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 	for {

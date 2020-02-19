@@ -18,12 +18,11 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "SessionsMemory",
-			Help: "Память за 5 минут (из кластера 1С)",
+			Help: "Память всего (из кластера 1С)",
 		},
 		[]string{"host", "base", "user"},
 	)
 
-	this.timerNotyfy = time.Second * time.Duration(reflect.ValueOf(s.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -31,7 +30,8 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 }
 
 func (this *ExplorerSessionsMemory) StartExplore() {
-	this.ticker = time.NewTicker(this.timerNotyfy)
+	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
 		ses, _ := this.getSessions()
@@ -52,7 +52,7 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 
 		groupByUser := map[key]int{}
 		for _, item := range ses {
-			if currentMemory, err := strconv.Atoi(item["memory-last-5min"]); err == nil {
+			if currentMemory, err := strconv.Atoi(item["memory-total"]); err == nil {
 				groupByUser[key{user: item["user-name"], db: item["infobase"]}] += currentMemory
 			}
 		}
