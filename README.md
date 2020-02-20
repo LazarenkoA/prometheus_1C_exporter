@@ -67,4 +67,6 @@ goto end
 
 ![](doc/img/browser_FCaSoFVBDe.png "Доступная производительность")
 
+![](doc/img/browser_jtYHlI4MPZ.png "Память по сеансам")
+
 ![](doc/img/browser_LnTYeIKxgG.png "Клиентские лицензии")
