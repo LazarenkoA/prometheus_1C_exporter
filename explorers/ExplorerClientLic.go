@@ -19,7 +19,7 @@ type ExplorerClientLic struct {
 func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *ExplorerClientLic {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "ClientLic",
+			Name: this.GetName(),
 			Help: "Киентские лицензии 1С",
 		},
 		[]string{"host", "licSRV"},
@@ -37,25 +37,30 @@ func (this *ExplorerClientLic) StartExplore() {
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {
-		lic, _ := this.getLic()
-		if len(lic) > 0 {
-			group = map[string]int{}
-			for _, item := range lic {
-				key := item["rmngr-address"]
-				if strings.Trim(key, " ") == "" {
-					key = item["license-type"] // Клиентские лиц могет быть HASP, если сервер лиц. не задан, группируем по license-type
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
+
+			lic, _ := this.getLic()
+			if len(lic) > 0 {
+				group = map[string]int{}
+				for _, item := range lic {
+					key := item["rmngr-address"]
+					if strings.Trim(key, " ") == "" {
+						key = item["license-type"] // Клиентские лиц могет быть HASP, если сервер лиц. не задан, группируем по license-type
+					}
+					group[key]++
 				}
-				group[key]++
-			}
 
-			this.summary.Reset()
-			for k, v := range group {
-				this.summary.WithLabelValues(host, k).Observe(float64(v))
-			}
+				this.summary.Reset()
+				for k, v := range group {
+					this.summary.WithLabelValues(host, k).Observe(float64(v))
+				}
 
-		} else {
-			this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
-		}
+			} else {
+				this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
+			}
+		}()
 		<-this.ticker.C
 	}
 }
@@ -82,5 +87,5 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 }
 
 func (this *ExplorerClientLic) GetName() string {
-	return "lic"
+	return "ClientLic"
 }

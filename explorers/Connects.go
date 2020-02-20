@@ -12,14 +12,13 @@ import (
 )
 
 type ExplorerConnects struct {
-	BaseRACExplorer
 	ExplorerCheckSheduleJob
 }
 
 func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "Connect",
+			Name: this.GetName(),
 			Help: "Соединения 1С",
 		},
 		[]string{"host", "base"},
@@ -36,30 +35,33 @@ func (this *ExplorerConnects) StartExplore() {
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		connects, _ := this.getConnects()
-		if len(connects) == 0 {
-			this.summary.WithLabelValues("", "").Observe(0) // для тестов
-		}
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
 
-		groupByDB := map[string]int{}
-		this.ExplorerCheckSheduleJob.settings = this.settings
-		if err := this.fillBaseList(); err != nil {
-			<-this.ticker.C
-			continue
-		}
+			connects, _ := this.getConnects()
+			if len(connects) == 0 {
+				this.summary.WithLabelValues("", "").Observe(0) // для тестов
+			}
 
-		for _, item := range connects {
-			groupByDB[this.findBaseName(item["infobase"])]++
-		}
+			groupByDB := map[string]int{}
+			this.ExplorerCheckSheduleJob.settings = this.settings
+			if err := this.fillBaseList(); err != nil {
+				return
+			}
 
-		this.summary.Reset()
-		// с разбивкой по БД
-		for k, v := range groupByDB {
-			this.summary.WithLabelValues(host, k).Observe(float64(v))
-		}
-		// общее кол-во по хосту
-		//this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
+			for _, item := range connects {
+				groupByDB[this.findBaseName(item["infobase"])]++
+			}
 
+			this.summary.Reset()
+			// с разбивкой по БД
+			for k, v := range groupByDB {
+				this.summary.WithLabelValues(host, k).Observe(float64(v))
+			}
+			// общее кол-во по хосту
+			//this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
+		}()
 		<-this.ticker.C
 	}
 }
@@ -84,5 +86,5 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 }
 
 func (this *ExplorerConnects) GetName() string {
-	return "con"
+	return "Connect"
 }

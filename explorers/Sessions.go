@@ -19,7 +19,7 @@ type ExplorerSessions struct {
 func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *ExplorerSessions {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "Session",
+			Name: this.GetName(),
 			Help: "Сессии 1С",
 		},
 		[]string{"host", "base"},
@@ -37,30 +37,33 @@ func (this *ExplorerSessions) StartExplore() {
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 	for {
-		ses, _ := this.getSessions()
-		if len(ses) == 0 {
-			this.summary.WithLabelValues("", "").Observe(0) // для тестов
-		}
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
 
-		groupByDB = map[string]int{}
-		this.ExplorerCheckSheduleJob.settings = this.settings
-		if err := this.fillBaseList(); err != nil {
-			<-this.ticker.C
-			continue
-		}
+			ses, _ := this.getSessions()
+			if len(ses) == 0 {
+				this.summary.WithLabelValues("", "").Observe(0) // для тестов
+			}
 
-		for _, item := range ses {
-			groupByDB[this.findBaseName(item["infobase"])]++
-		}
+			groupByDB = map[string]int{}
+			this.ExplorerCheckSheduleJob.settings = this.settings
+			if err := this.fillBaseList(); err != nil {
+				return
+			}
 
-		this.summary.Reset()
-		// с разбивкой по БД
-		for k, v := range groupByDB {
-			this.summary.WithLabelValues(host, k).Observe(float64(v))
-		}
-		// общее кол-во по хосту
-		//this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
+			for _, item := range ses {
+				groupByDB[this.findBaseName(item["infobase"])]++
+			}
 
+			this.summary.Reset()
+			// с разбивкой по БД
+			for k, v := range groupByDB {
+				this.summary.WithLabelValues(host, k).Observe(float64(v))
+			}
+			// общее кол-во по хосту
+			//this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
+		}()
 		<-this.ticker.C
 	}
 }
@@ -85,5 +88,5 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 }
 
 func (this *ExplorerSessions) GetName() string {
-	return "ses"
+	return "Session"
 }

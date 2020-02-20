@@ -1,6 +1,7 @@
 package explorer
 
 import (
+	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -20,7 +21,7 @@ type (
 func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerProc {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "ProcData",
+			Name:this.GetName(),
 			Help: "Память процессов",
 		},
 		[]string{"host", "name", "pid", "metrics"},
@@ -36,15 +37,24 @@ func (this *ExplorerProc) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
-	proc := newProcData()
+	proc, err := newProcData()
+	if err != nil {
+		log.Printf("Ошибка. Метрика %q:\n\t%v\n", this.GetName(), err)
+		return
+	}
 	for {
-		this.summary.Reset()
-		for _, p := range proc.GetAllProc() {
-			if p.ResidentMemory() > 0 && this.ContainsProc(p.Name()) {
-				this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "memory").Observe(float64(p.ResidentMemory()))
-				this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
+
+			this.summary.Reset()
+			for _, p := range proc.GetAllProc() {
+				if p.ResidentMemory() > 0 && this.ContainsProc(p.Name()) {
+					this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "memory").Observe(float64(p.ResidentMemory()))
+					this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
+				}
 			}
-		}
+		}()
 		<-this.ticker.C
 	}
 }
@@ -67,5 +77,5 @@ func (this *ExplorerProc) ContainsProc(procname string) bool {
 }
 
 func (this *ExplorerProc) GetName() string {
-	return "procmem"
+	return "ProcData"
 }

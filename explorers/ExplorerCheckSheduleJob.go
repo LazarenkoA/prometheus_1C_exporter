@@ -21,7 +21,7 @@ type ExplorerCheckSheduleJob struct {
 func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "SheduleJob",
+			Name: this.GetName(),
 			Help: "Состояние галки \"блокировка регламентных заданий\", если галка установлена значение будет 1 иначе 0 или метрика будет отсутствовать",
 		},
 		[]string{"base"},
@@ -37,19 +37,24 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
 	this.ticker = time.NewTicker(timerNotyfy)
 	for {
-		if listCheck, err := this.getData(); err == nil {
-			this.gauge.Reset()
-			for key, value := range listCheck {
-				if value {
-					this.gauge.WithLabelValues(key).Set(1)
-				} else {
-					this.gauge.WithLabelValues(key).Set(0)
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
+
+			if listCheck, err := this.getData(); err == nil {
+				this.gauge.Reset()
+				for key, value := range listCheck {
+					if value {
+						this.gauge.WithLabelValues(key).Set(1)
+					} else {
+						this.gauge.WithLabelValues(key).Set(0)
+					}
 				}
+			} else {
+				this.gauge.WithLabelValues("").Set(0) // для теста
+				log.Println("Произошла ошибка: ", err.Error())
 			}
-		} else {
-			this.gauge.WithLabelValues("").Set(0) // для теста
-			log.Println("Произошла ошибка: ", err.Error())
-		}
+		}()
 		<-this.ticker.C
 	}
 }
@@ -127,5 +132,5 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 }
 
 func (this *ExplorerCheckSheduleJob) GetName() string {
-	return "sjob"
+	return "SheduleJob"
 }

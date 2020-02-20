@@ -1,34 +1,34 @@
 # Доступные зачеия Explorers:
-  # lic - Клиентские лицензии
-  # aperf - Доступная производительность (через RAC)
-  # sjob - Проверка галки "блокировка регламентных заданий"
-  # ses - Сеансы
-  # con - Соединения
-  # sesmem - текущая память сеанса (через RAC)
-  # procmem - текущая память поцесса (получается из ОС, пока поддерживается только linux)
+  # ClientLic - Клиентские лицензии
+  # AvailablePerformance - Доступная производительность (через RAC)
+  # SheduleJob - Проверка галки "блокировка регламентных заданий"
+  # Session - Сеансы
+  # Connect - Соединения
+  # SessionsMemory - текущая память сеанса (через RAC)
+  # ProcData - Данные поцессов (получается из ОС, пока поддерживается только linux)
 # Property - доп. свойства, у каждой метрики свои могут быть.
-  # procmem доп. свойство processes определяет список процессов которые нужно мониторить
+  # у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
   # у всех метрик доп. свойство timerNotyfy время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
 Explorers:
-- Name: lic
+- Name: ClientLic
   Property:
     timerNotyfy: 60
-- Name: aperf
+- Name: AvailablePerformance
   Property:
     timerNotyfy: 10
-- Name: sjob
+- Name: SheduleJob
   Property:
     timerNotyfy: 10
-- Name: ses
+- Name: Session
   Property:
     timerNotyfy: 60
-- Name: con
+- Name: Connect
   Property:
     timerNotyfy: 60
-- Name: sesmem
+- Name: SessionsMemory
   Property:
     timerNotyfy: 10
-- Name: procmem
+- Name: ProcData
   Property:
     processes:
       - rphost

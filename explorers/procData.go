@@ -1,7 +1,10 @@
 package explorer
 
 import (
+	"fmt"
+	"github.com/matishsiao/goInfo"
 	"github.com/prometheus/procfs"
+	"strings"
 )
 
 type (
@@ -31,9 +34,14 @@ type (
 	}
 )
 
-func newProcData() Iproc {
+func newProcData() (Iproc, error) {
 	// тут проверять ОС и возвращать тот или иной объект
-	return new(processLinux)
+	gi := goInfo.GetInfo()
+	if strings.Contains(strings.ToLower(gi.OS),"linux") {
+		return new(processLinux), nil
+	} else {
+		return nil, fmt.Errorf("ОС %q не поддерживается", gi.OS)
+	}
 }
 
 func (this *processLinux) GetAllProc() []Iproc {

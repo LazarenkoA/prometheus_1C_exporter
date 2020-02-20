@@ -17,7 +17,7 @@ type ExplorerSessionsMemory struct {
 func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *ExplorerSessionsMemory {
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "SessionsMemory",
+			Name: this.GetName(),
 			Help: "Память всего (из кластера 1С)",
 		},
 		[]string{"host", "base", "user"},
@@ -34,39 +34,42 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		ses, _ := this.getSessions()
-		if len(ses) == 0 {
-			this.summary.WithLabelValues("", "", "").Observe(0) // для тестов
-		}
-		this.ExplorerCheckSheduleJob.settings = this.settings
-		if err := this.fillBaseList(); err != nil {
-			log.Println("Ошибка: ", err)
-			<-this.ticker.C
-			continue
-		}
+		this.pause.Lock()
+		func() {
+			defer this.pause.Unlock()
 
-		type key struct {
-			user string
-			db   string
-		}
-
-		groupByUser := map[key]int{}
-		for _, item := range ses {
-			if currentMemory, err := strconv.Atoi(item["memory-total"]); err == nil {
-				groupByUser[key{user: item["user-name"], db: item["infobase"]}] += currentMemory
+			ses, _ := this.getSessions()
+			if len(ses) == 0 {
+				this.summary.WithLabelValues("", "", "").Observe(0) // для тестов
 			}
-		}
+			this.ExplorerCheckSheduleJob.settings = this.settings
+			if err := this.fillBaseList(); err != nil {
+				log.Println("Ошибка: ", err)
+				return
+			}
 
-		this.summary.Reset()
-		for k, v := range groupByUser {
-			basename := this.findBaseName(k.db)
-			this.summary.WithLabelValues(host, basename, k.user).Observe(float64(v))
-		}
+			type key struct {
+				user string
+				db   string
+			}
 
+			groupByUser := map[key]int{}
+			for _, item := range ses {
+				if currentMemory, err := strconv.Atoi(item["memory-total"]); err == nil {
+					groupByUser[key{user: item["user-name"], db: item["infobase"]}] += currentMemory
+				}
+			}
+
+			this.summary.Reset()
+			for k, v := range groupByUser {
+				basename := this.findBaseName(k.db)
+				this.summary.WithLabelValues(host, basename, k.user).Observe(float64(v))
+			}
+		}()
 		<-this.ticker.C
 	}
 }
 
 func (this *ExplorerSessionsMemory) GetName() string {
-	return "sesmem"
+	return "SessionsMemory"
 }

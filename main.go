@@ -17,18 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type Iexplorer interface {
-	Start(IExplorers)
-	Stop()
-	StartExplore()
-	GetName() string
-}
-
-type Metrics struct {
-	explorers []Iexplorer
-	metrics   []string
-}
-
 func main() {
 	var settingsPath, port string
 	rand.Seed(time.Now().Unix())
@@ -42,9 +30,9 @@ func main() {
 	cerror := make(chan error)
 	metric := new(Metrics).Construct(s)
 	start := func() {
-		for _, ex := range metric.explorers {
+		for _, ex := range metric.Explorers {
 			ex.Stop()
-			if metric.contains(ex.GetName()) {
+			if metric.Contains(ex.GetName()) {
 				go ex.Start(ex)
 			}
 		}
@@ -65,16 +53,18 @@ func main() {
 
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
+	siteMux.Handle("/Continue", Continue(metric))
+	siteMux.Handle("/Pause", Pause(metric))
 
-	metric.append(new(ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
-	metric.append(new(ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
-	metric.append(new(ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
-	metric.append(new(ExplorerSessions).Construct(s, cerror))             // Сеансы
-	metric.append(new(ExplorerConnects).Construct(s, cerror))             // Соединения
-	metric.append(new(ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
-	metric.append(new(ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
+	metric.Append(new(ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
+	metric.Append(new(ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
+	metric.Append(new(ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
+	metric.Append(new(ExplorerSessions).Construct(s, cerror))             // Сеансы
+	metric.Append(new(ExplorerConnects).Construct(s, cerror))             // Соединения
+	metric.Append(new(ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
+	metric.Append(new(ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
 
-	log.Println("Сбор метрик:", strings.Join(metric.metrics, ","))
+	log.Println("Сбор метрик:", strings.Join(metric.Metrics, ","))
 	start()
 
 	go func() {
@@ -89,32 +79,6 @@ func main() {
 		break
 	}
 
-}
-
-func (this *Metrics) append(ex Iexplorer) {
-	this.explorers = append(this.explorers, ex)
-}
-
-func (this *Metrics) Construct(set *settings) *Metrics {
-	this.metrics = []string{}
-	for _, s := range set.Explorers {
-		this.metrics = append(this.metrics, s.Name)
-	}
-
-	return this
-}
-
-func (this *Metrics) contains(name string) bool {
-	if len(this.metrics) == 0 {
-		return true // Если не задали метрики через парамет, то используем все метрики
-	}
-	for _, item := range this.metrics {
-		if strings.Trim(item, " ") == strings.Trim(name, " ") {
-			return true
-		}
-	}
-
-	return false
 }
 
 // go build -o "Explorer_1C" -ldflags "-s -w" - билд чутка меньше размером
