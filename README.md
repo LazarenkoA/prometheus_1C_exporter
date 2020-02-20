@@ -21,11 +21,16 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 Имена метрик можно посмотреть в конфиге **settings.yaml**
 
 
+
+
 **Запуск** 
 
 ./ClientLic -port=9095 --settings=/usr/local/bin/settings.yaml
 
 Если порт не указать по дефолту будет порт 9091
+
+
+
 
 в конфииге прометеуса (prometheus.yml) нужно указать хосты на которых запущен explorer
 ```yaml
