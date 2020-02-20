@@ -25,7 +25,7 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 
 **Запуск** 
 
-./ClientLic -port=9095 --settings=/usr/local/bin/settings.yaml
+./1C_exporter -port=9095 --settings=/usr/local/bin/settings.yaml
 
 Если порт не указать по дефолту будет порт 9091
 
