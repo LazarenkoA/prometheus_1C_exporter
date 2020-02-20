@@ -22,8 +22,10 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 
 
 **Запуск** 
-./ClientLic -port=9095
-по дефолту порт 9091
+
+./ClientLic -port=9095 --settings=/usr/local/bin/settings.yaml
+
+Если порт не указать по дефолту будет порт 9091
 
 в конфииге прометеуса (prometheus.yml) нужно указать хосты на которых запущен explorer
 ```yaml
