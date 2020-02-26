@@ -1,0 +1,13 @@
+[Unit]
+Description=Prometheus 1C exporter
+After=local-fs.target network-online.target network.target
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/1c_exporter --settings=/usr/local/bin/settings.yaml
+ExecReload=/bin/kill -s HUP $MAINPID
+
+
+[Install]
+WantedBy=multi-user.target
