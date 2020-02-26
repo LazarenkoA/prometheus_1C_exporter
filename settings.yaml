@@ -35,6 +35,6 @@ Explorers:
       - ragent
       - rmngr
     timerNotyfy: 10
-MSURL: 
-MSUSER: 
-MSPAS: 
+MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
+MSUSER: RemoteAccess
+MSPAS: dvt45hn
