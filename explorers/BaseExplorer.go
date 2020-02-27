@@ -19,8 +19,7 @@ import (
 
 //////////////////////// Интерфейсы ////////////////////////////
 type Isettings interface {
-	GetBaseUser(string) string
-	GetBasePass(string) string
+	GetLogPass(string) (log string, pass string)
 	RAC_Path() string
 	GetExplorers() map[string]map[string]interface{}
 	GetProperty(string, string, interface{}) interface{}
@@ -136,6 +135,7 @@ func (this *BaseExplorer) Continue() {
 }
 
 func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[string]string) {
+	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
 		data := this.formatResult(part)
@@ -167,12 +167,12 @@ func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 }
 
 func (this *BaseRACExplorer) GetClusterID() string {
-	this.mutex().Lock()
-	defer this.mutex().Unlock()
+	//this.mutex().RLock()
+	//defer this.mutex().RUnlock()
 
 	update := func() {
-		//this.mutex().Lock()
-		//defer this.mutex().Unlock()
+		this.mutex().Lock()
+		defer this.mutex().Unlock()
 
 		cmdCommand := exec.Command(this.settings.RAC_Path(), "cluster", "list")
 		cluster := make(map[string]string)

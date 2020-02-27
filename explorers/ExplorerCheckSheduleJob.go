@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -68,10 +69,42 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 	}
 
 	// проверяем блокировку рег. заданий по каждой базе
-	for _, item := range this.baseList {
-		if baseinfo, err := this.getInfoBase(item["infobase"], item["name"]); err == nil {
-			data[baseinfo["name"]] = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
+	// информация по базе получается довольно долго, особенно если в кластере много баз (например тестовый контур), поэтому делаем через пул воркеров
+	type dbinfo struct {
+		guid, name string
+		value bool
+	}
+	chanIn := make(chan *dbinfo, 5)
+	chanOut := make(chan *dbinfo)
+	wg := new(sync.WaitGroup)
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for db := range chanIn {
+				if baseinfo, err := this.getInfoBase(db.guid, db.name); err == nil {
+					db.value = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
+					chanOut <- db
+				}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(chanOut)
+	}()
+
+	go func() {
+		for _, item := range this.baseList {
+			chanIn <- &dbinfo{ name: item["name"], guid: item["infobase"]}
 		}
+		close(chanIn)
+	}()
+
+	for db := range chanOut {
+		data[db.name] = db.value
 	}
 
 	return data, nil
@@ -80,13 +113,14 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
 	// /opt/1C/v8.3/x86_64/rac infobase info --cluster=02a9be50-73ff-11e9-fe99-001a4b010536 --infobase=603b443e-41af-11ea-939b-001a4b010536 --infobase-user=Парма --infobase-pwd=fdfdEERR34
 
+	login, pass := this.settings.GetLogPass(basename)
 	var param []string
 	param = append(param, "infobase")
 	param = append(param, "info")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
-	param = append(param, fmt.Sprintf("--infobase-user=%v", this.settings.GetBaseUser(basename)))
-	param = append(param, fmt.Sprintf("--infobase-pwd=%v", this.settings.GetBasePass(basename)))
+	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
+	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
 	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
 		log.Println("Произошла ошибка выполнения: ", err.Error())
@@ -99,7 +133,6 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 		} else {
 			return map[string]string{}, errors.New(fmt.Sprintf("Не удалось получить информацию по базе %q", basename))
 		}
-
 	}
 }
 

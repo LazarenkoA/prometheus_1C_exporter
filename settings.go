@@ -16,7 +16,7 @@ import (
 
 type settings struct {
 	mx          *sync.RWMutex `yaml:"-"`
-	login, pass string        `yaml:"-"`
+	//login, pass string        `yaml:"-"`
 	bases       []Bases       `yaml:"-"`
 
 	Explorers [] *struct {
@@ -57,39 +57,23 @@ func loadSettings(filePath string) *settings {
 		panic("Ошибка десириализации настроек")
 	}
 
+	rand.Seed(time.Now().Unix())
 	s.mx = new(sync.RWMutex)
 	s.getMSdata()
 
 	return s
 }
 
-func (s *settings) findUser(ibname string) {
-	s.pass = ""
-	s.login = ""
-
+func (s *settings) GetLogPass(ibname string) (login, pass string){
 	for _, base := range s.bases {
 		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
-			s.pass = base.UserPass
-			s.login = base.UserName
+			pass = base.UserPass
+			login = base.UserName
 			break
 		}
 	}
-}
 
-func (s *settings) GetBaseUser(ibname string) string {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-
-	s.findUser(ibname)
-	return s.login
-}
-
-func (s *settings) GetBasePass(ibname string) string {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-
-	s.findUser(ibname)
-	return s.pass
+	return
 }
 
 func (s *settings) RAC_Path() string {
