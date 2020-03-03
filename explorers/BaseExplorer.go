@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -244,7 +245,10 @@ func Pause(metrics *Metrics) http.Handler {
 		var offsetMin int
 		if v, err := strconv.ParseInt(r.URL.Query().Get("offsetMin"), 0, 0); err == nil {
 			offsetMin = int(v)
+			log.Println("Сбор метрик включется автоматически через", offsetMin, "минут")
 		}
+
+		log.Println("Приостановить сбор метрик", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Pause()
@@ -271,6 +275,7 @@ func Continue(metrics *Metrics) http.Handler {
 			return
 		}
 		metricNames := r.URL.Query().Get("metricNames")
+		log.Println("Продолжеить сбор метрик", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Continue()
