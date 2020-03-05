@@ -4,7 +4,7 @@
   # SheduleJob - Проверка галки "блокировка регламентных заданий"
   # Session - Сеансы
   # Connect - Соединения
-  # SessionsMemory - текущая память сеанса (через RAC)
+  # SessionsData - различные показарели из консоли 1с  (через RAC)
   # ProcData - Данные поцессов (получается из ОС, пока поддерживается только linux)
 # Property - доп. свойства, у каждой метрики свои могут быть.
   # у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
@@ -25,7 +25,7 @@ Explorers:
 - Name: Connect
   Property:
     timerNotyfy: 60
-- Name: SessionsMemory
+- Name: SessionsData
   Property:
     timerNotyfy: 10
 - Name: ProcData
