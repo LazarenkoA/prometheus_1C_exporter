@@ -40,7 +40,7 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 
 			ses, _ := this.getSessions()
 			if len(ses) == 0 {
-				this.summary.WithLabelValues("", "", "").Observe(0) // для тестов
+				this.summary.WithLabelValues("", "", "", "", "").Observe(0) // для тестов
 			}
 			this.ExplorerCheckSheduleJob.settings = this.settings
 			if err := this.fillBaseList(); err != nil {

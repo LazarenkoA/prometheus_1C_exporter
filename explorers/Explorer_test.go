@@ -42,14 +42,17 @@ type Bases struct {
 	URL string `json:"URL"`
 }
 
-func (s *settings) GetBaseUser(ibname string) string {
-	return ""
-}
+func (s *settings) GetLogPass(ibname string) (login, pass string){
+	for _, base := range s.bases {
+		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
+			pass = base.UserPass
+			login = base.UserName
+			break
+		}
+	}
 
-func (s *settings) GetBasePass(ibname string) string {
-	return ""
+	return
 }
-
 func (s *settings) RAC_Path() string {
 	return "/opt/1C/v8.3/x86_64/rac"
 }
