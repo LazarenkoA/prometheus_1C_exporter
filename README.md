@@ -70,6 +70,8 @@ goto end
 
 **Примеры дажбордов**
 
+![](doc/img/browser_d8CBonI15Y.png "")
+
 ![](doc/img/browser_FCaSoFVBDe.png "Доступная производительность")
 
 ![](doc/img/browser_jtYHlI4MPZ.png "Память по сеансам")

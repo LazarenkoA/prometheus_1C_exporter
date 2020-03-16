@@ -48,60 +48,48 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 				return
 			}
 
-			type key struct {
-				user string
-				id   string
-				db   string
-			}
-			type value struct {
-				memorytotal         int // память всего
-				readcurrent         int // чтение текущее
-				writecurrent        int // запись текущая
-				memorycurrent       int // память текущая
-				durationcurrent     int // время вызова текущее
-				durationcurrentdbms int // время вызова СУБД
-				cputimecurrent      int // процессорное время текущее
-			}
-
-			groupByUser := map[key]*value{}
-			for _, item := range ses {
-				value := new(value)
-				if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil {
-					value.memorytotal = memorytotal
-				}
-				if memorycurrent, err := strconv.Atoi(item["memory-current"]); err == nil {
-					value.memorycurrent = memorycurrent
-				}
-				if readcurrent, err := strconv.Atoi(item["read-current"]); err == nil {
-					value.readcurrent = readcurrent
-				}
-				if writecurrent, err := strconv.Atoi(item["write-current"]); err == nil {
-					value.writecurrent = writecurrent
-				}
-				if durationcurrent, err := strconv.Atoi(item["duration-current"]); err == nil {
-					value.durationcurrent = durationcurrent
-				}
-				if durationcurrentdbms, err := strconv.Atoi(item["duration current-dbms"]); err == nil {
-					value.durationcurrentdbms = durationcurrentdbms
-				}
-				if cputimecurrent, err := strconv.Atoi(item["cpu-time-current"]); err == nil {
-					value.cputimecurrent = cputimecurrent
-				}
-
-				groupByUser[key{user: item["user-name"], db: item["infobase"], id:item["session-id"]}] = value
-			}
+			//type key struct {
+			//	user string
+			//	id   string
+			//	db   string
+			//}
+			//type value struct {
+			//	memorytotal         int // память всего
+			//	readcurrent         int // чтение текущее
+			//	writecurrent        int // запись текущая
+			//	memorycurrent       int // память текущая
+			//	durationcurrent     int // время вызова текущее
+			//	durationcurrentdbms int // время вызова СУБД
+			//	cputimecurrent      int // процессорное время текущее
+			//}
 
 			this.summary.Reset()
-			for k, v := range groupByUser {
-				basename := this.findBaseName(k.db)
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "cputimecurrent").Observe(float64(v.cputimecurrent))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "durationcurrent").Observe(float64(v.durationcurrent))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "writecurrent").Observe(float64(v.writecurrent))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "memorycurrent").Observe(float64(v.memorycurrent))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "memorytotal").Observe(float64(v.memorytotal))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "durationcurrentdbms").Observe(float64(v.durationcurrentdbms))
-				this.summary.WithLabelValues(host, basename, k.user, k.id, "readcurrent").Observe(float64(v.readcurrent))
+			for _, item := range ses {
+				basename := this.findBaseName(item["infobase"])
+
+				if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil && memorytotal > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal").Observe(float64(memorytotal))
+				}
+				if memorycurrent, err := strconv.Atoi(item["memory-current"]); err == nil && memorycurrent > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorycurrent").Observe(float64(memorycurrent))
+				}
+				if readcurrent, err := strconv.Atoi(item["read-current"]); err == nil && readcurrent > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "readcurrent").Observe(float64(readcurrent))
+				}
+				if writecurrent, err := strconv.Atoi(item["write-current"]); err == nil && writecurrent > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "writecurrent").Observe(float64(writecurrent))
+				}
+				if durationcurrent, err := strconv.Atoi(item["duration-current"]); err == nil && durationcurrent > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent").Observe(float64(durationcurrent))
+				}
+				if durationcurrentdbms, err := strconv.Atoi(item["duration current-dbms"]); err == nil && durationcurrentdbms > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms").Observe(float64(durationcurrentdbms))
+				}
+				if cputimecurrent, err := strconv.Atoi(item["cpu-time-current"]); err == nil && cputimecurrent > 0 {
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent").Observe(float64(cputimecurrent))
+				}
 			}
+
 		}()
 		<-this.ticker.C
 	}
