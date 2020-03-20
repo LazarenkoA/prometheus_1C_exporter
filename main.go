@@ -38,7 +38,7 @@ func main() {
 		}
 	}
 
-	// Обабока сигала от ОС
+	// Обработка сигала от ОС
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP) // при отпавки reload
 	go func() {
