@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,6 +17,8 @@ type ExplorerAvailablePerformance struct {
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
+	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: this.GetName(),
@@ -31,7 +34,10 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 }
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
-	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
+	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+
+	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	for {
 		// Для обеспечения паузы. Логика такая, при каждой итерайии нам нужно лочить мьютекс, в конце разлочить, как только придет запрос на паузу этот же мьютекс будет залочен во вне
@@ -68,7 +74,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		log.Println("Произошла ошибка выполнения: ", err.Error())
+		logrusRotate.StandardLogger().WithError(err).Error()
 		return data, err
 	} else {
 		this.formatMultiResult(result, &procData)

@@ -2,12 +2,12 @@ package explorer
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"reflect"
 	"time"
 
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,6 +16,8 @@ type ExplorerConnects struct {
 }
 
 func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
+	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: this.GetName(),
@@ -31,7 +33,10 @@ func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *Explore
 }
 
 func (this *ExplorerConnects) StartExplore() {
-	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
+	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+
+	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
@@ -76,7 +81,7 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		log.Println("Произошла ошибка выполнения: ", err.Error())
+		logrusRotate.StandardLogger().WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &connData)

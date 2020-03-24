@@ -9,6 +9,7 @@ import (
 	//"os"
 	"time"
 
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -19,6 +20,8 @@ type (
 )
 
 func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerProc {
+	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:this.GetName(),
@@ -34,7 +37,10 @@ func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerPro
 }
 
 func (this *ExplorerProc) StartExplore() {
-	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
+	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+
+	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	proc, err := newProcData()

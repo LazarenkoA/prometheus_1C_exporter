@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -73,6 +73,10 @@ type Metrics struct {
 //////////////////////// Методы ////////////////////////////
 
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
+	logrusRotate.StandardLogger().WithField("Исполняемый файл", cmd.Path).
+		WithField("Параметры", cmd.Args).
+		Debug("Выполнение команды")
+
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
 
@@ -83,6 +87,7 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 		if stderr != "" {
 			errText += fmt.Sprintf("StdErr:%v\n", stderr)
 		}
+
 		return "", errors.New(errText)
 	}
 	return cmd.Stdout.(*bytes.Buffer).String(), err
@@ -245,10 +250,10 @@ func Pause(metrics *Metrics) http.Handler {
 		var offsetMin int
 		if v, err := strconv.ParseInt(r.URL.Query().Get("offsetMin"), 0, 0); err == nil {
 			offsetMin = int(v)
-			log.Println("Сбор метрик включется автоматически через", offsetMin, "минут")
+			logrusRotate.StandardLogger().Info("Сбор метрик включется автоматически через", offsetMin, "минут")
 		}
 
-		log.Println("Приостановить сбор метрик", metricNames)
+		logrusRotate.StandardLogger().Info("Приостановить сбор метрик", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Pause()
@@ -275,12 +280,13 @@ func Continue(metrics *Metrics) http.Handler {
 			return
 		}
 		metricNames := r.URL.Query().Get("metricNames")
-		log.Println("Продолжеить сбор метрик", metricNames)
+		logrusRotate.StandardLogger().Info("Продолжеить сбор метрик", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Continue()
 			} else {
 				fmt.Fprintf(w, "Метрика %q не найдена", metricName)
+				logrusRotate.StandardLogger().Error("Метрика %q не найдена", metricName)
 			}
 		}
 	})

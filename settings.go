@@ -27,6 +27,10 @@ type settings struct {
 	MSURL  string `yaml:"MSURL"`
 	MSUSER string `yaml:"MSUSER"`
 	MSPAS  string `yaml:"MSPAS"`
+	LogDir string `yaml:"LogDir"`
+	LogLevel int `yaml:"LogLevel"`
+	TimeRotate int `yaml:"TimeLogs"`
+	TTLLogs int `yaml:"TTLLogs"`
 }
 
 type Bases struct {

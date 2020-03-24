@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,6 +21,8 @@ type ExplorerCheckSheduleJob struct {
 }
 
 func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
+	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: this.GetName(),
@@ -35,7 +38,10 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 }
 
 func (this *ExplorerCheckSheduleJob) StartExplore() {
-	timerNotyfy := time.Second * time.Duration(reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int())
+	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
+	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+
+	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	for {
 		this.pause.Lock()
@@ -123,7 +129,7 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
 	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-		log.Println("Произошла ошибка выполнения: ", err.Error())
+		logrusRotate.StandardLogger().WithError(err).Error()
 		return map[string]string{}, err
 	} else {
 		baseInfo := []map[string]string{}
@@ -155,7 +161,7 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-		log.Println("Произошла ошибка выполнения: ", err.Error())
+		logrusRotate.StandardLogger().WithError(err).Error()
 		return err
 	} else {
 		this.formatMultiResult(result, &this.baseList)
