@@ -287,7 +287,7 @@ func Continue(metrics *Metrics) http.Handler {
 				exp.Continue()
 			} else {
 				fmt.Fprintf(w, "Метрика %q не найдена", metricName)
-				logrusRotate.StandardLogger().Error("Метрика %q не найдена", metricName)
+				logrusRotate.StandardLogger().Errorf("Метрика %q не найдена", metricName)
 			}
 		}
 	})
