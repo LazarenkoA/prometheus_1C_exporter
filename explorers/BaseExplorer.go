@@ -75,7 +75,7 @@ type Metrics struct {
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	logrusRotate.StandardLogger().WithField("Исполняемый файл", cmd.Path).
 		WithField("Параметры", cmd.Args).
-		Debug("Выполнение команды")
+		Trace("Выполнение команды")
 
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
@@ -100,6 +100,8 @@ func (this *BaseExplorer) Start(exp IExplorers) {
 
 	go func() {
 		<-this.ctx.Done()
+		logrusRotate.StandardLogger().Debug("Остановка сбора метрик")
+
 		if this.ticker != nil {
 			this.ticker.Stop()
 		}
@@ -238,7 +240,6 @@ func (this *Metrics) findExplorer(name string) Iexplorer {
 
 	return nil
 }
-
 
 func Pause(metrics *Metrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -42,6 +42,8 @@ func main() {
 			ex.Stop()
 			if metric.Contains(ex.GetName()) {
 				go ex.Start(ex)
+			} else {
+				logrusRotate.StandardLogger().Debug("Метрика ", ex.GetName(), " пропущена")
 			}
 		}
 	}

@@ -21,7 +21,7 @@ type ExplorerCheckSheduleJob struct {
 }
 
 func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
-	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -39,13 +39,14 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 
 func (this *ExplorerCheckSheduleJob) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	for {
 		this.pause.Lock()
 		func() {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.pause.Unlock()
 
 			if listCheck, err := this.getData(); err == nil {
@@ -71,6 +72,7 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 
 	// Получаем список баз в кластере
 	if err := this.fillBaseList(); err != nil {
+		logrusRotate.StandardLogger().WithError(err).Error()
 		return data, err
 	}
 

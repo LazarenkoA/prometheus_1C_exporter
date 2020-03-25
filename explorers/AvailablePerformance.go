@@ -17,7 +17,7 @@ type ExplorerAvailablePerformance struct {
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
-	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -35,7 +35,7 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -44,6 +44,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 		// соответственно итерация будет на паузе ждать
 		this.pause.Lock()
 		func() {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.pause.Unlock()
 
 			if licCount, err := this.getData(); err == nil {

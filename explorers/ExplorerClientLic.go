@@ -17,7 +17,7 @@ type ExplorerClientLic struct {
 }
 
 func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *ExplorerClientLic {
-	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -35,7 +35,7 @@ func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *Explor
 
 func (this *ExplorerClientLic) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -44,6 +44,7 @@ func (this *ExplorerClientLic) StartExplore() {
 	for {
 		this.pause.Lock()
 		func() {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.pause.Unlock()
 
 			lic, _ := this.getLic()

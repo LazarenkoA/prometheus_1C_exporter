@@ -1,7 +1,6 @@
 package explorer
 
 import (
-	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -16,7 +15,7 @@ type ExplorerSessionsMemory struct {
 }
 
 func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *ExplorerSessionsMemory {
-	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -34,7 +33,7 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 
 func (this *ExplorerSessionsMemory) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -42,6 +41,7 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 	for {
 		this.pause.Lock()
 		func() {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.pause.Unlock()
 
 			ses, _ := this.getSessions()
@@ -50,24 +50,9 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 			}
 			this.ExplorerCheckSheduleJob.settings = this.settings
 			if err := this.fillBaseList(); err != nil {
-				log.Println("Ошибка: ", err)
+				logrusRotate.StandardLogger().WithError(err).Error()
 				return
 			}
-
-			//type key struct {
-			//	user string
-			//	id   string
-			//	db   string
-			//}
-			//type value struct {
-			//	memorytotal         int // память всего
-			//	readcurrent         int // чтение текущее
-			//	writecurrent        int // запись текущая
-			//	memorycurrent       int // память текущая
-			//	durationcurrent     int // время вызова текущее
-			//	durationcurrentdbms int // время вызова СУБД
-			//	cputimecurrent      int // процессорное время текущее
-			//}
 
 			this.summary.Reset()
 			for _, item := range ses {

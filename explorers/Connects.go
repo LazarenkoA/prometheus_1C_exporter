@@ -16,7 +16,7 @@ type ExplorerConnects struct {
 }
 
 func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
-	logrusRotate.StandardLogger().Debug("Создание объекта",  this.GetName())
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -34,7 +34,7 @@ func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *Explore
 
 func (this *ExplorerConnects) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).Debug("Старт",  this.GetName())
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -42,6 +42,7 @@ func (this *ExplorerConnects) StartExplore() {
 	for {
 		this.pause.Lock()
 		func() {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.pause.Unlock()
 
 			connects, _ := this.getConnects()
@@ -52,6 +53,7 @@ func (this *ExplorerConnects) StartExplore() {
 			groupByDB := map[string]int{}
 			this.ExplorerCheckSheduleJob.settings = this.settings
 			if err := this.fillBaseList(); err != nil {
+				logrusRotate.StandardLogger().WithError(err).Error()
 				return
 			}
 
