@@ -47,7 +47,9 @@ func (this *ExplorerConnects) StartExplore() {
 
 			connects, _ := this.getConnects()
 			if len(connects) == 0 {
+				this.summary.Reset()
 				this.summary.WithLabelValues("", "").Observe(0) // для тестов
+				return
 			}
 
 			groupByDB := map[string]int{}

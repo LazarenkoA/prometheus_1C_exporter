@@ -48,7 +48,9 @@ func (this *ExplorerSessions) StartExplore() {
 
 			ses, _ := this.getSessions()
 			if len(ses) == 0 {
+				this.summary.Reset()
 				this.summary.WithLabelValues("", "").Observe(0) // для тестов
+				return
 			}
 
 			groupByDB = map[string]int{}

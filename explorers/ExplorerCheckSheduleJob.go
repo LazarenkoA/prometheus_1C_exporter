@@ -59,6 +59,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 					}
 				}
 			} else {
+				this.gauge.Reset()
 				this.gauge.WithLabelValues("").Set(0) // для теста
 				log.Println("Произошла ошибка: ", err.Error())
 			}

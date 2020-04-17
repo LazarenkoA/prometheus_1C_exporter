@@ -53,6 +53,7 @@ func (s *settings) GetLogPass(ibname string) (login, pass string){
 
 	return
 }
+
 func (s *settings) RAC_Path() string {
 	return "/opt/1C/v8.3/x86_64/rac"
 }

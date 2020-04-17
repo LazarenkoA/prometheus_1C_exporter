@@ -126,4 +126,4 @@ func (w *RotateConf) TimeRotate() int {
 
 
 // go build -o "Explorer_1C" -ldflags "-s -w" - билд чутка меньше размером
-//ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/Explorer_1C /usr/local/bin/1c_exporter &&  yes | cp /mnt/share/GO/prometheus_1C_exporter/settings.yaml /usr/local/bin/settings.yaml  && systemctl daemon-reload && systemctl start 1c_exporter.service"
+//ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/1c_exporter /usr/local/bin/1c_exporter &&  systemctl start 1c_exporter.service"

@@ -64,6 +64,7 @@ func (this *ExplorerClientLic) StartExplore() {
 				}
 
 			} else {
+				this.summary.Reset()
 				this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
 			}
 		}()

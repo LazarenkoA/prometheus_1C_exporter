@@ -53,6 +53,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 					this.summary.WithLabelValues(key).Observe(value)
 				}
 			} else {
+				this.summary.Reset()
 				this.summary.WithLabelValues("").Observe(0) // Для того что бы в ответе был AvailablePerformance, нужно дл атотестов
 				log.Println("Произошла ошибка: ", err.Error())
 			}
