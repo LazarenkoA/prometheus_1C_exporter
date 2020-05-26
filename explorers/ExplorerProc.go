@@ -49,10 +49,10 @@ func (this *ExplorerProc) StartExplore() {
 		return
 	}
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			this.summary.Reset()
 			for _, p := range proc.GetAllProc() {

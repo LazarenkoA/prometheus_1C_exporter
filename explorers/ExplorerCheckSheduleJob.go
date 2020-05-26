@@ -44,10 +44,10 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			if listCheck, err := this.getData(); err == nil {
 				this.gauge.Reset()

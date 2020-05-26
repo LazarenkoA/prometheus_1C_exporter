@@ -2,7 +2,6 @@ package explorer
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -42,20 +41,21 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 	for {
 		// Для обеспечения паузы. Логика такая, при каждой итерайии нам нужно лочить мьютекс, в конце разлочить, как только придет запрос на паузу этот же мьютекс будет залочен во вне
 		// соответственно итерация будет на паузе ждать
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
-			if licCount, err := this.getData(); err == nil {
+			if data, err := this.getData(); err == nil {
+				logrusRotate.StandardLogger().Debug("Колличество данных: ", len(data))
 				this.summary.Reset()
-				for key, value := range licCount {
+				for key, value := range data {
 					this.summary.WithLabelValues(key).Observe(value)
 				}
 			} else {
 				this.summary.Reset()
 				this.summary.WithLabelValues("").Observe(0) // Для того что бы в ответе был AvailablePerformance, нужно дл атотестов
-				log.Println("Произошла ошибка: ", err.Error())
+				logrusRotate.StandardLogger().Error("Произошла ошибка: ", err.Error())
 			}
 
 		}()

@@ -40,10 +40,10 @@ func (this *ExplorerConnects) StartExplore() {
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			connects, _ := this.getConnects()
 			if len(connects) == 0 {

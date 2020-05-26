@@ -42,12 +42,13 @@ func (this *ExplorerClientLic) StartExplore() {
 	host, _ := os.Hostname()
 	var group map[string]int
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			lic, _ := this.getLic()
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
 				for _, item := range lic {
@@ -67,12 +68,16 @@ func (this *ExplorerClientLic) StartExplore() {
 				this.summary.Reset()
 				this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
 			}
+
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("return")
 		}()
 		<-this.ticker.C
 	}
 }
 
 func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("getLic start")
+	defer logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("getLic return")
 	// /opt/1C/v8.3/x86_64/rac session list --licenses --cluster=5c4602fc-f704-11e8-fa8d-005056031e96
 	licData = []map[string]string{}
 

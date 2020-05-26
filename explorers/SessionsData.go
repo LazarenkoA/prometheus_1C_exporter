@@ -39,10 +39,10 @@ func (this *ExplorerSessionsMemory) StartExplore() {
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			ses, _ := this.getSessions()
 			if len(ses) == 0 {

@@ -53,7 +53,7 @@ type BaseExplorer struct {
 	cerror      chan error
 	ctx         context.Context
 	ctxFunc     context.CancelFunc
-	pause       *sync.Mutex
+	mutex       *sync.Mutex
 	isLocked    int32
 }
 
@@ -72,10 +72,35 @@ type Metrics struct {
 
 //////////////////////// Методы ////////////////////////////
 
+func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
+	if this.mutex == nil {
+		return
+	}
+
+	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
+	this.mutex.Lock()
+}
+
+func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
+	if this.mutex == nil {
+		return
+	}
+
+	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
+	this.mutex.Unlock()
+}
+
+func (this *BaseExplorer) StartExplore() {
+
+}
+func (this *BaseExplorer) GetName() string {
+	return  "Base"
+}
+
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	logrusRotate.StandardLogger().WithField("Исполняемый файл", cmd.Path).
 		WithField("Параметры", cmd.Args).
-		Trace("Выполнение команды")
+		Debug("Выполнение команды")
 
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
@@ -96,7 +121,7 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 // Своеобразный middleware
 func (this *BaseExplorer) Start(exp IExplorers) {
 	this.ctx, this.ctxFunc = context.WithCancel(context.Background())
-	this.pause = &sync.Mutex{}
+	this.mutex = &sync.Mutex{}
 
 	go func() {
 		<-this.ctx.Done()
@@ -129,15 +154,15 @@ func (this *BaseExplorer) Pause() {
 	if this.gauge != nil {
 		this.gauge.Reset()
 	}
-	if this.pause != nil && this.isLocked == 0 {
-		this.pause.Lock()
+	if this.isLocked == 0 {
+		this.Lock(this)
 		atomic.AddInt32(&this.isLocked, 1) // нужно что бы 2 раза не наложить lock
 	}
 }
 
 func (this *BaseExplorer) Continue() {
-	if this.pause != nil && this.isLocked == 1 {
-		this.pause.Unlock()
+	if this.isLocked == 1 {
+		this.Unlock(this)
 		atomic.AddInt32(&this.isLocked, -1)
 	}
 }

@@ -41,10 +41,10 @@ func (this *ExplorerSessions) StartExplore() {
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 	for {
-		this.pause.Lock()
+		this.Lock(this)
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.pause.Unlock()
+			defer this.Unlock(this)
 
 			ses, _ := this.getSessions()
 			if len(ses) == 0 {
