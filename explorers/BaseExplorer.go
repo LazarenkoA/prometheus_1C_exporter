@@ -205,7 +205,7 @@ func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 
 func (this *BaseRACExplorer) GetClusterID() string {
 	logrusRotate.StandardLogger().Trace("Получаем идентификатор кластера")
-	defer logrusRotate.StandardLogger().Trace("Получен идентификатор кластера", this.clusterID)
+	defer logrusRotate.StandardLogger().Trace("Получен идентификатор кластера ", this.clusterID)
 	//this.mutex().RLock()
 	//defer this.mutex().RUnlock()
 
