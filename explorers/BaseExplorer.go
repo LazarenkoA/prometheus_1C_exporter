@@ -182,7 +182,7 @@ func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[strin
 }
 
 func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Парс результата")
+	logrusRotate.StandardLogger().Trace("Парс результата")
 
 	result := make(map[string]string)
 
