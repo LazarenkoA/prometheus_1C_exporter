@@ -168,6 +168,8 @@ func (this *BaseExplorer) Continue() {
 }
 
 func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[string]string) {
+	logrusRotate.StandardLogger().Trace("Парс многострочного результата")
+
 	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
@@ -180,6 +182,8 @@ func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[strin
 }
 
 func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Парс результата")
+
 	result := make(map[string]string)
 
 	for _, line := range strings.Split(strIn, "\n") {
@@ -200,6 +204,8 @@ func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 }
 
 func (this *BaseRACExplorer) GetClusterID() string {
+	logrusRotate.StandardLogger().Trace("Получаем идентификатор кластера")
+	defer logrusRotate.StandardLogger().Trace("Получен идентификатор кластера", this.clusterID)
 	//this.mutex().RLock()
 	//defer this.mutex().RUnlock()
 

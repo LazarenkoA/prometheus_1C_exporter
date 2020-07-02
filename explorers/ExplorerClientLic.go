@@ -88,6 +88,12 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
+
+	logrusRotate.StandardLogger().
+		WithField("Name", this.GetName()).
+		WithField("Command", cmdCommand.Args).
+		Trace("Выполняем команду")
+
 	if result, err := this.run(cmdCommand); err != nil {
 		logrusRotate.StandardLogger().WithError(err).Error()
 		return []map[string]string{}, err
