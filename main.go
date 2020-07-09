@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"os"
@@ -34,6 +35,7 @@ func main() {
 
 	lw := new(logrusRotate.Rotate).Construct()
 	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
+	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
 
 	cerror := make(chan error)
 	metric := new(Metrics).Construct(s)
