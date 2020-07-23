@@ -21,6 +21,7 @@ jobs:
 
     - name: Тесты
       run: |
+        cd ./explorers
         go test -v -race .
       env:
         GO111MODULE: on  
