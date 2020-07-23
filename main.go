@@ -25,10 +25,17 @@ type RotateConf struct {
 
 func main() {
 	var settingsPath, port string
+	var help bool
 	rand.Seed(time.Now().Unix())
 	flag.StringVar(&settingsPath, "settings", "", "Путь к файлу настроек")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
+	flag.BoolVar(&help, "help", false, "Помощь")
 	flag.Parse()
+
+	if help {
+		flag.Usage()
+		return
+	}
 
 	//settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
 	s := loadSettings(settingsPath)
