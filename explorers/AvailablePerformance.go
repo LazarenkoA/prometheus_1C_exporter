@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	lr "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,7 +16,7 @@ type ExplorerAvailablePerformance struct {
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	lr.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -34,7 +34,7 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	lr.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -43,11 +43,11 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 		// соответственно итерация будет на паузе ждать
 		this.Lock(this)
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			lr.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock(this)
 
 			if data, err := this.getData(); err == nil {
-				logrusRotate.StandardLogger().Debug("Колличество данных: ", len(data))
+				lr.StandardLogger().Debug("Колличество данных: ", len(data))
 				this.summary.Reset()
 				for key, value := range data {
 					this.summary.WithLabelValues(key).Observe(value)
@@ -55,7 +55,7 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 			} else {
 				this.summary.Reset()
 				this.summary.WithLabelValues("").Observe(0) // Для того что бы в ответе был AvailablePerformance, нужно дл атотестов
-				logrusRotate.StandardLogger().Error("Произошла ошибка: ", err.Error())
+				lr.StandardLogger().Error("Произошла ошибка: ", err.Error())
 			}
 
 		}()
@@ -76,7 +76,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
+		lr.StandardLogger().WithError(err).Error()
 		return data, err
 	} else {
 		this.formatMultiResult(result, &procData)
