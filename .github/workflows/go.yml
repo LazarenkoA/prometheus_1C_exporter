@@ -18,7 +18,7 @@ jobs:
 
     - name: Тесты
       run: |
-        - go test -v -race .
+        go test -v -race .
       env:
         GO111MODULE: on  
 
