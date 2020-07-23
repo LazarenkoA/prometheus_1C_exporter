@@ -1,6 +1,15 @@
 language: go
 go:
   - tip
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+env:
+  - GO111MODULE=on
+install:
+  - go get -v golang.org/x/lint/golint
+script:
+  #- golint -set_exit_status .
+  - go test -v -race .
+matrix:
+  #allow_failures:
+  #  - go: tip
+notifications:
+    email: true
