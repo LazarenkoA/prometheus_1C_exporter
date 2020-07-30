@@ -12,10 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+
+	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 )
 
 type RotateConf struct {
