@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"os"
@@ -11,12 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-
-	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+
+	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 )
 
 type RotateConf struct {
@@ -37,7 +37,7 @@ func main() {
 		return
 	}
 
-	//settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
+	// settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
 	s := loadSettings(settingsPath)
 
 	lw := new(logrusRotate.Rotate).Construct()
@@ -102,13 +102,13 @@ func main() {
 	for err := range cerror {
 		logrusRotate.StandardLogger().WithError(err).Error()
 		fmt.Printf("Произошла ошибка:\n\t%v", err)
-		//break
+		// break
 	}
 
 }
 
-///////////////// RotateConf ////////////////////////////////////////////////////
-func (w *RotateConf) Construct(s *settings ) *RotateConf {
+// /////////////// RotateConf ////////////////////////////////////////////////////
+func (w *RotateConf) Construct(s *settings) *RotateConf {
 	w.settings = s
 	return w
 }
@@ -133,6 +133,5 @@ func (w *RotateConf) TimeRotate() int {
 	return w.settings.TimeRotate
 }
 
-
 // go build -o "Explorer_1C" -ldflags "-s -w" - билд чутка меньше размером
-//ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/1c_exporter /usr/local/bin/1c_exporter &&  systemctl start 1c_exporter.service"
+// ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/1c_exporter /usr/local/bin/1c_exporter &&  systemctl start 1c_exporter.service"

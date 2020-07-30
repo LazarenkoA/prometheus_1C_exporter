@@ -2,9 +2,10 @@ package explorer
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/matishsiao/goInfo"
 	"github.com/prometheus/procfs"
-	"strings"
 )
 
 type (
@@ -57,7 +58,7 @@ func (this *processLinux) GetAllProc() []Iproc {
 				pid:            p.PID,
 				name:           name,
 				residentMemory: stat.ResidentMemory(),
-				virtualMemory:  stat.VirtualMemory(),
+				virtualMemory:  int(stat.VirtualMemory()),
 				cpuTime:        stat.CPUTime(),
 			})
 		}
