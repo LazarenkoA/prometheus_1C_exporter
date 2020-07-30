@@ -79,11 +79,11 @@ func (s *settings) GetExplorers() map[string]map[string]interface{} {
 
 func Test_Explorer(t *testing.T) {
 	for id, test := range initests() {
-		t.Run(fmt.Sprintf("Выполняем тест %d", id), test)
+		t.Run(fmt.Sprintf("Выполняем тест %d (%v)", id, test.name), test.f)
 	}
 }
 
-func initests() []func(*testing.T) {
+func initests() []struct{ name string; f func(*testing.T) } {
 	s := new(settings)
 	if err := yaml.Unmarshal([]byte(settingstext()), s); err != nil {
 		panic("Ошибка десириализации настроек")
@@ -132,8 +132,8 @@ func initests() []func(*testing.T) {
 		}
 	}
 
-	return []func(*testing.T){
-		func(t *testing.T) {
+	return []struct{ name string; f func(*testing.T) } {
+		{"Общая проверка", func(t *testing.T) {
 			t.Parallel()
 			StatusCode, _, err := get(url)
 			if err != nil {
@@ -144,8 +144,8 @@ func initests() []func(*testing.T) {
 				t.Error("Код ответа должен быть 200, имеем ", StatusCode)
 				return
 			}
-		},
-		func(t *testing.T) {
+		}},
+		{ "Проверка ClientLic", func(t *testing.T) {
 			// middleware := func(h http.Handler) http.Handler {
 			// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 		h.ServeHTTP(w, r)
@@ -161,8 +161,9 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectlic.GetName()) < 0 {
 				t.Error("В ответе не найден", objectlic.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectlic.Stop()
+		}},
+		{"Проверка AvailablePerformance", func(t *testing.T) {
 			t.Parallel()
 			go objectPerf.Start(objectPerf)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -173,8 +174,9 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectPerf.GetName()) < 0 {
 				t.Error("В ответе не найден", objectPerf.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectPerf.Stop()
+		}},
+		{"Проверка SessionsData", func(t *testing.T) {
 			t.Parallel()
 			go objectMem.Start(objectMem)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -185,8 +187,9 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectMem.GetName()) < 0 {
 				t.Error("В ответе не найден", objectMem.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectMem.Stop()
+		}},
+		{"Проверка Session", func(t *testing.T) {
 			t.Parallel()
 			go objectSes.Start(objectSes)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -197,8 +200,10 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectSes.GetName()) < 0 {
 				t.Error("В ответе не найден", objectSes.GetName())
 			}
-		},
-		func(t *testing.T) {
+
+			objectSes.Stop()
+		}},
+		{"Проверка Connect", func(t *testing.T) {
 			t.Parallel()
 			go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -209,8 +214,9 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectCon.GetName()) < 0 {
 				t.Error("В ответе не найден", objectCon.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectCon.Stop()
+		}},
+		{"Проверка SheduleJob", func(t *testing.T) {
 			t.Parallel()
 			go objectCSJ.Start(objectCSJ)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -221,13 +227,14 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectCSJ.GetName()) < 0 {
 				t.Error("В ответе не найден", objectCSJ.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectCSJ.Stop()
+		}},
+		{"Проверка паузы", func(t *testing.T) {
 			go objectCSJ.Start(objectCSJ)
 			go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-			get(url)
+			//get(url)
 
 			code, _, _ := get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
 			if code != http.StatusOK {
@@ -242,13 +249,15 @@ func initests() []func(*testing.T) {
 			}
 			// разблокируем
 			get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
-		},
-		func(t *testing.T) {
+			objectCSJ.Stop()
+			objectCon.Stop()
+		}},
+		{"Проверка снятие с паузы", func(t *testing.T) {
 			go objectCSJ.Start(objectCSJ)
 			go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-			get(url)
+			//get(url)
 			get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
 			time.Sleep(time.Second)
 
@@ -263,8 +272,10 @@ func initests() []func(*testing.T) {
 			} else if strings.Index(body, objectCSJ.GetName()) < 0 || strings.Index(body, objectCon.GetName()) < 0 {
 				t.Error("В ответе не найдены", objectCSJ.GetName(), "или", objectCon.GetName())
 			}
-		},
-		func(t *testing.T) {
+			objectCSJ.Stop()
+			objectCon.Stop()
+		}},
+		{"", func(t *testing.T) {
 			// Нет смысла т.к. эта метрика только под линуксом работает
 			//t.Parallel()
 			//go objectProc.Start(objectProc)
@@ -276,7 +287,7 @@ func initests() []func(*testing.T) {
 			//} else if str := body; strings.Index(str, "ProcData") < 0 {
 			//	t.Error("В ответе не найден ProcData")
 			//}
-		},
+		}},
 	}
 }
 

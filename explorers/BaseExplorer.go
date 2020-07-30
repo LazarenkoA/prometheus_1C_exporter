@@ -312,7 +312,7 @@ func Continue(metrics *Metrics) http.Handler {
 			return
 		}
 		metricNames := r.URL.Query().Get("metricNames")
-		logrusRotate.StandardLogger().Info("Продолжеить сбор метрик", metricNames)
+		logrusRotate.StandardLogger().Info("Продолжить сбор метрик", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Continue()
