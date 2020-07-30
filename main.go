@@ -12,6 +12,8 @@ import (
 	"syscall"
 
 	"github.com/sirupsen/logrus"
+	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
+	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
