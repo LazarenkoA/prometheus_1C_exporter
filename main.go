@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	. "prometheus_1C_exporter/explorers"
+	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
