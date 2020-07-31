@@ -24,7 +24,7 @@ func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerPro
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:this.GetName(),
+			Name: this.GetName(),
 			Help: "Память процессов",
 		},
 		[]string{"host", "name", "pid", "metrics"},
@@ -48,11 +48,13 @@ func (this *ExplorerProc) StartExplore() {
 		log.Printf("Ошибка. Метрика %q:\n\t%v\n", this.GetName(), err)
 		return
 	}
+
+FOR:
 	for {
-		this.Lock(this)
+		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock(this)
+			defer this.Unlock()
 
 			this.summary.Reset()
 			for _, p := range proc.GetAllProc() {
@@ -62,7 +64,12 @@ func (this *ExplorerProc) StartExplore() {
 				}
 			}
 		}()
-		<-this.ticker.C
+
+		select {
+		case <-this.ctx.Done():
+			break FOR
+		case <-this.ticker.C:
+		}
 	}
 }
 

@@ -16,7 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 
-	. "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
+	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 )
 
 type RotateConf struct {
@@ -45,7 +45,7 @@ func main() {
 	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
 
 	cerror := make(chan error)
-	metric := new(Metrics).Construct(s)
+	metric := new(exp.Metrics).Construct(s)
 	start := func() {
 		for _, ex := range metric.Explorers {
 			ex.Stop()
@@ -78,16 +78,16 @@ func main() {
 
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
-	siteMux.Handle("/Continue", Continue(metric))
-	siteMux.Handle("/Pause", Pause(metric))
+	siteMux.Handle("/Continue", exp.Continue(metric))
+	siteMux.Handle("/Pause", exp.Pause(metric))
 
-	metric.Append(new(ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
-	metric.Append(new(ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
-	metric.Append(new(ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
-	metric.Append(new(ExplorerSessions).Construct(s, cerror))             // Сеансы
-	metric.Append(new(ExplorerConnects).Construct(s, cerror))             // Соединения
-	metric.Append(new(ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
-	metric.Append(new(ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
+	metric.Append(new(exp.ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
+	metric.Append(new(exp.ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
+	metric.Append(new(exp.ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
+	metric.Append(new(exp.ExplorerSessions).Construct(s, cerror))             // Сеансы
+	metric.Append(new(exp.ExplorerConnects).Construct(s, cerror))             // Соединения
+	metric.Append(new(exp.ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
+	metric.Append(new(exp.ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
 
 	logrusRotate.StandardLogger().Info("Сбор метрик:", strings.Join(metric.Metrics, ","))
 	start()

@@ -41,11 +41,13 @@ func (this *ExplorerClientLic) StartExplore() {
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	var group map[string]int
+
+FOR:
 	for {
-		this.Lock(this)
+		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock(this)
+			defer this.Unlock()
 
 			lic, _ := this.getLic()
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Количество лиц. %v", len(lic))
@@ -54,7 +56,7 @@ func (this *ExplorerClientLic) StartExplore() {
 				for _, item := range lic {
 					key := item["rmngr-address"]
 					if strings.Trim(key, " ") == "" {
-						key = item["license-type"] // Клиентские лиц могет быть HASP, если сервер лиц. не задан, группируем по license-type
+						key = item["license-type"] // Клиентские лиц может быть HASP, если сервер лиц. не задан, группируем по license-type
 					}
 					group[key]++
 				}
@@ -71,7 +73,12 @@ func (this *ExplorerClientLic) StartExplore() {
 
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("return")
 		}()
-		<-this.ticker.C
+
+		select {
+		case <-this.ctx.Done():
+			break FOR
+		case <-this.ticker.C:
+		}
 	}
 }
 

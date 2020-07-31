@@ -38,13 +38,14 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
+FOR:
 	for {
 		// Для обеспечения паузы. Логика такая, при каждой итерайии нам нужно лочить мьютекс, в конце разлочить, как только придет запрос на паузу этот же мьютекс будет залочен во вне
 		// соответственно итерация будет на паузе ждать
-		this.Lock(this)
+		this.Lock()
 		func() {
 			lr.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock(this)
+			defer this.Unlock()
 
 			if data, err := this.getData(); err == nil {
 				lr.StandardLogger().Debug("Колличество данных: ", len(data))
@@ -59,7 +60,12 @@ func (this *ExplorerAvailablePerformance) StartExplore() {
 			}
 
 		}()
-		<-this.ticker.C
+
+		select {
+		case <-this.ctx.Done():
+			break FOR
+		case <-this.ticker.C:
+		}
 	}
 }
 

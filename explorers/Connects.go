@@ -39,11 +39,13 @@ func (this *ExplorerConnects) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
+
+	FOR:
 	for {
-		this.Lock(this)
+		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock(this)
+			defer this.Unlock()
 
 			connects, _ := this.getConnects()
 			if len(connects) == 0 {
@@ -71,7 +73,12 @@ func (this *ExplorerConnects) StartExplore() {
 			// общее кол-во по хосту
 			//this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
 		}()
-		<-this.ticker.C
+
+		select {
+		case <-this.ctx.Done():
+			break FOR
+		case <-this.ticker.C:
+		}
 	}
 }
 

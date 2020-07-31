@@ -108,6 +108,8 @@ func initests() []struct{ name string; f func(*testing.T) } {
 	objectSes := new(ExplorerSessions).Construct(s, cerror)
 	objectCon := new(ExplorerConnects).Construct(s, cerror)
 	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
+	//objectCon2 := new(ExplorerConnects).Construct(s, cerror)
+	//objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 	//objectProc := new(ExplorerProc).Construct(s, cerror)
 
 	metric.Append(objectlic, objectPerf, objectMem, objectSes, objectCon, objectCSJ)
@@ -204,7 +206,6 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			objectSes.Stop()
 		}},
 		{"Проверка Connect", func(t *testing.T) {
-			t.Parallel()
 			go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
@@ -214,10 +215,8 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			} else if strings.Index(body, objectCon.GetName()) < 0 {
 				t.Error("В ответе не найден", objectCon.GetName())
 			}
-			objectCon.Stop()
 		}},
 		{"Проверка SheduleJob", func(t *testing.T) {
-			t.Parallel()
 			go objectCSJ.Start(objectCSJ)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
@@ -227,11 +226,11 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			} else if strings.Index(body, objectCSJ.GetName()) < 0 {
 				t.Error("В ответе не найден", objectCSJ.GetName())
 			}
-			objectCSJ.Stop()
 		}},
 		{"Проверка паузы", func(t *testing.T) {
-			go objectCSJ.Start(objectCSJ)
-			go objectCon.Start(objectCon)
+			//Должны быть запущены с предыдущего теста
+			//go objectCSJ.Start(objectCSJ)
+			//go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			//get(url)
@@ -249,15 +248,16 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			}
 			// разблокируем
 			get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
-			objectCSJ.Stop()
-			objectCon.Stop()
 		}},
 		{"Проверка снятие с паузы", func(t *testing.T) {
-			go objectCSJ.Start(objectCSJ)
-			go objectCon.Start(objectCon)
-			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+			//Должны быть запущены с предыдущего теста
+			//go objectCSJ.Start(objectCSJ)
+			//go objectCon.Start(objectCon)
+			//time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-			//get(url)
+			//_, body1, err := get(url)
+			//fmt.Println(body1)
+
 			get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
 			time.Sleep(time.Second)
 

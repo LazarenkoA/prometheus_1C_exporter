@@ -43,11 +43,13 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
+
+	FOR:
 	for {
-		this.Lock(this)
+		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock(this)
+			defer this.Unlock()
 
 			if listCheck, err := this.getData(); err == nil {
 				this.gauge.Reset()
@@ -64,7 +66,12 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 				log.Println("Произошла ошибка: ", err.Error())
 			}
 		}()
-		<-this.ticker.C
+
+		select {
+		case <-this.ctx.Done():
+			break FOR
+		case <-this.ticker.C:
+		}
 	}
 }
 

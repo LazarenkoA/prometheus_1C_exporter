@@ -43,6 +43,8 @@ type Iexplorer interface {
 
 // базовый класс для всех метрик
 type BaseExplorer struct {
+	sync.Mutex
+
 	mx          *sync.RWMutex
 	summary     *prometheus.SummaryVec
 	сounter     *prometheus.CounterVec
@@ -53,7 +55,7 @@ type BaseExplorer struct {
 	cerror      chan error
 	ctx         context.Context
 	ctxFunc     context.CancelFunc
-	mutex       *sync.Mutex
+	//mutex       *sync.Mutex
 	isLocked    int32
 }
 
@@ -72,23 +74,23 @@ type Metrics struct {
 
 //////////////////////// Методы ////////////////////////////
 
-func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
-	if this.mutex == nil {
-		return
-	}
+//func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
+//	//if this.mutex == nil {
+//	//	return
+//	//}
+//
+//	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
+//	this.mutex.Lock()
+//}
 
-	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
-	this.mutex.Lock()
-}
-
-func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
-	if this.mutex == nil {
-		return
-	}
-
-	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
-	this.mutex.Unlock()
-}
+//func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
+//	//if this.mutex == nil {
+//	//	return
+//	//}
+//
+//	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
+//	this.mutex.Unlock()
+//}
 
 func (this *BaseExplorer) StartExplore() {
 
@@ -121,12 +123,13 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 // Своеобразный middleware
 func (this *BaseExplorer) Start(exp IExplorers) {
 	this.ctx, this.ctxFunc = context.WithCancel(context.Background())
-	this.mutex = &sync.Mutex{}
+	//this.mutex = &sync.Mutex{}
 
 	go func() {
-		<-this.ctx.Done()
+		<-this.ctx.Done() // Stop
 		logrusRotate.StandardLogger().Debug("Остановка сбора метрик")
 
+		this.Continue() // что б снять лок
 		if this.ticker != nil {
 			this.ticker.Stop()
 		}
@@ -155,15 +158,15 @@ func (this *BaseExplorer) Pause() {
 		this.gauge.Reset()
 	}
 	if this.isLocked == 0 {
-		this.Lock(this)
 		atomic.AddInt32(&this.isLocked, 1) // нужно что бы 2 раза не наложить lock
+		this.Lock()
 	}
 }
 
 func (this *BaseExplorer) Continue() {
 	if this.isLocked == 1 {
-		this.Unlock(this)
 		atomic.AddInt32(&this.isLocked, -1)
+		this.Unlock()
 	}
 }
 
