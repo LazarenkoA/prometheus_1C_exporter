@@ -151,21 +151,23 @@ func (this *BaseExplorer) Stop() {
 }
 
 func (this *BaseExplorer) Pause() {
+	logrusRotate.StandardLogger().Trace("Pause begin")
+	defer logrusRotate.StandardLogger().Trace("Pause end")
+
 	if this.summary != nil {
 		this.summary.Reset()
 	}
 	if this.gauge != nil {
 		this.gauge.Reset()
 	}
-	if this.isLocked == 0 {
-		atomic.AddInt32(&this.isLocked, 1) // нужно что бы 2 раза не наложить lock
+
+	if atomic.CompareAndSwapInt32(&this.isLocked, 0, 1) { // нужно что бы 2 раза не наложить lock
 		this.Lock()
 	}
 }
 
 func (this *BaseExplorer) Continue() {
-	if this.isLocked == 1 {
-		atomic.AddInt32(&this.isLocked, -1)
+	if atomic.CompareAndSwapInt32(&this.isLocked, 1, -1)  {
 		this.Unlock()
 	}
 }
@@ -285,10 +287,10 @@ func Pause(metrics *Metrics) http.Handler {
 		var offsetMin int
 		if v, err := strconv.ParseInt(r.URL.Query().Get("offsetMin"), 0, 0); err == nil {
 			offsetMin = int(v)
-			logrusRotate.StandardLogger().Info("Сбор метрик включется автоматически через", offsetMin, "минут")
+			logrusRotate.StandardLogger().Info("Сбор метрик включится автоматически через ", offsetMin, "минут")
 		}
 
-		logrusRotate.StandardLogger().Info("Приостановить сбор метрик", metricNames)
+		logrusRotate.StandardLogger().Info("Приостановить сбор метрик ", metricNames)
 		for _, metricName := range strings.Split(metricNames, ",") {
 			if exp := metrics.findExplorer(metricName); exp != nil {
 				exp.Pause()
