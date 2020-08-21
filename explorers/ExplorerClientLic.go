@@ -21,8 +21,9 @@ func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *Explor
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Киентские лицензии 1С",
+			Name:        this.GetName(),
+			Help:        "Киентские лицензии 1С",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "licSRV"},
 	)
@@ -49,7 +50,7 @@ FOR:
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			lic, _ := this.getLic()
+			lic, _ := []map[string]string {{"rmngr-address": "eee"} }, 0 //this.getLic()
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
@@ -61,8 +62,9 @@ FOR:
 					group[key]++
 				}
 
-				this.summary.Reset()
+				//this.summary.Reset()
 				for k, v := range group {
+					logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
 					this.summary.WithLabelValues(host, k).Observe(float64(v))
 				}
 
