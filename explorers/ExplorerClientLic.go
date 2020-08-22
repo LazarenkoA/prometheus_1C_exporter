@@ -50,7 +50,8 @@ FOR:
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			lic, _ := []map[string]string {{"rmngr-address": "eee"} }, 0 //this.getLic()
+			//lic, _ := []map[string]string {{"rmngr-address": "eee"} }, 0
+			lic, _ := this.getLic()
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
