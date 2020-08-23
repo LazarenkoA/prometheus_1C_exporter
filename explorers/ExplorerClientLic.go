@@ -63,7 +63,7 @@ FOR:
 					group[key]++
 				}
 
-				//this.summary.Reset()
+				this.summary.Reset()
 				for k, v := range group {
 					logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
 					this.summary.WithLabelValues(host, k).Observe(float64(v))
