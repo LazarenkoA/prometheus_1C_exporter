@@ -94,7 +94,7 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
+		logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &sesData)

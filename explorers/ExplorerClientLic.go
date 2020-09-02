@@ -45,10 +45,14 @@ func (this *ExplorerClientLic) StartExplore() {
 
 FOR:
 	for {
+		logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Lock")
 		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock()
+			defer func() {
+				logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Unlock")
+				this.Unlock()
+			}()
 
 			//lic, _ := []map[string]string {{"rmngr-address": "eee"} }, 0
 			lic, _ := this.getLic()
@@ -65,7 +69,7 @@ FOR:
 
 				this.summary.Reset()
 				for k, v := range group {
-					logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
+					//logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
 					this.summary.WithLabelValues(host, k).Observe(float64(v))
 				}
 
@@ -105,7 +109,7 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 		Trace("Выполняем команду")
 
 	if result, err := this.run(cmdCommand); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
+		logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &licData)

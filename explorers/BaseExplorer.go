@@ -106,18 +106,34 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
+	errch := make(chan error, 1)
 
-	err := cmd.Run()
-	stderr := cmd.Stderr.(*bytes.Buffer).String()
+	err := cmd.Start()
 	if err != nil {
-		errText := fmt.Sprintf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
-		if stderr != "" {
-			errText += fmt.Sprintf("StdErr:%v\n", stderr)
-		}
-
-		return "", errors.New(errText)
+		return "", fmt.Errorf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
 	}
-	return cmd.Stdout.(*bytes.Buffer).String(), err
+
+	// запускаем в горутине т.к. наблюдалось что при выполнении RAC может происходить зависон, нам нужен таймаут
+	go func() {
+		errch <- cmd.Wait()
+	}()
+
+	select {
+	case <-time.After(time.Second * 5): // timeout
+		return "", fmt.Errorf("Выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
+	case err := <-errch:
+		if err != nil {
+			stderr := cmd.Stderr.(*bytes.Buffer).String()
+			errText := fmt.Sprintf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
+			if stderr != "" {
+				errText += fmt.Sprintf("StdErr:%v\n", stderr)
+			}
+
+			return "", errors.New(errText)
+		} else {
+			return cmd.Stdout.(*bytes.Buffer).String(), nil
+		}
+	}
 }
 
 // Своеобразный middleware

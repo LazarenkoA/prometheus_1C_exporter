@@ -83,7 +83,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		lr.StandardLogger().WithError(err).Error()
+		lr.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
 		return data, err
 	} else {
 		this.formatMultiResult(result, &procData)
