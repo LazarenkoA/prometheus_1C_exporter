@@ -26,6 +26,8 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 Имена метрик можно посмотреть в конфиге **settings.yaml**
 
 
+**Сборка**
+ Ставим [Go](https://blog.golang.org/), `git clone https://github.com/LazarenkoA/prometheus_1C_exporter`, переходим в каталог `go build -o "1C_exporter"` или `go build -o "1C_exporter.exe"`. 
 
 
 **Запуск** 
