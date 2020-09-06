@@ -13,6 +13,8 @@ import (
 
 type ExplorerAvailablePerformance struct {
 	BaseRACExplorer
+
+	dataGetter func() (map[string]float64, error)
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
@@ -26,6 +28,11 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 		},
 		[]string{"host"},
 	)
+
+	// dataGetter - типа мок. Инициализируется из тестов
+	if this.dataGetter == nil {
+		this.dataGetter = this.getData
+	}
 
 	this.settings = s
 	this.cerror = cerror
@@ -48,7 +55,7 @@ FOR:
 			lr.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			if data, err := this.getData(); err == nil {
+			if data, err := this.dataGetter(); err == nil {
 				lr.StandardLogger().Debug("Колличество данных: ", len(data))
 				this.summary.Reset()
 				for key, value := range data {
@@ -56,8 +63,7 @@ FOR:
 				}
 			} else {
 				this.summary.Reset()
-				this.summary.WithLabelValues("").Observe(0) // Для того что бы в ответе был AvailablePerformance, нужно дл атотестов
-				lr.StandardLogger().Error("Произошла ошибка: ", err.Error())
+				lr.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
 			}
 
 		}()
@@ -69,6 +75,8 @@ FOR:
 		}
 	}
 }
+
+
 
 func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, err error) {
 	data = make(map[string]float64)
@@ -90,15 +98,15 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]float64, er
 	}
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
-	tmp := make(map[string][]int)
+	tmp := make(map[string][]float64)
 	for _, item := range procData {
-		if perfomance, err := strconv.Atoi(item["available-perfomance"]); err == nil {
+		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil {
 			tmp[item["host"]] = append(tmp[item["host"]], perfomance)
 		}
 	}
 	for key, value := range tmp {
 		for _, item := range value {
-			data[key] += float64(item)
+			data[key] += item
 		}
 		data[key] = data[key] / float64(len(value))
 	}

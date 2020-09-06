@@ -28,6 +28,12 @@ func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *Explor
 		[]string{"host", "licSRV"},
 	)
 
+	// dataGetter - типа мок. Инициализируется из тестов
+	if this.dataGetter == nil {
+		this.dataGetter = this.getLic
+	}
+
+
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.summary)
@@ -40,6 +46,8 @@ func (this *ExplorerClientLic) StartExplore() {
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
+
+
 	host, _ := os.Hostname()
 	var group map[string]int
 
@@ -54,8 +62,7 @@ FOR:
 				this.Unlock()
 			}()
 
-			//lic, _ := []map[string]string {{"rmngr-address": "eee"} }, 0
-			lic, _ := this.getLic()
+			lic, _ := this.dataGetter()
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
@@ -75,7 +82,6 @@ FOR:
 
 			} else {
 				this.summary.Reset()
-				this.summary.WithLabelValues("", "").Observe(0) // нужно для автотестов
 			}
 
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("return")

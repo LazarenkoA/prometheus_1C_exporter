@@ -3,7 +3,6 @@ package explorer
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os/exec"
 	"reflect"
 	"strings"
@@ -17,7 +16,18 @@ import (
 type ExplorerCheckSheduleJob struct {
 	BaseRACExplorer
 
-	baseList []map[string]string
+	baseList   []map[string]string
+	dataGetter func() (map[string]bool, error)
+	mx *sync.RWMutex
+	one sync.Once
+}
+
+func (this *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
+	this.one.Do(func() {
+		this.mx = new(sync.RWMutex)
+	})
+
+	return this.mx
 }
 
 func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
@@ -30,6 +40,11 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 		},
 		[]string{"base"},
 	)
+
+	// dataGetter - типа мок. Инициализируется из тестов
+	if this.dataGetter == nil {
+		this.dataGetter = this.getData
+	}
 
 	this.settings = s
 	this.cerror = cerror
@@ -44,14 +59,20 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 
-	FOR:
+	// Получаем список баз в кластере
+	if err := this.fillBaseList(); err != nil {
+		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Error()
+		return
+	}
+
+FOR:
 	for {
 		this.Lock()
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			if listCheck, err := this.getData(); err == nil {
+			if listCheck, err := this.dataGetter(); err == nil {
 				this.gauge.Reset()
 				for key, value := range listCheck {
 					if value {
@@ -62,8 +83,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 				}
 			} else {
 				this.gauge.Reset()
-				this.gauge.WithLabelValues("").Set(0) // для теста
-				log.Println("Произошла ошибка: ", err.Error())
+				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
 			}
 		}()
 
@@ -78,17 +98,11 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) {
 	data = make(map[string]bool)
 
-	// Получаем список баз в кластере
-	if err := this.fillBaseList(); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
-		return data, err
-	}
-
 	// проверяем блокировку рег. заданий по каждой базе
 	// информация по базе получается довольно долго, особенно если в кластере много баз (например тестовый контур), поэтому делаем через пул воркеров
 	type dbinfo struct {
 		guid, name string
-		value bool
+		value      bool
 	}
 	chanIn := make(chan *dbinfo, 5)
 	chanOut := make(chan *dbinfo)
@@ -113,8 +127,11 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 	}()
 
 	go func() {
+		this.mutex().RLock()
+		defer this.mutex().RUnlock()
+
 		for _, item := range this.baseList {
-			chanIn <- &dbinfo{ name: item["name"], guid: item["infobase"]}
+			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
 		}
 		close(chanIn)
 	}()
@@ -153,6 +170,9 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 }
 
 func (this *ExplorerCheckSheduleJob) findBaseName(ref string) string {
+	this.mutex().RLock()
+	defer this.mutex().RUnlock()
+
 	for _, b := range this.baseList {
 		if b["infobase"] == ref {
 			return b["name"]
@@ -162,22 +182,41 @@ func (this *ExplorerCheckSheduleJob) findBaseName(ref string) string {
 }
 
 func (this *ExplorerCheckSheduleJob) fillBaseList() error {
-	// /opt/1C/v8.3/x86_64/rac infobase --cluster=02a9be50-73ff-11e9-fe99-001a4b010536 summary list
-
-	var param []string
-	param = append(param, "infobase")
-	param = append(param, "summary")
-	param = append(param, "list")
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
-
-	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
-		return err
-	} else {
-		this.formatMultiResult(result, &this.baseList)
+	if len(this.baseList) > 0 { // Список баз может быть уже заполнен, например при тетсировании
+		return nil
 	}
 
-	return nil
+	run := func() error {
+		this.mutex().Lock()
+		defer this.mutex().Unlock()
+
+		var param []string
+		param = append(param, "infobase")
+		param = append(param, "summary")
+		param = append(param, "list")
+		param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+
+		if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
+			logrusRotate.StandardLogger().WithError(err).Error("Ошибка получения списка баз")
+			return err
+		} else {
+			this.formatMultiResult(result, &this.baseList)
+		}
+
+		return nil
+	}
+
+	// редко, но все же список баз может быть изменен поэтому делаем обновление периодическим, что бы не приходилось перезапускать экспортер
+	go func() {
+		t := time.NewTicker(time.Hour)
+		defer t.Stop()
+
+		for range t.C {
+			run()
+		}
+	}()
+
+	return run()
 }
 
 func (this *ExplorerCheckSheduleJob) GetName() string {

@@ -20,12 +20,17 @@ func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *Explore
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Сессии 1С",
+			Name:       this.GetName(),
+			Help:       "Сессии 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "base"},
 	)
+
+	// dataGetter - типа мок. Инициализируется из тестов
+	if this.BaseExplorer.dataGetter == nil {
+		this.BaseExplorer.dataGetter = this.getSessions
+	}
 
 	this.settings = s
 	this.cerror = cerror
@@ -42,6 +47,12 @@ func (this *ExplorerSessions) StartExplore() {
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 
+	this.ExplorerCheckSheduleJob.settings = this.settings
+	if err := this.fillBaseList(); err != nil {
+		logrusRotate.StandardLogger().WithError(err).Error()
+		return
+	}
+
 FOR:
 	for {
 		this.Lock()
@@ -49,20 +60,13 @@ FOR:
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			ses, _ := this.getSessions()
+			ses, _ := this.BaseExplorer.dataGetter()
 			if len(ses) == 0 {
 				this.summary.Reset()
-				this.summary.WithLabelValues("", "").Observe(0) // для тестов
 				return
 			}
 
 			groupByDB = map[string]int{}
-			this.ExplorerCheckSheduleJob.settings = this.settings
-			if err := this.fillBaseList(); err != nil {
-				logrusRotate.StandardLogger().WithError(err).Error()
-				return
-			}
-
 			for _, item := range ses {
 				groupByDB[this.findBaseName(item["infobase"])]++
 			}

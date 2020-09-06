@@ -2,15 +2,15 @@ package explorer
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type settings struct {
@@ -18,7 +18,7 @@ type settings struct {
 	login, pass string        `yaml:"-"`
 	bases       []Bases       `yaml:"-"`
 
-	Explorers [] *struct {
+	Explorers []*struct {
 		Name     string                 `yaml:"Name"`
 		Property map[string]interface{} `yaml:"Property"`
 	} `yaml:"Explorers"`
@@ -42,7 +42,7 @@ type Bases struct {
 	URL string `json:"URL"`
 }
 
-func (s *settings) GetLogPass(ibname string) (login, pass string){
+func (s *settings) GetLogPass(ibname string) (login, pass string) {
 	for _, base := range s.bases {
 		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
 			pass = base.UserPass
@@ -83,7 +83,10 @@ func Test_Explorer(t *testing.T) {
 	}
 }
 
-func initests() []struct{ name string; f func(*testing.T) } {
+func initests() []struct {
+	name string
+	f    func(*testing.T)
+} {
 	s := new(settings)
 	if err := yaml.Unmarshal([]byte(settingstext()), s); err != nil {
 		panic("Ошибка десириализации настроек")
@@ -134,7 +137,10 @@ func initests() []struct{ name string; f func(*testing.T) } {
 		}
 	}
 
-	return []struct{ name string; f func(*testing.T) } {
+	return []struct {
+		name string
+		f    func(*testing.T)
+	}{
 		{"Общая проверка", func(t *testing.T) {
 			t.Parallel()
 			StatusCode, _, err := get(url)
@@ -147,87 +153,214 @@ func initests() []struct{ name string; f func(*testing.T) } {
 				return
 			}
 		}},
-		{ "Проверка ClientLic", func(t *testing.T) {
+		{"Проверка ClientLic", func(t *testing.T) {
 			// middleware := func(h http.Handler) http.Handler {
 			// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// 		h.ServeHTTP(w, r)
 			// 	})
 			// }
 			t.Parallel()
+			objectlic.dataGetter = func() ([]map[string]string, error) {
+				return []map[string]string{
+					{
+						"rmngr-address": "localhost",
+					},
+					{
+						"rmngr-address": "localhost",
+					},
+					{
+						"rmngr-address": "localhost",
+					},
+				}, nil
+			}
 			go objectlic.Start(objectlic)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectlic.GetName()) < 0 {
-				t.Error("В ответе не найден", objectlic.GetName())
+			} else {
+				reg := regexp.MustCompile(`(?m)^ClientLic\{[^\}]+\}[\s]+3`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectlic.GetName())
+				}
 			}
 			objectlic.Stop()
 		}},
 		{"Проверка AvailablePerformance", func(t *testing.T) {
 			t.Parallel()
+			objectPerf.dataGetter = func() (map[string]float64, error) {
+				return map[string]float64{
+					"localhost": 10,
+				}, nil
+			}
+
 			go objectPerf.Start(objectPerf)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectPerf.GetName()) < 0 {
-				t.Error("В ответе не найден", objectPerf.GetName())
+			} else {
+				reg := regexp.MustCompile(`(?m)^AvailablePerformance\{[^\}]+\}[\s]+10`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectPerf.GetName())
+				}
 			}
 			objectPerf.Stop()
 		}},
 		{"Проверка SessionsData", func(t *testing.T) {
 			t.Parallel()
+			objectMem.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
+				return []map[string]string{
+					{
+						"memory-total":          "10",
+						"memory-current":        "22",
+						"read-current":          "21",
+						"write-current":         "3",
+						"duration-current":      "2",
+						"duration current-dbms": "34",
+						"cpu-time-current":      "32",
+						"infobase":              "dfsddsfdfgd",
+					},
+				}, nil
+			}
+			objectMem.baseList = []map[string]string{
+				{
+					"infobase": "dfsddsfdfgd",
+					"name":     "test",
+				},
+			}
+
 			go objectMem.Start(objectMem)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectMem.GetName()) < 0 {
-				t.Error("В ответе не найден", objectMem.GetName())
+			} else {
+				regs := []*regexp.Regexp{
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"memorytotal\".+?\}[\s]+10`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"memorycurrent\".+?\}[\s]+22`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"readcurrent\".+?\}[\s]+21`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"writecurrent\".+?\}[\s]+3`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"durationcurrent\".+?\}[\s]+2`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"durationcurrentdbms\".+?\}[\s]+34`),
+					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"cputimecurrent\".+?\}[\s]+32`),
+				}
+				for _, r := range regs {
+					if !r.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение)", objectMem.GetName())
+					}
+				}
 			}
 			objectMem.Stop()
 		}},
-		{"Проверка Session", func(t *testing.T) {
+		{
+			"Проверка Session", func(t *testing.T) {
 			t.Parallel()
+			objectSes.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
+				return []map[string]string{
+					{
+						"infobase": "weewwefef",
+					},
+					{
+						"infobase": "weewwefef",
+					},
+					{
+						"infobase": "weewwefef",
+					},
+				}, nil
+			}
+			objectSes.baseList = []map[string]string{
+				{
+					"infobase": "weewwefef",
+					"name":     "test2",
+				},
+			}
+
 			go objectSes.Start(objectSes)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectSes.GetName()) < 0 {
-				t.Error("В ответе не найден", objectSes.GetName())
+			} else {
+				reg := regexp.MustCompile(`(?m)^Session\{[^\}]+\}[\s]+3`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectSes.GetName())
+				}
 			}
 
 			objectSes.Stop()
-		}},
-		{"Проверка Connect", func(t *testing.T) {
+		},
+		},
+		{
+			"Проверка Connect", func(t *testing.T) {
+			objectCon.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
+				return []map[string]string{
+					{
+						"infobase": "ewewded",
+					},
+					{
+						"infobase": "ewewded",
+					},
+					{
+						"infobase": "ewewded",
+					},
+				}, nil
+			}
+			objectCon.baseList = []map[string]string{
+				{
+					"infobase": "ewewded",
+					"name":     "test3",
+				},
+			}
 			go objectCon.Start(objectCon)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectCon.GetName()) < 0 {
-				t.Error("В ответе не найден", objectCon.GetName())
+			} else {
+				reg := regexp.MustCompile(`(?m)^Connect\{[^\}]+\}[\s]+3`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCon.GetName())
+				}
 			}
-		}},
-		{"Проверка SheduleJob", func(t *testing.T) {
+		},
+		},
+		{
+			"Проверка SheduleJob", func(t *testing.T) {
+			objectCSJ.dataGetter = func() (map[string]bool, error) {
+				return map[string]bool{
+					"test3": true,
+				}, nil
+			}
+			objectCSJ.baseList = []map[string]string{
+				{
+					"infobase": "325rffff",
+					"name":     "test3",
+				},
+			}
 			go objectCSJ.Start(objectCSJ)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
 			_, body, err := get(url)
 			if err != nil {
 				t.Error(err)
-			} else if strings.Index(body, objectCSJ.GetName()) < 0 {
-				t.Error("В ответе не найден", objectCSJ.GetName())
+			} else {
+				reg := regexp.MustCompile(`(?m)^SheduleJob{base="test3"}[\s]+1`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCSJ.GetName())
+				}
+
+
 			}
-		}},
-		{"Проверка паузы", func(t *testing.T) {
+		},
+		},
+		{
+			"Проверка паузы", func(t *testing.T) {
 			//Должны быть запущены с предыдущего теста
 			//go objectCSJ.Start(objectCSJ)
 			//go objectCon.Start(objectCon)
@@ -248,8 +381,10 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			}
 			// разблокируем
 			get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
-		}},
-		{"Проверка снятие с паузы", func(t *testing.T) {
+		},
+		},
+		{
+			"Проверка снятие с паузы", func(t *testing.T) {
 			//Должны быть запущены с предыдущего теста
 			//go objectCSJ.Start(objectCSJ)
 			//go objectCon.Start(objectCon)
@@ -274,8 +409,10 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			}
 			objectCSJ.Stop()
 			objectCon.Stop()
-		}},
-		{"", func(t *testing.T) {
+		},
+		},
+		{
+			"", func(t *testing.T) {
 			// Нет смысла т.к. эта метрика только под линуксом работает
 			//t.Parallel()
 			//go objectProc.Start(objectProc)
@@ -287,7 +424,8 @@ func initests() []struct{ name string; f func(*testing.T) } {
 			//} else if str := body; strings.Index(str, "ProcData") < 0 {
 			//	t.Error("В ответе не найден ProcData")
 			//}
-		}},
+		},
+		},
 	}
 }
 

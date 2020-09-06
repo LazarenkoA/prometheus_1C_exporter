@@ -19,12 +19,16 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Показатели из кластера 1С",
+			Name:       this.GetName(),
+			Help:       "Показатели из кластера 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "base", "user", "id", "datatype"},
 	)
+	// dataGetter - типа мок. Инициализируется из тестов
+	if this.BaseExplorer.dataGetter == nil {
+		this.BaseExplorer.dataGetter = this.getSessions
+	}
 
 	this.settings = s
 	this.cerror = cerror
@@ -35,6 +39,12 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 func (this *ExplorerSessionsMemory) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
 	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+
+	this.ExplorerCheckSheduleJob.settings = this.settings
+	if err := this.fillBaseList(); err != nil {
+		logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error("Ошибка получения списка баз")
+		return
+	}
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -47,18 +57,7 @@ FOR:
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			ses, _ := this.getSessions()
-			if len(ses) == 0 {
-				this.summary.Reset()
-				this.summary.WithLabelValues("", "", "", "", "").Observe(0) // для тестов
-				return
-			}
-			this.ExplorerCheckSheduleJob.settings = this.settings
-			if err := this.fillBaseList(); err != nil {
-				logrusRotate.StandardLogger().WithError(err).Error()
-				return
-			}
-
+			ses, _ := this.BaseExplorer.dataGetter()
 			this.summary.Reset()
 			for _, item := range ses {
 				basename := this.findBaseName(item["infobase"])

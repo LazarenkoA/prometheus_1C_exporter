@@ -39,6 +39,7 @@ type Iexplorer interface {
 	GetName() string
 }
 
+
 //////////////////////// Типы ////////////////////////////
 
 // базовый класс для всех метрик
@@ -57,6 +58,8 @@ type BaseExplorer struct {
 	ctxFunc     context.CancelFunc
 	//mutex       *sync.Mutex
 	isLocked    int32
+	// mock object
+	dataGetter func() ([]map[string]string, error)
 }
 
 // базовый класс для всех метрик собираемых через RAC
