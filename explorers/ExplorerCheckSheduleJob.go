@@ -147,6 +147,10 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	// /opt/1C/v8.3/x86_64/rac infobase info --cluster=02a9be50-73ff-11e9-fe99-001a4b010536 --infobase=603b443e-41af-11ea-939b-001a4b010536 --infobase-user=Парма --infobase-pwd=fdfdEERR34
 
 	login, pass := this.settings.GetLogPass(basename)
+	if login == "" {
+		return nil,	fmt.Errorf("для базы %s не определен пользователь", basename)
+	}
+
 	var param []string
 	param = append(param, "infobase")
 	param = append(param, "info")
@@ -155,8 +159,9 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
 	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithField("param", param).Debugf("Получаем информацию для базы %q", basename)
 	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-		logrusRotate.StandardLogger().WithError(err).Error()
+		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Error()
 		return map[string]string{}, err
 	} else {
 		baseInfo := []map[string]string{}
@@ -164,7 +169,7 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 		if len(baseInfo) > 0 {
 			return baseInfo[0], nil
 		} else {
-			return map[string]string{}, errors.New(fmt.Sprintf("Не удалось получить информацию по базе %q", basename))
+			return nil, errors.New(fmt.Sprintf("Не удалось получить информацию по базе %q", basename))
 		}
 	}
 }
@@ -197,7 +202,7 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 		param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 		if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-			logrusRotate.StandardLogger().WithError(err).Error("Ошибка получения списка баз")
+			logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Error("Ошибка получения списка баз")
 			return err
 		} else {
 			this.formatMultiResult(result, &this.baseList)

@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -63,12 +63,14 @@ func loadSettings(filePath string) *settings {
 
 	rand.Seed(time.Now().Unix())
 	s.mx = new(sync.RWMutex)
-	s.getMSdata()
 
 	return s
 }
 
 func (s *settings) GetLogPass(ibname string) (login, pass string){
+	s.mx.RLock()
+	defer s.mx.RUnlock()
+
 	for _, base := range s.bases {
 		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
 			pass = base.UserPass
@@ -93,26 +95,30 @@ func (s *settings) getMSdata() {
 			return
 		}
 
-		cl := &http.Client{Timeout: time.Second * 10}
+		logrusRotate.StandardLogger().Info("Запрашиваем список баз из МС")
+
+
+		cl := &http.Client{Timeout: time.Second * 30}
 		req, _ := http.NewRequest(http.MethodGet, s.MSURL, nil)
 		req.SetBasicAuth(s.MSUSER, s.MSPAS)
 		if resp, err := cl.Do(req); err != nil {
-			log.Println("Произошла ошибка при обращении к МС", err)
+			logrusRotate.StandardLogger().WithError(err).Error("Произошла ошибка при обращении к МС")
 		} else {
 			if !(resp.StatusCode >= http.StatusOK && resp.StatusCode <= http.StatusIMUsed) {
-				log.Println("МС вернул код возврата", resp.StatusCode)
+				logrusRotate.StandardLogger().Errorf("МС вернул код возврата %d", resp.StatusCode)
 			}
 
 			body, _ := ioutil.ReadAll(resp.Body)
 			defer resp.Body.Close()
 
 			if err := json.Unmarshal(body, &s.bases); err != nil {
-				log.Println("Не удалось сериализовать данные от МС. Ошибка:", err)
+				logrusRotate.StandardLogger().WithError(err).Error("Не удалось сериализовать данные от МС")
 			}
 		}
 	}
 
-	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(8-2)+2)) // разброс по задержке (8-2 часа), что бы не получилось так, что все эксплореры разом ломануться в МС
+	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // разброс по задержке (2-8 часа), что бы не получилось так, что все эксплореры разом ломануться в МС
+	defer timer.Stop()
 	get()
 
 	go func() {

@@ -107,6 +107,7 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 		WithField("Параметры", cmd.Args).
 		Debug("Выполнение команды")
 
+	timeout := time.Second * 15
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
 	errch := make(chan error, 1)
@@ -122,7 +123,7 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	}()
 
 	select {
-	case <-time.After(time.Second * 5): // timeout
+	case <-time.After(timeout): // timeout
 		return "", fmt.Errorf("Выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
 	case err := <-errch:
 		if err != nil {

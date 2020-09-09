@@ -43,6 +43,7 @@ func main() {
 	lw := new(logrusRotate.Rotate).Construct()
 	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
 	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
+	s.getMSdata()
 
 	cerror := make(chan error)
 	metric := new(exp.Metrics).Construct(s)
@@ -101,8 +102,7 @@ func main() {
 
 	for err := range cerror {
 		logrusRotate.StandardLogger().WithError(err).Error()
-		fmt.Printf("Произошла ошибка:\n\t%v", err)
-		// break
+		fmt.Printf("Произошла ошибка:\n\t %v", err)
 	}
 
 }
