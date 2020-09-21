@@ -68,9 +68,14 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 FOR:
 	for {
 		this.Lock()
+		logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Lock")
 		func() {
+			defer func() {
+				this.Unlock()
+				logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Unlock")
+			}()
+
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock()
 
 			if listCheck, err := this.dataGetter(); err == nil {
 				this.gauge.Reset()
@@ -96,6 +101,9 @@ FOR:
 }
 
 func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) {
+	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Получение данных")
+	defer logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Данные получены")
+
 	data = make(map[string]bool)
 
 	// проверяем блокировку рег. заданий по каждой базе
@@ -116,6 +124,8 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 				if baseinfo, err := this.getInfoBase(db.guid, db.name); err == nil {
 					db.value = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
 					chanOut <- db
+				} else {
+					logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
 				}
 			}
 		}()
@@ -131,6 +141,7 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 		defer this.mutex().RUnlock()
 
 		for _, item := range this.baseList {
+			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Запрашиваем информацию для базы %s", item["name"])
 			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
 		}
 		close(chanIn)
