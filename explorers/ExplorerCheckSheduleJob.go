@@ -16,10 +16,11 @@ import (
 type ExplorerCheckSheduleJob struct {
 	BaseRACExplorer
 
-	baseList   []map[string]string
-	dataGetter func() (map[string]bool, error)
-	mx *sync.RWMutex
-	one sync.Once
+	baseList      []map[string]string
+	attemptsСount map[string]int
+	dataGetter    func() (map[string]bool, error)
+	mx            *sync.RWMutex
+	one           sync.Once
 }
 
 func (this *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
@@ -46,6 +47,7 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 		this.dataGetter = this.getData
 	}
 
+	this.attemptsСount = make(map[string]int, 0)
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
@@ -159,8 +161,11 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
-		CForce <- true // принудительно запрашиваем данные из МС
-		return nil,	fmt.Errorf("для базы %s не определен пользователь", basename)
+		if v, ok := this.attemptsСount[basename]; ok && v <=3 {
+			CForce <- true // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
+			this.attemptsСount[basename]++
+		}
+		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
 
 	var param []string
