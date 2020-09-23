@@ -162,8 +162,8 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
 		if v, ok := this.attemptsСount[basename]; !ok || v <=3 {
+			this.attemptsСount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
 			CForce <- true // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
-			this.attemptsСount[basename]++
 		}
 		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
