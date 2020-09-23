@@ -86,7 +86,7 @@ func (s *settings) RAC_Path() string {
 	return "/opt/1C/v8.3/x86_64/rac"
 }
 
-func (s *settings) getMSdata() {
+func (s *settings) getMSdata(cForce chan bool) {
 	get := func() {
 		s.mx.Lock()
 		defer s.mx.Unlock()
@@ -94,9 +94,6 @@ func (s *settings) getMSdata() {
 		if s.MSURL == "" {
 			return
 		}
-
-		logrusRotate.StandardLogger().Info("Запрашиваем список баз из МС")
-
 
 		cl := &http.Client{Timeout: time.Second * 30}
 		req, _ := http.NewRequest(http.MethodGet, s.MSURL, nil)
@@ -122,8 +119,19 @@ func (s *settings) getMSdata() {
 	get()
 
 	go func() {
-		for range timer.C {
-			get()
+		for {
+			select {
+			case f := <- cForce:
+				if f {
+					logrusRotate.StandardLogger().Info("Принудительно запрашиваем список баз из МС")
+					get()
+				}
+			case <-timer.C:
+				logrusRotate.StandardLogger().Info("Планово запрашиваем список баз из МС")
+				get()
+			default:
+
+			}
 		}
 	}()
 }

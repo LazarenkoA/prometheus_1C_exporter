@@ -18,6 +18,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+var (
+	// Канал для передачи флага принудительного обновления данных из МС
+	CForce chan bool
+)
+
 //////////////////////// Интерфейсы ////////////////////////////
 type Isettings interface {
 	GetLogPass(string) (log string, pass string)

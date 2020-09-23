@@ -159,6 +159,7 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
+		CForce <- true // принудительно запрашиваем данные из МС
 		return nil,	fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
 

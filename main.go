@@ -23,6 +23,10 @@ type RotateConf struct {
 	settings *settings
 }
 
+func init()  {
+	exp.CForce = make(chan bool, 1)
+}
+
 func main() {
 	var settingsPath, port string
 	var help bool
@@ -43,7 +47,7 @@ func main() {
 	lw := new(logrusRotate.Rotate).Construct()
 	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
 	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
-	s.getMSdata()
+	s.getMSdata(exp.CForce)
 
 	cerror := make(chan error)
 	metric := new(exp.Metrics).Construct(s)
@@ -133,5 +137,5 @@ func (w *RotateConf) TimeRotate() int {
 	return w.settings.TimeRotate
 }
 
-// go build -o "Explorer_1C" -ldflags "-s -w" - билд чутка меньше размером
+// go build -o "1c_exporter" -ldflags "-s -w" - билд чутка меньше размером
 // ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/1c_exporter /usr/local/bin/1c_exporter &&  systemctl start 1c_exporter.service"
