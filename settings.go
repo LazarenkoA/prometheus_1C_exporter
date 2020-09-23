@@ -95,7 +95,7 @@ func (s *settings) getMSdata(cForce chan bool) {
 			return
 		}
 
-		cl := &http.Client{Timeout: time.Second * 30}
+		cl := &http.Client{Timeout: time.Minute}
 		req, _ := http.NewRequest(http.MethodGet, s.MSURL, nil)
 		req.SetBasicAuth(s.MSUSER, s.MSPAS)
 		if resp, err := cl.Do(req); err != nil {
