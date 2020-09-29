@@ -1,19 +1,27 @@
 # Доступные зачеия Explorers:
-  # ClientLic - Клиентские лицензии
-  # AvailablePerformance - Доступная производительность (через RAC)
-  # SheduleJob - Проверка галки "блокировка регламентных заданий"
-  # Session - Сеансы
-  # Connect - Соединения
-  # SessionsData - различные показарели из консоли 1с  (через RAC)
-  # ProcData - Данные поцессов (получается из ОС, пока поддерживается только linux)
+# ClientLic - Клиентские лицензии
+# AvailablePerformance - Доступная производительность (через RAC)
+# SheduleJob - Проверка галки "блокировка регламентных заданий"
+# Session - Сеансы
+# Connect - Соединения
+# SessionsData - различные показарели из консоли 1с  (через RAC)
+# ProcData - Данные поцессов (получается из ОС, пока поддерживается только linux)
+# CPU - загрузка ЦПУ
+# disk - метрики дикска, пока только linux и WeightedIO
 # Property - доп. свойства, у каждой метрики свои могут быть.
-  # у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
-  # у всех метрик доп. свойство timerNotyfy время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
+# у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
+# у всех метрик доп. свойство timerNotyfy время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
 Explorers:
 - Name: ClientLic
   Property:
     timerNotyfy: 60
 - Name: AvailablePerformance
+  Property:
+    timerNotyfy: 10
+- Name: CPU
+  Property:
+    timerNotyfy: 10
+- Name: disk
   Property:
     timerNotyfy: 10
 - Name: SheduleJob

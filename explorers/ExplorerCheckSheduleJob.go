@@ -64,7 +64,7 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	// Получаем список баз в кластере
 	if err := this.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Warning()
+		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Warning("Не удалось получить список баз")
 	}
 
 FOR:

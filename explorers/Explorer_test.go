@@ -111,6 +111,8 @@ func initests() []struct {
 	objectSes := new(ExplorerSessions).Construct(s, cerror)
 	objectCon := new(ExplorerConnects).Construct(s, cerror)
 	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
+	//objecеDisk := new(ExplorerDisk).Construct(s, cerror)
+	objectCPU := new(ExplorerCPU).Construct(s, cerror)
 	//objectCon2 := new(ExplorerConnects).Construct(s, cerror)
 	//objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 	//objectProc := new(ExplorerProc).Construct(s, cerror)
@@ -426,6 +428,24 @@ func initests() []struct {
 			//}
 		},
 		},
+		{
+			"Проверка ЦПУ", func(t *testing.T) {
+			t.Parallel()
+			go objectCPU.Start(objectCPU)
+			time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
+
+			_, body, err := get(url)
+			if err != nil {
+				t.Error(err)
+			} else {
+				reg := regexp.MustCompile(`(?m)^CPU\{[^\}]+\}[\s]+[\d]+`)
+				if !reg.MatchString(body) {
+					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCPU.GetName())
+				}
+			}
+			objectCPU.Stop()
+		},
+		},
 	}
 }
 
@@ -440,6 +460,12 @@ func settingstext() string {
 - Name: SheduleJob
   Property:
     timerNotyfy: 1
+- Name: CPU
+  Property:
+    timerNotyfy: 10
+- Name: disk
+  Property:
+    timerNotyfy: 10
 - Name: Session
   Property:
     timerNotyfy: 60

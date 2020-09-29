@@ -1,7 +1,6 @@
 package explorer
 
 import (
-	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -44,11 +43,6 @@ func (this *ExplorerProc) StartExplore() {
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
-	proc, err := newProcData()
-	if err != nil {
-		log.Printf("Ошибка. Метрика %q:\n\t%v\n", this.GetName(), err)
-		return
-	}
 
 FOR:
 	for {
@@ -56,6 +50,12 @@ FOR:
 		func() {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
+
+			proc, err := newProcData()
+			if err != nil {
+				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+				return
+			}
 
 			this.summary.Reset()
 			for _, p := range proc.GetAllProc() {

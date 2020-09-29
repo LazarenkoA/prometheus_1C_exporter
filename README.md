@@ -6,6 +6,8 @@
 * Количество соединений
 * Количество сеансов
 * Текущая память процесса (получается из ОС, пока поддерживается только linux)
+* Общая загрузка ЦПУ (получается из ОС)
+* Метрики дикска (получается из ОС, пока только linux и WeightedIO)
 * Проверка галки "блокировка регламентных заданий"
 * Память всего
 * Память текущая
@@ -59,11 +61,8 @@ end:
 Создать файл [name metrics].go в котором будет описан класс метрики, класс должен имплементировать интерфейс Iexplorer, после чего добавляем экземпляр класса к метрикам:
 ```golang
 metric := new(Metrics)
-	metric.append(new(ExplorerClientLic).Construct(time.Second * 10))
-	// metric.append(новый explorer объект) 
-	
-	for _, ex := range metric.explorers {
-		go ex.StartExplore()
+metric.append(new(ExplorerClientLic).Construct(time.Second * 10))
+// metric.append(новый explorer объект) 
 }
 ```
 ```golang
