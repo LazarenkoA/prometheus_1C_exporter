@@ -16,7 +16,7 @@ Explorers:
   Property:
     timerNotyfy: 60
 - Name: AvailablePerformance
-  Property:
+  Property: 
     timerNotyfy: 10
 - Name: CPU
   Property:
