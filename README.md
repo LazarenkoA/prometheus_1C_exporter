@@ -78,3 +78,36 @@ goto end
 ![](doc/img/browser_jtYHlI4MPZ.png "Память по сеансам")
 
 ![](doc/img/browser_LnTYeIKxgG.png "Клиентские лицензии")
+
+Для данной конфигурации дажбордов (Клиентские лицензии) настройки графаны такие: 
+* Создаем новый дажборд
+* Query - prometheus
+* в поле Metrics `sum by (licSRV) (ClientLic{quantile="0.5", licSRV=~"(?i).+sys.+"})`
+![](doc/img/browser_nyNO3gj9Y4.png "Пример настройки графаны")
+
+экспортер выдает данные в таком виде
+```
+.....
+ClientLic{host="CA-N11-APP-1",licSRV="\"ca-sys-1\"",quantile="0.5"} 193
+ClientLic{host="CA-N11-APP-1",licSRV="\"ca-sys-1\"",quantile="0.9"} 193
+ClientLic{host="CA-N11-APP-1",licSRV="\"ca-sys-1\"",quantile="0.99"} 193
+ClientLic_sum{host="CA-N11-APP-1",licSRV="\"ca-sys-1\""} 193
+ClientLic_count{host="CA-N11-APP-1",licSRV="\"ca-sys-1\""} 1
+ClientLic{host="CA-N11-APP-1",licSRV="HASP",quantile="0.5"} 17
+ClientLic{host="CA-N11-APP-1",licSRV="HASP",quantile="0.9"} 17
+ClientLic{host="CA-N11-APP-1",licSRV="HASP",quantile="0.99"} 17
+ClientLic_sum{host="CA-N11-APP-1",licSRV="HASP"} 17
+ClientLic_count{host="CA-N11-APP-1",licSRV="HASP"} 1
+ClientLic{host="CA-N11-APP-1",licSRV="soft",quantile="0.5"} 4
+ClientLic{host="CA-N11-APP-1",licSRV="soft",quantile="0.9"} 4
+ClientLic{host="CA-N11-APP-1",licSRV="soft",quantile="0.99"} 4
+ClientLic_sum{host="CA-N11-APP-1",licSRV="soft"} 4
+ClientLic_count{host="CA-N11-APP-1",licSRV="soft"} 1
+.....
+```
+это можно проверить выполнив `curl http://localhost:9091/1C_Metrics` 
+
+соответственно в примере `sum by (licSRV) (ClientLic{quantile="0.5", licSRV=~"(?i).+sys.+"})` мы берем метрику ClientLic
+ту где quantile="0.5" и licSRV подходит к regexp `"(?i).+sys.+"`
+Другие дажборды настраиваются по аналогии. Другие примеры функций можно посмотреть в 
+[документации prometheus](https://prometheus.io/docs/prometheus/latest/querying/examples/)
