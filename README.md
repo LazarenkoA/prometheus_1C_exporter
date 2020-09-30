@@ -51,7 +51,7 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 ```golang
 end:
 ```
-Все, настраиваем дажборды, умиляемся. 
+Все, [настраиваем](#configure) дажборды, умиляемся. 
 
 ------------
 
@@ -79,6 +79,7 @@ goto end
 
 ![](doc/img/browser_LnTYeIKxgG.png "Клиентские лицензии")
 
+### <a name="configure"></a>
 Для данной конфигурации дажбордов (Клиентские лицензии) настройки графаны такие: 
 * Создаем новый дажборд
 * Query - prometheus
