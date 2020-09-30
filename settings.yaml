@@ -14,7 +14,7 @@
 Explorers:
 - Name: ClientLic
   Property:
-    timerNotyfy: 60
+    timerNotyfy: 60 
 - Name: AvailablePerformance
   Property: 
     timerNotyfy: 10
