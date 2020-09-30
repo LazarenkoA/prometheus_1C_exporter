@@ -43,9 +43,10 @@ Explorers:
       - ragent
       - rmngr
     timerNotyfy: 10
-MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
-MSUSER: RemoteAccess
-MSPAS: dvt45hn
+MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase # Не обязательный параметр
+MSUSER: RemoteAccess                                                  # Не обязательный параметр
+MSPAS: dvt45hn                                                        # Не обязательный параметр
+RAC: "/opt/1C/v8.3/x86_64/rac"
 LogDir: /var/log/1c_exporter  # Если на задан логи будут писаться в каталог с исполняемым файлом
 LogLevel: 5                   # Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
 TimeRotate: 1                 # Время в часах через которое будет создаваться новый файл логов

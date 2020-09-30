@@ -31,8 +31,25 @@ type settings struct {
 	LogLevel int `yaml:"LogLevel"`
 	TimeRotate int `yaml:"TimeLogs"`
 	TTLLogs int `yaml:"TTLLogs"`
+	RAC  string `yaml:"RAC"`
 }
 
+/*
+#################### JSON
+{
+"Caption": "Зарплата и кадры государственного учреждения КОРП (Нода 17)",
+"Name": "hrmcorp-n17",
+"UUID": "3f1d6b7e-2d1b-11e8-9d8b-00505603303b",
+"Cluster": {
+	"MainServer": "ca-n17-app-1",
+	"RASServer": "ca-n17-app-1",
+	"RASPort": 1545
+},
+"UserName": "",
+"UserPass": "",
+"URL": "h",
+"Conf": "Зарплата и кадры государственного учреждения КОРП"
+}*/
 type Bases struct {
 	Caption  string `json:"Caption"`
 	Name     string `json:"Name"`
@@ -83,7 +100,7 @@ func (s *settings) GetLogPass(ibname string) (login, pass string){
 }
 
 func (s *settings) RAC_Path() string {
-	return "/opt/1C/v8.3/x86_64/rac"
+	return s.RAC
 }
 
 func (s *settings) getMSdata(cForce chan bool) {

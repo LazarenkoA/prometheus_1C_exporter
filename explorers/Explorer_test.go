@@ -482,6 +482,7 @@ func settingstext() string {
       - ragent
       - rmngr
     timerNotyfy: 10
+RAC: "/opt/1C/v8.3/x86_64/rac"
 MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
 MSUSER: RemoteAccess
 MSPAS: dvt45hn`
