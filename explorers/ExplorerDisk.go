@@ -22,8 +22,8 @@ func (this *ExplorerDisk) Construct(s Isettings, cerror chan error) *ExplorerDis
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Показатели дисков",
+			Name:       this.GetName(),
+			Help:       "Показатели дисков",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "disk", "metrics"},
@@ -59,6 +59,10 @@ FOR:
 			this.summary.Reset()
 			for k, v := range dinfo {
 				this.summary.WithLabelValues(host, k, "WeightedIO").Observe(float64(v.WeightedIO))
+				this.summary.WithLabelValues(host, k, "IopsInProgress").Observe(float64(v.IopsInProgress))
+				this.summary.WithLabelValues(host, k, "ReadCount").Observe(float64(v.ReadCount))
+				this.summary.WithLabelValues(host, k, "WriteCount").Observe(float64(v.WriteCount))
+				this.summary.WithLabelValues(host, k, "IoTime").Observe(float64(v.IoTime))
 			}
 		}()
 

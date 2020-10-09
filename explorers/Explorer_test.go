@@ -111,7 +111,7 @@ func initests() []struct {
 	objectSes := new(ExplorerSessions).Construct(s, cerror)
 	objectCon := new(ExplorerConnects).Construct(s, cerror)
 	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
-	//objecеDisk := new(ExplorerDisk).Construct(s, cerror)
+	objecеDisk := new(ExplorerDisk).Construct(s, cerror)
 	objectCPU := new(ExplorerCPU).Construct(s, cerror)
 	//objectCon2 := new(ExplorerConnects).Construct(s, cerror)
 	//objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
@@ -250,9 +250,9 @@ func initests() []struct {
 					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"durationcurrentdbms\".+?\}[\s]+34`),
 					regexp.MustCompile(`(?m)^SessionsData\{.+?datatype=\"cputimecurrent\".+?\}[\s]+32`),
 				}
-				for _, r := range regs {
+				for i, r := range regs {
 					if !r.MatchString(body) {
-						t.Errorf("В ответе не найден %s (или не корректное значение)", objectMem.GetName())
+						t.Errorf("В ответе не найден %s (или не корректное значение). Шаблон №%d", objectMem.GetName(), i)
 					}
 				}
 			}
@@ -260,191 +260,216 @@ func initests() []struct {
 		}},
 		{
 			"Проверка Session", func(t *testing.T) {
-			t.Parallel()
-			objectSes.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
-				return []map[string]string{
-					{
-						"infobase": "weewwefef",
-					},
-					{
-						"infobase": "weewwefef",
-					},
-					{
-						"infobase": "weewwefef",
-					},
-				}, nil
-			}
-			objectSes.baseList = []map[string]string{
-				{
-					"infobase": "weewwefef",
-					"name":     "test2",
-				},
-			}
-
-			go objectSes.Start(objectSes)
-			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
-
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else {
-				reg := regexp.MustCompile(`(?m)^Session\{[^\}]+\}[\s]+3`)
-				if !reg.MatchString(body) {
-					t.Errorf("В ответе не найден %s (или не корректное значение)", objectSes.GetName())
+				t.Parallel()
+				objectSes.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
+					return []map[string]string{
+						{
+							"infobase": "weewwefef",
+						},
+						{
+							"infobase": "weewwefef",
+						},
+						{
+							"infobase": "weewwefef",
+						},
+					}, nil
 				}
-			}
+				objectSes.baseList = []map[string]string{
+					{
+						"infobase": "weewwefef",
+						"name":     "test2",
+					},
+				}
 
-			objectSes.Stop()
-		},
+				go objectSes.Start(objectSes)
+				time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else {
+					reg := regexp.MustCompile(`(?m)^Session\{[^\}]+\}[\s]+3`)
+					if !reg.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение)", objectSes.GetName())
+					}
+				}
+
+				objectSes.Stop()
+			},
 		},
 		{
 			"Проверка Connect", func(t *testing.T) {
-			objectCon.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
-				return []map[string]string{
-					{
-						"infobase": "ewewded",
-					},
-					{
-						"infobase": "ewewded",
-					},
-					{
-						"infobase": "ewewded",
-					},
-				}, nil
-			}
-			objectCon.baseList = []map[string]string{
-				{
-					"infobase": "ewewded",
-					"name":     "test3",
-				},
-			}
-			go objectCon.Start(objectCon)
-			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
-
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else {
-				reg := regexp.MustCompile(`(?m)^Connect\{[^\}]+\}[\s]+3`)
-				if !reg.MatchString(body) {
-					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCon.GetName())
+				objectCon.BaseExplorer.dataGetter = func() ([]map[string]string, error) {
+					return []map[string]string{
+						{
+							"infobase": "ewewded",
+						},
+						{
+							"infobase": "ewewded",
+						},
+						{
+							"infobase": "ewewded",
+						},
+					}, nil
 				}
-			}
-		},
+				objectCon.baseList = []map[string]string{
+					{
+						"infobase": "ewewded",
+						"name":     "test3",
+					},
+				}
+				go objectCon.Start(objectCon)
+				time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else {
+					reg := regexp.MustCompile(`(?m)^Connect\{[^\}]+\}[\s]+3`)
+					if !reg.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение)", objectCon.GetName())
+					}
+				}
+			},
 		},
 		{
 			"Проверка SheduleJob", func(t *testing.T) {
-			objectCSJ.dataGetter = func() (map[string]bool, error) {
-				return map[string]bool{
-					"test3": true,
-				}, nil
-			}
-			objectCSJ.baseList = []map[string]string{
-				{
-					"infobase": "325rffff",
-					"name":     "test3",
-				},
-			}
-			go objectCSJ.Start(objectCSJ)
-			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
-
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else {
-				reg := regexp.MustCompile(`(?m)^SheduleJob{base="test3"}[\s]+1`)
-				if !reg.MatchString(body) {
-					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCSJ.GetName())
+				objectCSJ.dataGetter = func() (map[string]bool, error) {
+					return map[string]bool{
+						"test3": true,
+					}, nil
 				}
+				objectCSJ.baseList = []map[string]string{
+					{
+						"infobase": "325rffff",
+						"name":     "test3",
+					},
+				}
+				go objectCSJ.Start(objectCSJ)
+				time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else {
+					reg := regexp.MustCompile(`(?m)^SheduleJob{base="test3"}[\s]+1`)
+					if !reg.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение)", objectCSJ.GetName())
+					}
 
-			}
-		},
+				}
+			},
 		},
 		{
 			"Проверка паузы", func(t *testing.T) {
-			//Должны быть запущены с предыдущего теста
-			//go objectCSJ.Start(objectCSJ)
-			//go objectCon.Start(objectCon)
-			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+				//Должны быть запущены с предыдущего теста
+				//go objectCSJ.Start(objectCSJ)
+				//go objectCon.Start(objectCon)
+				time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-			//get(url)
+				//get(url)
 
-			code, _, _ := get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
-			if code != http.StatusOK {
-				t.Error("Код ответа должен быть 200, имеем", code)
-			}
+				code, _, _ := get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
+				if code != http.StatusOK {
+					t.Error("Код ответа должен быть 200, имеем", code)
+				}
 
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else if strings.Index(body, objectCSJ.GetName()) >= 0 || strings.Index(body, objectCon.GetName()) >= 0 {
-				t.Error("В ответе найден", objectCSJ.GetName(), "или", objectCon.GetName(), "его там быть не должно")
-			}
-			// разблокируем
-			get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
-		},
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else if strings.Index(body, objectCSJ.GetName()) >= 0 || strings.Index(body, objectCon.GetName()) >= 0 {
+					t.Error("В ответе найден", objectCSJ.GetName(), "или", objectCon.GetName(), "его там быть не должно")
+				}
+				// разблокируем
+				get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
+			},
 		},
 		{
 			"Проверка снятие с паузы", func(t *testing.T) {
-			//Должны быть запущены с предыдущего теста
-			//go objectCSJ.Start(objectCSJ)
-			//go objectCon.Start(objectCon)
-			//time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+				//Должны быть запущены с предыдущего теста
+				//go objectCSJ.Start(objectCSJ)
+				//go objectCon.Start(objectCon)
+				//time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-			//_, body1, err := get(url)
-			//fmt.Println(body1)
+				//_, body1, err := get(url)
+				//fmt.Println(body1)
 
-			get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
-			time.Sleep(time.Second)
+				get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
+				time.Sleep(time.Second)
 
-			code, _, _ := get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
-			if code != http.StatusOK {
-				t.Error("Код ответа должен быть 200, имеем", code)
-			}
-			time.Sleep(time.Second) // нужно т.к. итерация внутреннего цикла экспортера 1 сек (так в настройках выставлено)
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else if strings.Index(body, objectCSJ.GetName()) < 0 || strings.Index(body, objectCon.GetName()) < 0 {
-				t.Error("В ответе не найдены", objectCSJ.GetName(), "или", objectCon.GetName())
-			}
-			objectCSJ.Stop()
-			objectCon.Stop()
-		},
+				code, _, _ := get("http://localhost:" + port + "/Continue?metricNames=SheduleJob,Connect")
+				if code != http.StatusOK {
+					t.Error("Код ответа должен быть 200, имеем", code)
+				}
+				time.Sleep(time.Second) // нужно т.к. итерация внутреннего цикла экспортера 1 сек (так в настройках выставлено)
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else if strings.Index(body, objectCSJ.GetName()) < 0 || strings.Index(body, objectCon.GetName()) < 0 {
+					t.Error("В ответе не найдены", objectCSJ.GetName(), "или", objectCon.GetName())
+				}
+				objectCSJ.Stop()
+				objectCon.Stop()
+			},
 		},
 		{
 			"", func(t *testing.T) {
-			// Нет смысла т.к. эта метрика только под линуксом работает
-			//t.Parallel()
-			//go objectProc.Start(objectProc)
-			//time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
-			//
-			//_, body, err := get()
-			//if err != nil {
-			//	t.Error(err)
-			//} else if str := body; strings.Index(str, "ProcData") < 0 {
-			//	t.Error("В ответе не найден ProcData")
-			//}
-		},
+				// Нет смысла т.к. эта метрика только под линуксом работает
+				//t.Parallel()
+				//go objectProc.Start(objectProc)
+				//time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
+				//
+				//_, body, err := get()
+				//if err != nil {
+				//	t.Error(err)
+				//} else if str := body; strings.Index(str, "ProcData") < 0 {
+				//	t.Error("В ответе не найден ProcData")
+				//}
+			},
 		},
 		{
 			"Проверка ЦПУ", func(t *testing.T) {
-			t.Parallel()
-			go objectCPU.Start(objectCPU)
-			time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
+				t.Parallel()
+				go objectCPU.Start(objectCPU)
+				time.Sleep(time.Second * 2) // Нужно подождать, что бы Explore успел отработаь
 
-			_, body, err := get(url)
-			if err != nil {
-				t.Error(err)
-			} else {
-				reg := regexp.MustCompile(`(?m)^CPU\{[^\}]+\}[\s]+[\d]+`)
-				if !reg.MatchString(body) {
-					t.Errorf("В ответе не найден %s (или не корректное значение)", objectCPU.GetName())
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else {
+					reg := regexp.MustCompile(`(?m)^CPU\{[^\}]+\}[\s]+[\d]+`)
+					if !reg.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение)", objectCPU.GetName())
+					}
 				}
-			}
-			objectCPU.Stop()
+				objectCPU.Stop()
+			},
 		},
+		{
+			"Проверка диска", func(t *testing.T) {
+				t.Parallel()
+				go objecеDisk.Start(objecеDisk)
+				time.Sleep(time.Second * 2) // Нужно подождать, что бы Explore успел отработаь
+
+				_, body, err := get(url)
+				if err != nil {
+					t.Error(err)
+				} else {
+					regs := []*regexp.Regexp{
+						regexp.MustCompile(`(?m)^disk\{.+?metrics=\"WeightedIO\".+?\}[\s]+[\d]+`),
+						regexp.MustCompile(`(?m)^disk\{.+?metrics=\"IopsInProgress\".+?\}[\s]+[\d]+`),
+						regexp.MustCompile(`(?m)^disk\{.+?metrics=\"ReadCount\".+?\}[\s]+[\d]+`),
+						regexp.MustCompile(`(?m)^disk\{.+?metrics=\"WriteCount\".+?\}[\s]+[\d]+`),
+						regexp.MustCompile(`(?m)^disk\{.+?metrics=\"IoTime\".+?\}[\s]+[\d]+`),
+					}
+					for i, r := range regs {
+						if !r.MatchString(body) {
+							t.Errorf("В ответе не найден %s (или не корректное значение). Шаблон №%d", objecеDisk.GetName(), i)
+						}
+					}
+				}
+				objecеDisk.Stop()
+			},
 		},
 	}
 }

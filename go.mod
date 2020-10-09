@@ -7,6 +7,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/influxdata/telegraf v1.15.3
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/procfs v0.1.3
 	github.com/shirou/gopsutil v2.20.8+incompatible
