@@ -210,6 +210,7 @@ func (this *BaseExplorer) Continue() {
 func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[string]string) {
 	logrusRotate.StandardLogger().Trace("Парс многострочного результата")
 
+	data = normalizeEncoding(data)
 	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(data, -1) {
@@ -225,11 +226,12 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	logrusRotate.StandardLogger().Trace("Парс результата")
 
 	result := make(map[string]string)
+	strIn = normalizeEncoding(strIn)
 
 	for _, line := range strings.Split(strIn, "\n") {
 		parts := strings.Split(line, ":")
 		if len(parts) == 2 {
-			result[normalizeEncoding(strings.Trim(parts[0], " \r"))] = normalizeEncoding(strings.Trim(parts[1], " \r"))
+			result[strings.Trim(parts[0], " \r")] = strings.Trim(parts[1], " \r")
 		}
 	}
 
