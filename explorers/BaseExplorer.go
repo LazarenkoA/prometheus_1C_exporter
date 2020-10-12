@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -15,7 +14,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/softlandia/cpd"
+	"golang.org/x/text/encoding/charmap"
 )
 
 var (
@@ -227,11 +229,23 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	for _, line := range strings.Split(strIn, "\n") {
 		parts := strings.Split(line, ":")
 		if len(parts) == 2 {
-			result[strings.Trim(parts[0], " \r")] = strings.Trim(parts[1], " \r")
+			result[normalizeEncoding(strings.Trim(parts[0], " \r"))] = normalizeEncoding(strings.Trim(parts[1], " \r"))
 		}
 	}
 
 	return result
+}
+
+func normalizeEncoding(str string) string {
+	encoding := cpd.CodepageAutoDetect([]byte(str))
+	switch encoding {
+	case cpd.CP866:
+		encoder := charmap.CodePage866.NewDecoder()
+		if msg, err := encoder.String(str); err != nil {
+			return msg
+		}
+	}
+	return str
 }
 
 func (this *BaseRACExplorer) mutex() *sync.RWMutex {

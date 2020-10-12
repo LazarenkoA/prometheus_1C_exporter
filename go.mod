@@ -12,7 +12,9 @@ require (
 	github.com/prometheus/procfs v0.1.3
 	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
+	github.com/softlandia/cpd v0.0.0-20200709134012-d8dd1a8ae52d
 	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 // indirect
+	golang.org/x/text v0.3.3
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
