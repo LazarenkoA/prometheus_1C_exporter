@@ -56,7 +56,7 @@ FOR:
 			defer this.Unlock()
 
 			if data, err := this.dataGetter(); err == nil {
-				lr.StandardLogger().Debug("Колличество данных: ", len(data))
+				lr.StandardLogger().Debug("Количество данных: ", len(data))
 				this.summary.Reset()
 				for key, value := range data {
 					this.summary.WithLabelValues(key).Observe(value)

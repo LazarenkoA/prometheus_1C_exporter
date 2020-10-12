@@ -207,13 +207,17 @@ func (this *BaseExplorer) Continue() {
 	}
 }
 
-func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[string]string) {
+func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
 	logrusRotate.StandardLogger().Trace("Парс многострочного результата")
 
-	data = normalizeEncoding(data)
+	strIn = normalizeEncoding(strIn)
+	strIn = strings.Replace(strIn, "\r", "", -1)
 	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
-	for _, part := range reg.Split(data, -1) {
+	parts := reg.Split(strIn, -1)
+
+	fmt.Println(len(parts), "частей")
+	for _, part := range parts {
 		data := this.formatResult(part)
 		if len(data) == 0 {
 			continue
@@ -225,9 +229,8 @@ func (this *BaseRACExplorer) formatMultiResult(data string, licData *[]map[strin
 func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	logrusRotate.StandardLogger().Trace("Парс результата")
 
-	result := make(map[string]string)
 	strIn = normalizeEncoding(strIn)
-
+	result := make(map[string]string)
 	for _, line := range strings.Split(strIn, "\n") {
 		parts := strings.Split(line, ":")
 		if len(parts) == 2 {
@@ -240,10 +243,11 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 
 func normalizeEncoding(str string) string {
 	encoding := cpd.CodepageAutoDetect([]byte(str))
+
 	switch encoding {
 	case cpd.CP866:
 		encoder := charmap.CodePage866.NewDecoder()
-		if msg, err := encoder.String(str); err != nil {
+		if msg, err := encoder.String(str); err == nil {
 			return msg
 		}
 	}

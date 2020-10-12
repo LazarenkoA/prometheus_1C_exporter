@@ -104,6 +104,10 @@ func (s *settings) RAC_Path() string {
 }
 
 func (s *settings) getMSdata(cForce chan bool) {
+	if s.MSURL == "" {
+		return
+	}
+
 	get := func() {
 		s.mx.Lock()
 		defer s.mx.Unlock()
