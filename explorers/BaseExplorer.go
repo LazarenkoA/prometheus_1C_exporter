@@ -214,10 +214,7 @@ func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[stri
 	strIn = strings.Replace(strIn, "\r", "", -1)
 	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
-	parts := reg.Split(strIn, -1)
-
-	fmt.Println(len(parts), "частей")
-	for _, part := range parts {
+	for _, part := range reg.Split(strIn, -1) {
 		data := this.formatResult(part)
 		if len(data) == 0 {
 			continue
