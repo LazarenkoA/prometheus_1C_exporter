@@ -44,7 +44,6 @@ type Iexplorer interface {
 	GetName() string
 }
 
-
 //////////////////////// Типы ////////////////////////////
 
 // базовый класс для всех метрик
@@ -62,7 +61,7 @@ type BaseExplorer struct {
 	ctx         context.Context
 	ctxFunc     context.CancelFunc
 	//mutex       *sync.Mutex
-	isLocked    int32
+	isLocked int32
 	// mock object
 	dataGetter func() ([]map[string]string, error)
 }
@@ -104,7 +103,7 @@ func (this *BaseExplorer) StartExplore() {
 
 }
 func (this *BaseExplorer) GetName() string {
-	return  "Base"
+	return "Base"
 }
 
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
@@ -198,7 +197,7 @@ func (this *BaseExplorer) Continue() {
 	logrusRotate.StandardLogger().Trace("Continue. begin")
 	defer logrusRotate.StandardLogger().Trace("Continue. end")
 
-	if atomic.CompareAndSwapInt32(&this.isLocked, 1, 0)  {
+	if atomic.CompareAndSwapInt32(&this.isLocked, 1, 0) {
 		this.Unlock()
 		logrusRotate.StandardLogger().Trace("Continue. Блокировка снята")
 	} else {
@@ -228,7 +227,7 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	for _, line := range strings.Split(strIn, "\n") {
 		parts := strings.Split(line, ":")
 		if len(parts) == 2 {
-			result[strings.Trim(parts[0], " ")] = strings.Trim(parts[1], " ")
+			result[strings.Trim(parts[0], " \r")] = strings.Trim(parts[1], " \r")
 		}
 	}
 
@@ -275,7 +274,7 @@ func (this *BaseRACExplorer) GetClusterID() string {
 	return this.clusterID
 }
 
-func (this *Metrics) Append(ex... Iexplorer) {
+func (this *Metrics) Append(ex ...Iexplorer) {
 	this.Explorers = append(this.Explorers, ex...)
 }
 
@@ -314,7 +313,7 @@ func (this *Metrics) findExplorer(name string) Iexplorer {
 func Pause(metrics *Metrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w,  fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
 			return
 		}
 		logrusRotate.StandardLogger().WithField("URL", r.URL.RequestURI()).Trace("Пауза")
@@ -355,7 +354,7 @@ func Pause(metrics *Metrics) http.Handler {
 func Continue(metrics *Metrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w,  fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
 			return
 		}
 		logrusRotate.StandardLogger().WithField("URL", r.URL.RequestURI()).Trace("Продолжить")
