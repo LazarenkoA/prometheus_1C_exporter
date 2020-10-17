@@ -17,7 +17,7 @@ type ExplorerCheckSheduleJob struct {
 	BaseRACExplorer
 
 	baseList      []map[string]string
-	attemptsСount map[string]int
+	attemptsCount map[string]int
 	dataGetter    func() (map[string]bool, error)
 	mx            *sync.RWMutex
 	one           sync.Once
@@ -47,7 +47,7 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 		this.dataGetter = this.getData
 	}
 
-	this.attemptsСount = make(map[string]int, 0)
+	this.attemptsCount = make(map[string]int, 0)
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
@@ -161,10 +161,10 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
-		if v, ok := this.attemptsСount[basename]; !ok || v <=3 {
-			this.attemptsСount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
-			time.Sleep(time.Second*5) // что б растянуть во времени
-			CForce <- true // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
+		if v, ok := this.attemptsCount[basename]; !ok || v <= 3 {
+			this.attemptsCount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
+			time.Sleep(time.Second * 5)    // что б растянуть во времени
+			CForce <- true                 // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
 		}
 		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
