@@ -54,7 +54,7 @@ type BaseExplorer struct {
 
 	mx          *sync.RWMutex
 	summary     *prometheus.SummaryVec
-	сounter     *prometheus.CounterVec
+	counter     *prometheus.CounterVec
 	gauge       *prometheus.GaugeVec
 	ticker      *time.Ticker
 	timerNotyfy time.Duration
