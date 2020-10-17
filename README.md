@@ -123,3 +123,7 @@ ClientLic_count{host="CA-N11-APP-1",licSRV="soft"} 1
 Пример настройки графаны для дажборда по IOPS диска
 
 `sum(disk{ node="$group", host=~"(?i).*app-1", quantile="0.5", metrics="IopsInProgress"})by (metrics) `
+
+Ожидание на диске
+
+`sum(rate(disk{ node="$group", host=~"(?i).*app-2", quantile="0.5", metrics="WeightedIO"}[5m])) by (metrics) `
