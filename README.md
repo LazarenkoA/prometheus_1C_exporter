@@ -85,12 +85,14 @@ goto end
 
 ![](doc/img/browser_LnTYeIKxgG.png "Клиентские лицензии")
 
+![](doc/img/browser_LnTYeIKxgG.png "IOPS дисков")
+
 ### <a name="configure"></a>
 Для данной конфигурации дажбордов (Клиентские лицензии) настройки графаны такие: 
 * Создаем новый дажборд
 * Query - prometheus
 * в поле Metrics `sum by (licSRV) (ClientLic{quantile="0.5", licSRV=~"(?i).+sys.+"})`
-![](doc/img/browser_nyNO3gj9Y4.png "Пример настройки графаны")
+![](doc/img/browser_nXMbpZXJZK.png "Пример настройки графаны")
 
 экспортер выдает данные в таком виде
 ```
