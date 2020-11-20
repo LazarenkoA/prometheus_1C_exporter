@@ -78,7 +78,7 @@ type BaseRACExplorer struct {
 
 type Metrics struct {
 	Explorers []Iexplorer
-	Metrics   []string
+	Metrics   []string // метрики
 }
 
 //////////////////////// Методы ////////////////////////////
