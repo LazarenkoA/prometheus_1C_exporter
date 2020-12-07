@@ -81,7 +81,7 @@ type Metrics struct {
 	Metrics   []string // метрики
 }
 
-//////////////////////// Методы ////////////////////////////
+//////////////////////// Методы /////////////////////////////
 
 //func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
 //	//if this.mutex == nil {

@@ -23,7 +23,7 @@ func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *E
 			Help:       "Показатели из кластера 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
-		[]string{"host", "base", "user", "id", "datatype"},
+		[]string{"host", "base", "user", "id", "datatype", "servicename"},
 	)
 	// dataGetter - типа мок. Инициализируется из тестов
 	if this.BaseExplorer.dataGetter == nil {
@@ -63,25 +63,25 @@ FOR:
 				basename := this.findBaseName(item["infobase"])
 
 				if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil && memorytotal > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal").Observe(float64(memorytotal))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal", item["current-service-name"]).Observe(float64(memorytotal))
 				}
 				if memorycurrent, err := strconv.Atoi(item["memory-current"]); err == nil && memorycurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorycurrent").Observe(float64(memorycurrent))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorycurrent", item["current-service-name"]).Observe(float64(memorycurrent))
 				}
 				if readcurrent, err := strconv.Atoi(item["read-current"]); err == nil && readcurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "readcurrent").Observe(float64(readcurrent))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "readcurrent", item["current-service-name"]).Observe(float64(readcurrent))
 				}
 				if writecurrent, err := strconv.Atoi(item["write-current"]); err == nil && writecurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "writecurrent").Observe(float64(writecurrent))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "writecurrent", item["current-service-name"]).Observe(float64(writecurrent))
 				}
 				if durationcurrent, err := strconv.Atoi(item["duration-current"]); err == nil && durationcurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent").Observe(float64(durationcurrent))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent", item["current-service-name"]).Observe(float64(durationcurrent))
 				}
 				if durationcurrentdbms, err := strconv.Atoi(item["duration current-dbms"]); err == nil && durationcurrentdbms > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms").Observe(float64(durationcurrentdbms))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms", item["current-service-name"]).Observe(float64(durationcurrentdbms))
 				}
 				if cputimecurrent, err := strconv.Atoi(item["cpu-time-current"]); err == nil && cputimecurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent").Observe(float64(cputimecurrent))
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent", item["current-service-name"]).Observe(float64(cputimecurrent))
 				}
 			}
 
