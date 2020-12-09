@@ -116,6 +116,8 @@ func (s *settings) getMSdata(cForce chan bool) {
 			return
 		}
 
+		logrusRotate.StandardLogger().WithField("MSURL", s.MSURL).Info("Обращаемся к МС")
+
 		cl := &http.Client{Timeout: time.Minute}
 		req, _ := http.NewRequest(http.MethodGet, s.MSURL, nil)
 		req.SetBasicAuth(s.MSUSER, s.MSPAS)
@@ -136,10 +138,10 @@ func (s *settings) getMSdata(cForce chan bool) {
 	}
 
 	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // разброс по задержке (2-8 часа), что бы не получилось так, что все эксплореры разом ломануться в МС
-	defer timer.Stop()
 	get()
 
 	go func() {
+		defer timer.Stop()
 		for {
 			select {
 			case f := <- cForce:
