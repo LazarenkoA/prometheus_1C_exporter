@@ -191,10 +191,15 @@ func initests() []struct {
 		}},
 		{"Проверка AvailablePerformance", func(t *testing.T) {
 			t.Parallel()
-			objectPerf.dataGetter = func() (map[string]float64, error) {
-				return map[string]float64{
-					"localhost": 10,
-				}, nil
+			objectPerf.dataGetter = func() (map[string]map[string]float64, error) {
+				return map[string]map[string]float64{
+					"localhost": {
+						"available": 10,
+						"avgcalltime": 11,
+						"avgdbcalltime": 12,
+						"avglockcalltime": 13,
+						"avgservercalltime": 14,
+					}}, nil
 			}
 
 			go objectPerf.Start(objectPerf)
@@ -204,9 +209,17 @@ func initests() []struct {
 			if err != nil {
 				t.Error(err)
 			} else {
-				reg := regexp.MustCompile(`(?m)^AvailablePerformance\{[^\}]+\}[\s]+10`)
-				if !reg.MatchString(body) {
-					t.Errorf("В ответе не найден %s (или не корректное значение)", objectPerf.GetName())
+				regs := []*regexp.Regexp{
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?available.+?10`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgcalltime.+?11`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgdbcalltime.+?12`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avglockcalltime.+?13`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgservercalltime.+?14`),
+				}
+				for i, r := range regs {
+					if !r.MatchString(body) {
+						t.Errorf("В ответе не найден %s (или не корректное значение). Шаблон №%d", objectPerf.GetName(), i)
+					}
 				}
 			}
 			objectPerf.Stop()
