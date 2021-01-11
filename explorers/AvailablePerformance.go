@@ -22,8 +22,8 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Доступная производительность хоста",
+			Name:       this.GetName(),
+			Help:       "Доступная производительность хоста",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "type"},
@@ -99,28 +99,26 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
 	tmp := make(map[string]map[string][]float64)
-	tmp["dsds"] = map[string][]float64 {"available": []float64{}}
-
-
+	tmp["dsds"] = map[string][]float64{"available": []float64{}}
 
 	for _, item := range procData {
 		if _, ok := tmp[item["host"]]; !ok {
 			tmp[item["host"]] = map[string][]float64{}
 		}
 
-		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil {
+		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil { // Доступная производительность
 			tmp[item["host"]]["available"] = append(tmp[item["host"]]["available"], perfomance)
 		}
-		if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil {
+		if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil { // среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из: значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
 			tmp[item["host"]]["avgcalltime"] = append(tmp[item["host"]]["avgcalltime"], avgcalltime)
 		}
-		if avgdbcalltime, err := strconv.ParseFloat(item["avg-db-call-time"], 64); err == nil {
+		if avgdbcalltime, err := strconv.ParseFloat(item["avg-db-call-time"], 64); err == nil { // среднее время, затрачиваемое рабочим процессом на обращения к серверу баз данных при выполнении одного клиентского обращения
 			tmp[item["host"]]["avgdbcalltime"] = append(tmp[item["host"]]["avgdbcalltime"], avgdbcalltime)
 		}
-		if avglockcalltime, err := strconv.ParseFloat(item["avg-lock-call-time"], 64); err == nil {
+		if avglockcalltime, err := strconv.ParseFloat(item["avg-lock-call-time"], 64); err == nil { // среднее время обращения к менеджеру блокировок
 			tmp[item["host"]]["avglockcalltime"] = append(tmp[item["host"]]["avglockcalltime"], avglockcalltime)
 		}
-		if avgservercalltime, err := strconv.ParseFloat(item["avg-server-call-time"], 64); err == nil {
+		if avgservercalltime, err := strconv.ParseFloat(item["avg-server-call-time"], 64); err == nil { // среднее время, затрачиваемое самим рабочим процессом на выполнение одного клиентского обращения
 			tmp[item["host"]]["avgservercalltime"] = append(tmp[item["host"]]["avgservercalltime"], avgservercalltime)
 		}
 	}
@@ -137,7 +135,7 @@ func (this *ExplorerAvailablePerformance) GetName() string {
 	return "AvailablePerformance"
 }
 
-func sum(in []float64)(result float64) {
+func sum(in []float64) (result float64) {
 	for _, v := range in {
 		result += v
 	}
