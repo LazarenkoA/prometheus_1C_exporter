@@ -194,10 +194,10 @@ func initests() []struct {
 			objectPerf.dataGetter = func() (map[string]map[string]float64, error) {
 				return map[string]map[string]float64{
 					"localhost": {
-						"available": 10,
-						"avgcalltime": 11,
-						"avgdbcalltime": 12,
-						"avglockcalltime": 13,
+						"available":         10,
+						"avgcalltime":       11,
+						"avgdbcalltime":     12,
+						"avglockcalltime":   13,
 						"avgservercalltime": 14,
 					}}, nil
 			}
@@ -522,6 +522,6 @@ func settingstext() string {
     timerNotyfy: 10
 RAC: "/opt/1C/v8.3/x86_64/rac"
 MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
-MSUSER: RemoteAccess
-MSPAS: dvt45hn`
+MSUSER: 
+MSPAS: `
 }

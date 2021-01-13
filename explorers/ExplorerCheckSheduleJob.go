@@ -157,8 +157,6 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 }
 
 func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
-	// /opt/1C/v8.3/x86_64/rac infobase info --cluster=02a9be50-73ff-11e9-fe99-001a4b010536 --infobase=603b443e-41af-11ea-939b-001a4b010536 --infobase-user=Парма --infobase-pwd=fdfdEERR34
-
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
 		if v, ok := this.attemptsCount[basename]; !ok || v <= 3 {
