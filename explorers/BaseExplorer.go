@@ -31,6 +31,8 @@ type Isettings interface {
 	RAC_Path() string
 	RAC_Port() string
 	RAC_Host() string
+	RAC_Login() string
+	RAC_Pass() string
 	GetExplorers() map[string]map[string]interface{}
 	GetProperty(string, string, interface{}) interface{}
 }
@@ -280,6 +282,13 @@ func (this *BaseRACExplorer) GetClusterID() string {
 				param = append(param, this.settings.RAC_Port())
 			}
 		}
+		if login := this.settings.RAC_Login(); login != "" {
+			param = append(param, fmt.Sprintf("--cluster-user=%v", login))
+			if pwd := this.settings.RAC_Pass(); pwd != "" {
+				param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
+			}
+		}
+
 		param = append(param, "cluster")
 		param = append(param, "list")
 

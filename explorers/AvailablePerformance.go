@@ -92,6 +92,12 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 			param = append(param, this.settings.RAC_Port())
 		}
 	}
+	if login := this.settings.RAC_Login(); login != "" {
+		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
+		if pwd := this.settings.RAC_Pass(); pwd != "" {
+			param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
+		}
+	}
 
 	param = append(param, "process")
 	param = append(param, "list")

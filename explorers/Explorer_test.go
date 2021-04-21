@@ -63,6 +63,12 @@ func (s *settings) RAC_Port() string {
 func (s *settings) RAC_Host() string {
 	return "localhost"
 }
+func (s *settings) RAC_Login() string {
+	return ""
+}
+func (s *settings) RAC_Pass() string {
+	return ""
+}
 
 func (s *settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
 	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {

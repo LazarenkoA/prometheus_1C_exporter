@@ -32,9 +32,11 @@ type settings struct {
 	TimeRotate int    `yaml:"TimeLogs"`
 	TTLLogs    int    `yaml:"TTLLogs"`
 	RAC        *struct {
-		Path string `yaml:"Path"`
-		Port string `yaml:"Port"`
-		Host string `yaml:"Host"`
+		Path  string `yaml:"Path"`
+		Port  string `yaml:"Port"`
+		Host  string `yaml:"Host"`
+		Login string `yaml:"Login"`
+		Pass  string `yaml:"Pass"`
 	} `yaml:"RAC"`
 }
 
@@ -113,6 +115,14 @@ func (s *settings) RAC_Port() string {
 
 func (s *settings) RAC_Host() string {
 	return s.RAC.Host
+}
+
+func (s *settings) RAC_Login() string {
+	return s.RAC.Login
+}
+
+func (s *settings) RAC_Pass() string {
+	return s.RAC.Pass
 }
 
 func (s *settings) getMSdata(cForce chan bool) {
