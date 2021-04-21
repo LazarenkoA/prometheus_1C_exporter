@@ -29,6 +29,8 @@ var (
 type Isettings interface {
 	GetLogPass(string) (log string, pass string)
 	RAC_Path() string
+	RAC_Port() string
+	RAC_Host() string
 	GetExplorers() map[string]map[string]interface{}
 	GetProperty(string, string, interface{}) interface{}
 }
@@ -270,7 +272,18 @@ func (this *BaseRACExplorer) GetClusterID() string {
 		this.mutex().Lock()
 		defer this.mutex().Unlock()
 
-		cmdCommand := exec.Command(this.settings.RAC_Path(), "cluster", "list")
+		param := []string{}
+		if this.settings.RAC_Host() != "" {
+			param = append(param, this.settings.RAC_Host())
+
+			if this.settings.RAC_Port() != "" {
+				param = append(param, this.settings.RAC_Port())
+			}
+		}
+		param = append(param, "cluster")
+		param = append(param, "list")
+
+		cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
 		if result, err := this.run(cmdCommand); err != nil {
 			this.cerror <- fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error()) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения

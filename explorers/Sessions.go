@@ -92,6 +92,14 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 	sesData = []map[string]string{}
 
 	param := []string{}
+	if this.settings.RAC_Host() != "" {
+		param = append(param, this.settings.RAC_Host())
+
+		if this.settings.RAC_Port() != "" {
+			param = append(param, this.settings.RAC_Port())
+		}
+	}
+
 	param = append(param, "session")
 	param = append(param, "list")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))

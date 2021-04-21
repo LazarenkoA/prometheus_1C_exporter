@@ -91,6 +91,14 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 	connData = []map[string]string{}
 
 	param := []string{}
+	if this.settings.RAC_Host() != "" {
+		param = append(param, this.settings.RAC_Host())
+
+		if this.settings.RAC_Port() != "" {
+			param = append(param, this.settings.RAC_Port())
+		}
+	}
+
 	param = append(param, "connection")
 	param = append(param, "list")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))

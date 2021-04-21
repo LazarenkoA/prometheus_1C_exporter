@@ -57,6 +57,12 @@ func (s *settings) GetLogPass(ibname string) (login, pass string) {
 func (s *settings) RAC_Path() string {
 	return "/opt/1C/v8.3/x86_64/rac"
 }
+func (s *settings) RAC_Port() string {
+	return "1545"
+}
+func (s *settings) RAC_Host() string {
+	return "localhost"
+}
 
 func (s *settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
 	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {
@@ -520,7 +526,10 @@ func settingstext() string {
       - ragent
       - rmngr
     timerNotyfy: 10
-RAC: "/opt/1C/v8.3/x86_64/rac"
+RAC:
+  Path: "/opt/1C/v8.3/x86_64/rac"
+  Port: "1545"      # Не обязательный параметр
+  Host: "localhost" # Не обязательный параметр
 MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
 MSUSER: 
 MSPAS: `

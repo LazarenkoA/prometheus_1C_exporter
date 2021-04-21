@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	// settingsPath = "D:\\GoMy\\src\\prometheus_1C_exporter\\settings.yaml" // debug
+	// settingsPath = "settings.yaml" // debug
 	s := loadSettings(settingsPath)
 
 	lw := new(logrusRotate.Rotate).Construct()

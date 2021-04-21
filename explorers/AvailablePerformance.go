@@ -85,6 +85,14 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 	procData := []map[string]string{}
 
 	param := []string{}
+	if this.settings.RAC_Host() != "" {
+		param = append(param, this.settings.RAC_Host())
+
+		if this.settings.RAC_Port() != "" {
+			param = append(param, this.settings.RAC_Port())
+		}
+	}
+
 	param = append(param, "process")
 	param = append(param, "list")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))

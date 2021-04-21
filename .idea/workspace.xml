@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.go" beforeDir="false" afterPath="$PROJECT_DIR$/settings.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/settings.yaml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" path="C:\Go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="C:\Program Files\JetBrains\IntelliJ IDEA 2020.2.2\plugins\maven\lib\maven3" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="1iKh5URUTPfFHafTJCkIw5NfP6y" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="configurable.Global.GOPATH.is.expanded" value="true" />
+    <property name="configurable.Module.GOPATH.is.expanded" value="false" />
+    <property name="configurable.Project.GOPATH.is.expanded" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="go.vgo" />
+  </component>
+  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter">
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+      <option name="arquillianRunConfiguration">
+        <value>
+          <option name="containerStateName" value="" />
+        </value>
+      </option>
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="DIRECTORY" />
+      <filePath value="$PROJECT_DIR$" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$/main.go" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build prometheus_1C_exporter/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="DIRECTORY" />
+      <filePath value="$PROJECT_DIR$" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTest_Explorer\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTest_Explorer\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTest_RAC\E$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
+        <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
+        <item itemvalue="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+        <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="" />
+      <created>1601662007906</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1601662007906</updated>
+      <workItem from="1601662009331" duration="748000" />
+      <workItem from="1601662822398" duration="397000" />
+      <workItem from="1601663237449" duration="181000" />
+      <workItem from="1601663495833" duration="268000" />
+      <workItem from="1601663784191" duration="337000" />
+      <workItem from="1602143135862" duration="797000" />
+      <workItem from="1602272220443" duration="7210000" />
+      <workItem from="1602435847123" duration="728000" />
+      <workItem from="1602494828326" duration="2839000" />
+      <workItem from="1602519771365" duration="6137000" />
+      <workItem from="1602960824071" duration="1434000" />
+      <workItem from="1603183647811" duration="842000" />
+      <workItem from="1603797058455" duration="55000" />
+      <workItem from="1604384242027" duration="138000" />
+      <workItem from="1604384595469" duration="1281000" />
+      <workItem from="1604927093125" duration="861000" />
+      <workItem from="1605766614514" duration="1988000" />
+      <workItem from="1605975917685" duration="1240000" />
+      <workItem from="1607357510818" duration="11965000" />
+      <workItem from="1609348163846" duration="12538000" />
+      <workItem from="1609782629675" duration="1431000" />
+      <workItem from="1610356466631" duration="4182000" />
+      <workItem from="1610540184697" duration="863000" />
+      <workItem from="1615547413594" duration="817000" />
+      <workItem from="1616652109983" duration="1878000" />
+      <workItem from="1617104985562" duration="2232000" />
+      <workItem from="1618926708766" duration="2559000" />
+    </task>
+    <task id="LOCAL-00001" summary="добавлены метрики для диска">
+      <created>1602276839579</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1602276839579</updated>
+    </task>
+    <task id="LOCAL-00002" summary="убрал перевод коретки из результата">
+      <created>1602495070004</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1602495070004</updated>
+    </task>
+    <task id="LOCAL-00003" summary="добавил нормализацию кодировки (актуально для windows)">
+      <created>1602495963130</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1602495963130</updated>
+    </task>
+    <task id="LOCAL-00004" summary="edit readme">
+      <created>1602496198713</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1602496198713</updated>
+    </task>
+    <task id="LOCAL-00005" summary="кодировка">
+      <created>1602520223780</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1602520223780</updated>
+    </task>
+    <task id="LOCAL-00006" summary="убрал отладочный код">
+      <created>1602524757711</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1602524757711</updated>
+    </task>
+    <task id="LOCAL-00007" summary="опечатка">
+      <created>1602961245900</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1602961245900</updated>
+    </task>
+    <task id="LOCAL-00008" summary="опечатка">
+      <created>1602961507956</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1602961507956</updated>
+    </task>
+    <task id="LOCAL-00009" summary="README.md">
+      <created>1603183895425</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1603183895425</updated>
+    </task>
+    <task id="LOCAL-00010" summary="завершение процесса при завершении таймаута">
+      <created>1605863452368</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1605863452368</updated>
+    </task>
+    <task id="LOCAL-00011" summary="test">
+      <created>1605863726494</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1605863726494</updated>
+    </task>
+    <task id="LOCAL-00012" summary="добавлен комментарий">
+      <created>1610357486587</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1610357486587</updated>
+    </task>
+    <task id="LOCAL-00013" summary=".">
+      <created>1610540380173</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1610540380173</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="добавлены метрики для диска" />
+    <MESSAGE value="убрал перевод коретки из результата" />
+    <MESSAGE value="добавил нормализацию кодировки (актуально для windows)" />
+    <MESSAGE value="edit readme" />
+    <MESSAGE value="кодировка" />
+    <MESSAGE value="убрал отладочный код" />
+    <MESSAGE value="опечатка" />
+    <MESSAGE value="README.md" />
+    <MESSAGE value="завершение процесса при завершении таймаута" />
+    <MESSAGE value="test" />
+    <MESSAGE value="добавлен комментарий" />
+    <MESSAGE value="." />
+    <option name="LAST_COMMIT_MESSAGE" value="." />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+  <component name="WindowStateProjectService">
+    <state width="1877" height="328" key="GridCell.Tab.0.bottom" timestamp="1618985797865">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797865" />
+    <state width="1877" height="328" key="GridCell.Tab.0.center" timestamp="1618985797865">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797865" />
+    <state width="1877" height="328" key="GridCell.Tab.0.left" timestamp="1618985797865">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797865" />
+    <state width="1877" height="328" key="GridCell.Tab.0.right" timestamp="1618985797865">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797865" />
+    <state width="1877" height="328" key="GridCell.Tab.1.bottom" timestamp="1618985797735">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797735" />
+    <state width="1877" height="328" key="GridCell.Tab.1.center" timestamp="1618985797735">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797735" />
+    <state width="1877" height="328" key="GridCell.Tab.1.left" timestamp="1618985797735">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797735" />
+    <state width="1877" height="328" key="GridCell.Tab.1.right" timestamp="1618985797735">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="328" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1618985797735" />
+    <state x="552" y="252" key="Vcs.Push.Dialog.v2" timestamp="1610540382845">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="552" y="252" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1610540382845" />
+    <state x="669" y="253" width="1052" height="534" key="find.popup" timestamp="1618985620245">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="669" y="253" width="1052" height="534" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1618985620245" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1618984837843">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1618984837843" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/main.go</url>
+          <line>30</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/explorers/pars_test.go</url>
+          <line>27</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/explorers/Explorer_test.go</url>
+          <line>228</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

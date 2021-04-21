@@ -168,6 +168,14 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	}
 
 	var param []string
+	if this.settings.RAC_Host() != "" {
+		param = append(param, this.settings.RAC_Host())
+
+		if this.settings.RAC_Port() != "" {
+			param = append(param, this.settings.RAC_Port())
+		}
+	}
+
 	param = append(param, "infobase")
 	param = append(param, "info")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
@@ -212,6 +220,14 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 		defer this.mutex().Unlock()
 
 		var param []string
+		if this.settings.RAC_Host() != "" {
+			param = append(param, this.settings.RAC_Host())
+
+			if this.settings.RAC_Port() != "" {
+				param = append(param, this.settings.RAC_Port())
+			}
+		}
+
 		param = append(param, "infobase")
 		param = append(param, "summary")
 		param = append(param, "list")
