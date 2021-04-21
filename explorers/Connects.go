@@ -99,6 +99,8 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 		}
 	}
 
+	param = append(param, "connection")
+	param = append(param, "list")
 	if login := this.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := this.settings.RAC_Pass(); pwd != "" {
@@ -106,8 +108,6 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 		}
 	}
 
-	param = append(param, "connection")
-	param = append(param, "list")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)

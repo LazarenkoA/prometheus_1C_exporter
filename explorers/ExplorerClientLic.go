@@ -111,6 +111,10 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 			param = append(param, this.settings.RAC_Port())
 		}
 	}
+
+
+	param = append(param, "session")
+	param = append(param, "list")
 	if login := this.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := this.settings.RAC_Pass(); pwd != "" {
@@ -118,8 +122,6 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 		}
 	}
 
-	param = append(param, "session")
-	param = append(param, "list")
 	param = append(param, "--licenses")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 

@@ -99,6 +99,9 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 			param = append(param, this.settings.RAC_Port())
 		}
 	}
+
+	param = append(param, "session")
+	param = append(param, "list")
 	if login := this.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := this.settings.RAC_Pass(); pwd != "" {
@@ -106,8 +109,6 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 		}
 	}
 
-	param = append(param, "session")
-	param = append(param, "list")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)

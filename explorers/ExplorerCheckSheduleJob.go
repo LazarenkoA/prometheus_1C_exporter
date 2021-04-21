@@ -175,6 +175,9 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 			param = append(param, this.settings.RAC_Port())
 		}
 	}
+
+	param = append(param, "infobase")
+	param = append(param, "info")
 	if login := this.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := this.settings.RAC_Pass(); pwd != "" {
@@ -182,8 +185,6 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 		}
 	}
 
-	param = append(param, "infobase")
-	param = append(param, "info")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
 	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
@@ -233,16 +234,16 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 				param = append(param, this.settings.RAC_Port())
 			}
 		}
+
+		param = append(param, "infobase")
+		param = append(param, "summary")
+		param = append(param, "list")
 		if login := this.settings.RAC_Login(); login != "" {
 			param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 			if pwd := this.settings.RAC_Pass(); pwd != "" {
 				param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
 			}
 		}
-
-		param = append(param, "infobase")
-		param = append(param, "summary")
-		param = append(param, "list")
 		param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 		if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
