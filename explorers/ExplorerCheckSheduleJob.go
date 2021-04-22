@@ -139,9 +139,6 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 	}()
 
 	go func() {
-		this.mutex().RLock()
-		defer this.mutex().RUnlock()
-
 		for _, item := range this.baseList {
 			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Запрашиваем информацию для базы %s", item["name"])
 			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
@@ -160,7 +157,10 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
 		if v, ok := this.attemptsCount[basename]; !ok || v <= 3 {
+			this.mutex().Lock()
 			this.attemptsCount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
+			this.mutex().Unlock()
+
 			time.Sleep(time.Second * 5)    // что б растянуть во времени
 			CForce <- true                 // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
 		}

@@ -24,12 +24,9 @@
   <component name="ChangeListManager">
     <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus_1C_exporter" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,7 +61,7 @@
     <property name="configurable.Project.GOPATH.is.expanded" value="true" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../WorkGIT/MIRS_STORAGE/GO/GoGateway" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="go.vgo" />
@@ -184,7 +181,7 @@
       <workItem from="1615547413594" duration="817000" />
       <workItem from="1616652109983" duration="1878000" />
       <workItem from="1617104985562" duration="2232000" />
-      <workItem from="1618926708766" duration="8568000" />
+      <workItem from="1618926708766" duration="14786000" />
     </task>
     <task id="LOCAL-00001" summary="добавлены метрики для диска">
       <created>1602276839579</created>
@@ -328,6 +325,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="478" height="466" key="DebuggerActiveHint/0.0.1920.1040@0.0.1920.1040" timestamp="1618987011726" />
+    <state x="740" y="274" key="FileChooserDialogImpl" timestamp="1619070971066">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1619070971066" />
     <state width="1877" height="328" key="GridCell.Tab.0.bottom" timestamp="1619024044582">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

@@ -540,3 +540,7 @@ MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
 MSUSER: 
 MSPAS: `
 }
+
+
+// go test -coverprofile="cover.out"
+// go tool cover -html="cover.out" -o cover.html
