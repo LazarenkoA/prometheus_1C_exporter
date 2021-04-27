@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
@@ -13,6 +14,13 @@ import (
 
 type ExplorerConnects struct {
 	ExplorerCheckSheduleJob
+}
+
+func appendParam(in []string, value string) []string {
+	if value != "" {
+		in = append(in, value)
+	}
+	return in
 }
 
 func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
@@ -92,11 +100,7 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 
 	param := []string{}
 	if this.settings.RAC_Host() != "" {
-		param = append(param, this.settings.RAC_Host())
-
-		if this.settings.RAC_Port() != "" {
-			param = append(param, this.settings.RAC_Port())
-		}
+		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "connection")

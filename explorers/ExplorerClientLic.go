@@ -105,13 +105,8 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 
 	// если заполнен хост то порт может быть не заполнен, если не заполнен хост, а заполнен порт, так не будет работать, по этому условие с портом внутри
 	if this.settings.RAC_Host() != "" {
-		param = append(param, this.settings.RAC_Host())
-
-		if this.settings.RAC_Port() != "" {
-			param = append(param, this.settings.RAC_Port())
-		}
+		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
 	}
-
 
 	param = append(param, "session")
 	param = append(param, "list")

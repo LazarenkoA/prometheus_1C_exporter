@@ -24,8 +24,12 @@
   <component name="ChangeListManager">
     <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus_1C_exporter" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -67,13 +71,15 @@
     <property name="settings.editor.selected.configurable" value="go.vgo" />
   </component>
   <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter">
-    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
           <option name="containerStateName" value="" />
         </value>
       </option>
-      <option name="TEST_OBJECT" value="class" />
+      <option name="TEST_OBJECT" value="CLASS" />
+      <properties />
+      <listeners />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -181,7 +187,8 @@
       <workItem from="1615547413594" duration="817000" />
       <workItem from="1616652109983" duration="1878000" />
       <workItem from="1617104985562" duration="2232000" />
-      <workItem from="1618926708766" duration="14786000" />
+      <workItem from="1618926708766" duration="15592000" />
+      <workItem from="1619544501826" duration="1317000" />
     </task>
     <task id="LOCAL-00001" summary="добавлены метрики для диска">
       <created>1602276839579</created>
@@ -329,46 +336,46 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1619070971066" />
-    <state width="1877" height="328" key="GridCell.Tab.0.bottom" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.0.bottom" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.0.center" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.0.center" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.0.left" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.0.left" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.0.right" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.0.right" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.1.bottom" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.1.bottom" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.1.center" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.1.center" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.1.left" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.1.left" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state width="1877" height="328" key="GridCell.Tab.1.right" timestamp="1619024044582">
+    <state width="1877" height="328" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state width="1877" height="328" key="GridCell.Tab.1.right" timestamp="1619073098668">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619024044582" />
-    <state x="552" y="252" key="Vcs.Push.Dialog.v2" timestamp="1610540382845">
+    <state width="1877" height="328" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
+    <state x="713" y="127" width="1052" height="689" key="find.popup" timestamp="1619545946101">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="252" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1610540382845" />
-    <state x="713" y="127" width="1052" height="689" key="find.popup" timestamp="1619025660535">
+    <state x="713" y="127" width="1052" height="689" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1619545946101" />
+    <state x="342" y="127" key="new project wizard" timestamp="1619073090759">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="713" y="127" width="1052" height="689" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1619025660535" />
+    <state x="342" y="127" key="new project wizard/0.0.1920.1040@0.0.1920.1040" timestamp="1619073090759" />
     <state x="616" y="240" key="run.anything.popup" timestamp="1618984837843">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

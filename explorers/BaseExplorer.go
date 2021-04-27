@@ -276,11 +276,7 @@ func (this *BaseRACExplorer) GetClusterID() string {
 
 		param := []string{}
 		if this.settings.RAC_Host() != "" {
-			param = append(param, this.settings.RAC_Host())
-
-			if this.settings.RAC_Port() != "" {
-				param = append(param, this.settings.RAC_Port())
-			}
+			param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
 		}
 
 		param = append(param, "cluster")
