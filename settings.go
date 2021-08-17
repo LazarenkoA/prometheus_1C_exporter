@@ -81,7 +81,7 @@ func loadSettings(filePath string) *settings {
 
 	s := new(settings)
 	if err := yaml.Unmarshal(file, s); err != nil {
-		panic("Ошибка десириализации настроек")
+		logrusRotate.StandardLogger().WithError(err).Panic("Ошибка десириализации настроек")
 	}
 
 	rand.Seed(time.Now().Unix())

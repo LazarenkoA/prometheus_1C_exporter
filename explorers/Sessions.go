@@ -17,7 +17,8 @@ type ExplorerSessions struct {
 }
 
 func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *ExplorerSessions {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -41,7 +42,7 @@ func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *Explore
 
 func (this *ExplorerSessions) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -51,7 +52,7 @@ func (this *ExplorerSessions) StartExplore() {
 	this.ExplorerCheckSheduleJob.settings = this.settings
 	if err := this.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Warning("Не удалось получить список баз")
+		this.logger.WithError(err).Warning("Не удалось получить список баз")
 	}
 
 FOR:
@@ -94,7 +95,7 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 
 	param := []string{}
 	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "session")
@@ -110,7 +111,7 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+		this.logger.WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &sesData)

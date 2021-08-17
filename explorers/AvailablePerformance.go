@@ -19,7 +19,8 @@ type ExplorerAvailablePerformance struct {
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
-	lr.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = lr.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -87,7 +88,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 
 	param := []string{}
 	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "process")
@@ -111,7 +112,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
 	tmp := make(map[string]map[string][]float64)
-	tmp["dsds"] = map[string][]float64{"available": []float64{}}
+	//tmp["dsds"] = map[string][]float64{"available": []float64{}}
 
 	for _, item := range procData {
 		if _, ok := tmp[item["host"]]; !ok {

@@ -19,12 +19,13 @@ type (
 )
 
 func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerProc {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Память процессов",
+			Name:       this.GetName(),
+			Help:       "Память процессов",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "name", "pid", "metrics"},
@@ -38,7 +39,7 @@ func (this *ExplorerProc) Construct(s Isettings, cerror chan error) *ExplorerPro
 
 func (this *ExplorerProc) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -48,12 +49,12 @@ FOR:
 	for {
 		this.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			this.logger.Trace("Старт итерации таймера")
 			defer this.Unlock()
 
 			proc, err := newProcData()
 			if err != nil {
-				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+				this.logger.WithError(err).Error()
 				return
 			}
 

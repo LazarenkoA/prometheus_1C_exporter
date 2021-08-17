@@ -24,7 +24,8 @@ func appendParam(in []string, value string) []string {
 }
 
 func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -100,7 +101,7 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 
 	param := []string{}
 	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "connection")
@@ -116,7 +117,7 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+		this.logger.WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
 		this.formatMultiResult(result, &connData)

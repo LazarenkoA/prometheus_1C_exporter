@@ -18,7 +18,8 @@ type (
 )
 
 func (this *ExplorerDisk) Construct(s Isettings, cerror chan error) *ExplorerDisk {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -37,7 +38,7 @@ func (this *ExplorerDisk) Construct(s Isettings, cerror chan error) *ExplorerDis
 
 func (this *ExplorerDisk) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -47,12 +48,12 @@ FOR:
 	for {
 		this.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			this.logger.Trace("Старт итерации таймера")
 			defer this.Unlock()
 
 			dinfo, err := disk.IOCounters()
 			if err != nil {
-				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+				this.logger.WithError(err).Error()
 				return
 			}
 

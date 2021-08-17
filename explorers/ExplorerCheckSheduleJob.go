@@ -32,7 +32,8 @@ func (this *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
 }
 
 func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -56,7 +57,7 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 
 func (this *ExplorerCheckSheduleJob) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -64,20 +65,20 @@ func (this *ExplorerCheckSheduleJob) StartExplore() {
 	// Получаем список баз в кластере
 	if err := this.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Warning("Не удалось получить список баз")
+		this.logger.WithError(err).Warning("Не удалось получить список баз")
 	}
 
 FOR:
 	for {
 		this.Lock()
-		logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Lock")
+		this.logger.Trace("Lock")
 		func() {
 			defer func() {
 				this.Unlock()
-				logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Unlock")
+				this.logger.Trace("Unlock")
 			}()
 
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			this.logger.Trace("Старт итерации таймера")
 
 			if listCheck, err := this.dataGetter(); err == nil {
 				this.gauge.Reset()
@@ -90,7 +91,7 @@ FOR:
 				}
 			} else {
 				this.gauge.Reset()
-				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
+				this.logger.WithError(err).Error("Произошла ошибка")
 			}
 		}()
 
@@ -103,8 +104,8 @@ FOR:
 }
 
 func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Получение данных")
-	defer logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Данные получены")
+	this.logger.Trace("Получение данных")
+	defer this.logger.Trace("Данные получены")
 
 	data = make(map[string]bool)
 
@@ -127,7 +128,7 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 					db.value = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
 					chanOut <- db
 				} else {
-					logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+					this.logger.WithError(err).Error()
 				}
 			}
 		}()
@@ -140,7 +141,7 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 
 	go func() {
 		for _, item := range this.baseList {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Tracef("Запрашиваем информацию для базы %s", item["name"])
+			this.logger.Tracef("Запрашиваем информацию для базы %s", item["name"])
 			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
 		}
 		close(chanIn)
@@ -161,15 +162,15 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 			this.attemptsCount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
 			this.mutex().Unlock()
 
-			time.Sleep(time.Second * 5)    // что б растянуть во времени
-			CForce <- true                 // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
+			time.Sleep(time.Second * 5) // что б растянуть во времени
+			CForce <- true              // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
 		}
 		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
 
 	var param []string
 	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "infobase")
@@ -186,9 +187,9 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
 	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithField("param", param).Debugf("Получаем информацию для базы %q", basename)
+	this.logger.WithField("param", param).Debugf("Получаем информацию для базы %q", basename)
 	if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Error()
+		this.logger.WithError(err).Error()
 		return map[string]string{}, err
 	} else {
 		baseInfo := []map[string]string{}
@@ -224,7 +225,7 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 
 		var param []string
 		if this.settings.RAC_Host() != "" {
-			param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+			param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 		}
 
 		param = append(param, "infobase")
@@ -239,7 +240,7 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 		param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 		if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {
-			logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Error("Ошибка получения списка баз")
+			this.logger.WithError(err).Error("Ошибка получения списка баз")
 			return err
 		} else {
 			this.formatMultiResult(result, &this.baseList)

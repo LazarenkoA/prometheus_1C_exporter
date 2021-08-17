@@ -23,7 +23,7 @@ type RotateConf struct {
 	settings *settings
 }
 
-func init()  {
+func init() {
 	exp.CForce = make(chan bool, 1)
 }
 
@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	// settingsPath = "settings.yaml" // debug
+	//settingsPath = "settings.yaml" // debug
 	s := loadSettings(settingsPath)
 
 	lw := new(logrusRotate.Rotate).Construct()

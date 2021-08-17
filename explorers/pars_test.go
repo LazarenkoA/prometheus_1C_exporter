@@ -1,6 +1,7 @@
 package explorer
 
 import (
+	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"testing"
@@ -17,6 +18,7 @@ func rac_initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	object := new(BaseRACExplorer)
+	object.logger = logrusRotate.StandardLogger().WithField("Name", "test")
 
 	return []func(*testing.T){
 		func(t *testing.T) {
@@ -24,6 +26,8 @@ func rac_initests() []func(*testing.T) {
 			object.formatMultiResult(stringData(), &licData)
 			if len(licData) != 3 {
 				t.Error("В массиве должно быть 3 элемента, по факту ", len(licData))
+			} else if len(licData[0]) != 18 {
+				t.Error("Количество полей должно быть 18, по факту ", len(licData[0]))
 			}
 		},
 	}
@@ -43,6 +47,8 @@ func stringData() string {
 	max-users-cur      : 500
 	rmngr-address      : "host1"
 	rmngr-port         : 31569
+	started-at                       : 2021-08-13T18:18:09
+	last-active-at                   : 2021-08-13T18:18:09
 	rmngr-pid          : 20452
 	short-presentation : "Сервер, 8100886831 500 113000"
 	full-presentation  : "Сервер, 20452, host1, 31569, 8100886831 500 113000, file:///var/1C/licenses/20132343433446.lic"
@@ -61,6 +67,8 @@ func stringData() string {
 	rmngr-address      : "host1"
 	rmngr-port         : 31569
 	rmngr-pid          : 20452
+	started-at                       : 2021-08-13T18:18:09
+	last-active-at                   : 2021-08-13T18:18:09
 	short-presentation : "Сервер, 8100886831 500 113000"
 	full-presentation  : "Сервер, 20452, host1, 31569, 8100886831 500 113000, file:///var/1C/licenses/20132343433446.lic"
 
@@ -74,6 +82,8 @@ func stringData() string {
 	license-type       : soft
 	net                : no
 	max-users-all      : 113000
+	started-at                       : 2021-08-13T18:18:09
+	last-active-at                   : 2021-08-13T18:18:09
 	max-users-cur      : 500
 	rmngr-address      : "host1"
 	rmngr-port         : 31569

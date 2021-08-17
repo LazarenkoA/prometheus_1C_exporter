@@ -18,12 +18,13 @@ type (
 )
 
 func (this *ExplorerCPU) Construct(s Isettings, cerror chan error) *ExplorerCPU {
-	logrusRotate.StandardLogger().WithField("Name", this.GetName()).Debug("Создание объекта")
+	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
+	this.logger.Debug("Создание объекта")
 
 	this.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: this.GetName(),
-			Help: "Метрики CPU",
+			Name:       this.GetName(),
+			Help:       "Метрики CPU",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host"},
@@ -37,22 +38,22 @@ func (this *ExplorerCPU) Construct(s Isettings, cerror chan error) *ExplorerCPU 
 
 func (this *ExplorerCPU) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 
-	FOR:
+FOR:
 	for {
 		this.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			this.logger.Trace("Старт итерации таймера")
 			defer this.Unlock()
 
 			percentage, err := cpu.Percent(0, false)
 			if err != nil {
-				logrusRotate.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+				this.logger.WithError(err).Error()
 				return
 			}
 
@@ -69,7 +70,6 @@ func (this *ExplorerCPU) StartExplore() {
 		}
 	}
 }
-
 
 func (this *ExplorerCPU) GetName() string {
 	return "CPU"

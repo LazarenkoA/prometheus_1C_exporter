@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -70,6 +71,7 @@ type BaseExplorer struct {
 	isLocked int32
 	// mock object
 	dataGetter func() ([]map[string]string, error)
+	logger     *logrus.Entry
 }
 
 // базовый класс для всех метрик собираемых через RAC
@@ -113,7 +115,7 @@ func (this *BaseExplorer) GetName() string {
 }
 
 func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
-	logrusRotate.StandardLogger().WithField("Исполняемый файл", cmd.Path).
+	this.logger.WithField("Исполняемый файл", cmd.Path).
 		WithField("Параметры", cmd.Args).
 		Debug("Выполнение команды")
 
@@ -159,7 +161,7 @@ func (this *BaseExplorer) Start(exp IExplorers) {
 
 	go func() {
 		<-this.ctx.Done() // Stop
-		logrusRotate.StandardLogger().Debug("Остановка сбора метрик")
+		this.logger.Debug("Остановка сбора метрик")
 
 		this.Continue() // что б снять лок
 		if this.ticker != nil {
@@ -183,8 +185,8 @@ func (this *BaseExplorer) Stop() {
 }
 
 func (this *BaseExplorer) Pause() {
-	logrusRotate.StandardLogger().Trace("Pause. begin")
-	defer logrusRotate.StandardLogger().Trace("Pause. end")
+	this.logger.Trace("Pause. begin")
+	defer this.logger.Trace("Pause. end")
 
 	if this.summary != nil {
 		this.summary.Reset()
@@ -195,26 +197,23 @@ func (this *BaseExplorer) Pause() {
 
 	if atomic.CompareAndSwapInt32(&this.isLocked, 0, 1) { // нужно что бы 2 раза не наложить lock
 		this.Lock()
-		logrusRotate.StandardLogger().Trace("Pause. Блокировка установлена")
+		this.logger.Trace("Pause. Блокировка установлена")
 	} else {
-		logrusRotate.StandardLogger().WithField("isLocked", this.isLocked).Trace("Pause. Уже заблокировано")
+		this.logger.WithField("isLocked", this.isLocked).Trace("Pause. Уже заблокировано")
 	}
 }
 
 func (this *BaseExplorer) Continue() {
-	logrusRotate.StandardLogger().Trace("Continue. begin")
-	defer logrusRotate.StandardLogger().Trace("Continue. end")
-
 	if atomic.CompareAndSwapInt32(&this.isLocked, 1, 0) {
 		this.Unlock()
-		logrusRotate.StandardLogger().Trace("Continue. Блокировка снята")
+		this.logger.Trace("Continue. Блокировка снята")
 	} else {
-		logrusRotate.StandardLogger().WithField("isLocked", this.isLocked).Trace("Continue. Блокировка не была установлена")
+		this.logger.WithField("isLocked", this.isLocked).Trace("Continue. Блокировка не была установлена")
 	}
 }
 
 func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
-	logrusRotate.StandardLogger().Trace("Парс многострочного результата")
+	this.logger.Trace("Парс многострочного результата")
 
 	strIn = normalizeEncoding(strIn)
 	strIn = strings.Replace(strIn, "\r", "", -1)
@@ -230,17 +229,17 @@ func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[stri
 }
 
 func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
-	logrusRotate.StandardLogger().Trace("Парс результата")
-
 	strIn = normalizeEncoding(strIn)
 	result := make(map[string]string)
 	for _, line := range strings.Split(strIn, "\n") {
 		parts := strings.Split(line, ":")
-		if len(parts) == 2 {
-			result[strings.Trim(parts[0], " \r")] = strings.Trim(parts[1], " \r")
+		// могут быть параметры с временем started-at : 2021-08-17T11:12:09
+		if len(parts) >= 2 {
+			result[strings.Trim(parts[0], " \r\t")] = strings.Trim(strings.Join(parts[1:], ":"), " \r\t")
 		}
 	}
 
+	this.logger.WithField("strIn", strIn).WithField("out", result).Trace("Парс результата")
 	return result
 }
 
@@ -265,8 +264,8 @@ func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 }
 
 func (this *BaseRACExplorer) GetClusterID() string {
-	logrusRotate.StandardLogger().Debug("Получаем идентификатор кластера")
-	defer logrusRotate.StandardLogger().Debug("Получен идентификатор кластера ", this.clusterID)
+	this.logger.Debug("Получаем идентификатор кластера")
+	defer this.logger.Debug("Получен идентификатор кластера ", this.clusterID)
 	//this.mutex().RLock()
 	//defer this.mutex().RUnlock()
 
@@ -276,7 +275,7 @@ func (this *BaseRACExplorer) GetClusterID() string {
 
 		param := []string{}
 		if this.settings.RAC_Host() != "" {
-			param = append(param, strings.Join(appendParam([]string{ this.settings.RAC_Host() }, this.settings.RAC_Port()), ":"))
+			param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
 		}
 
 		param = append(param, "cluster")

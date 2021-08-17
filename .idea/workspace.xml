@@ -27,17 +27,25 @@
       <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCPU.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCPU.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerDisk.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerDisk.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerProc.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerProc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/SessionsData.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/SessionsData.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/pars_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/pars_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus_1C_exporter" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.go" beforeDir="false" afterPath="$PROJECT_DIR$/settings.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="GOROOT" path="C:\Go" />
+  <component name="GOROOT" path="D:\GoMy\src\go1.16.4" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -65,21 +73,19 @@
     <property name="configurable.Project.GOPATH.is.expanded" value="true" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../WorkGIT/MIRS_STORAGE/GO/GoGateway" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../WorkGIT/MIRS_STORAGE/GO/runner" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="go.vgo" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter">
-    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)">
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
           <option name="containerStateName" value="" />
         </value>
       </option>
-      <option name="TEST_OBJECT" value="CLASS" />
-      <properties />
-      <listeners />
+      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -133,6 +139,17 @@
       <pattern value="^\QTest_Explorer\E$" />
       <method v="2" />
     </configuration>
+    <configuration name="Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTest_RAC\E$" />
+      <method v="2" />
+    </configuration>
     <configuration name="Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$/explorers" />
@@ -146,6 +163,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
         <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
         <item itemvalue="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
@@ -188,7 +206,16 @@
       <workItem from="1616652109983" duration="1878000" />
       <workItem from="1617104985562" duration="2232000" />
       <workItem from="1618926708766" duration="15592000" />
-      <workItem from="1619544501826" duration="1317000" />
+      <workItem from="1619544501826" duration="7344000" />
+      <workItem from="1620137732488" duration="66000" />
+      <workItem from="1621618558461" duration="657000" />
+      <workItem from="1622714438513" duration="304000" />
+      <workItem from="1622715063358" duration="9000" />
+      <workItem from="1624359778596" duration="865000" />
+      <workItem from="1624444534017" duration="2825000" />
+      <workItem from="1625169900047" duration="748000" />
+      <workItem from="1628192214516" duration="2224000" />
+      <workItem from="1629140990364" duration="16526000" />
     </task>
     <task id="LOCAL-00001" summary="добавлены метрики для диска">
       <created>1602276839579</created>
@@ -328,78 +355,77 @@
     <integration-enabled>true</integration-enabled>
   </component>
   <component name="WindowStateProjectService">
-    <state width="478" height="466" key="DebuggerActiveHint" timestamp="1618987011726">
+    <state x="752" y="450" key="#GOROOT" timestamp="1621618568852">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="478" height="466" key="DebuggerActiveHint/0.0.1920.1040@0.0.1920.1040" timestamp="1618987011726" />
-    <state x="740" y="274" key="FileChooserDialogImpl" timestamp="1619070971066">
+    <state x="752" y="450" key="#GOROOT/0.0.1920.1040@0.0.1920.1040" timestamp="1621618568852" />
+    <state x="709" y="356" key="#com.intellij.ide.actions.ChooseComponentsToExportDialog" timestamp="1624444898496">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1619070971066" />
-    <state width="1877" height="328" key="GridCell.Tab.0.bottom" timestamp="1619073098668">
+    <state x="709" y="356" key="#com.intellij.ide.actions.ChooseComponentsToExportDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1624444898496" />
+    <state width="638" height="466" key="DebuggerActiveHint" timestamp="1629191779439">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.0.center" timestamp="1619073098668">
+    <state width="638" height="466" key="DebuggerActiveHint/0.0.1920.1040@0.0.1920.1040" timestamp="1629191779439" />
+    <state x="740" y="274" key="FileChooserDialogImpl" timestamp="1624478116448">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.0.left" timestamp="1619073098668">
+    <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1624478116448" />
+    <state width="1877" height="318" key="GridCell.Tab.0.bottom" timestamp="1629191909712">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.0.right" timestamp="1619073098668">
+    <state width="1877" height="318" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909712" />
+    <state width="1877" height="318" key="GridCell.Tab.0.center" timestamp="1629191909711">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.1.bottom" timestamp="1619073098668">
+    <state width="1877" height="318" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909711" />
+    <state width="1877" height="318" key="GridCell.Tab.0.left" timestamp="1629191909710">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.1.center" timestamp="1619073098668">
+    <state width="1877" height="318" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909710" />
+    <state width="1877" height="318" key="GridCell.Tab.0.right" timestamp="1629191909712">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.1.left" timestamp="1619073098668">
+    <state width="1877" height="318" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909712" />
+    <state width="1877" height="318" key="GridCell.Tab.1.bottom" timestamp="1629191909066">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state width="1877" height="328" key="GridCell.Tab.1.right" timestamp="1619073098668">
+    <state width="1877" height="318" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909066" />
+    <state width="1877" height="318" key="GridCell.Tab.1.center" timestamp="1629191909066">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="328" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1619073098668" />
-    <state x="713" y="127" width="1052" height="689" key="find.popup" timestamp="1619545946101">
+    <state width="1877" height="318" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909066" />
+    <state width="1877" height="318" key="GridCell.Tab.1.left" timestamp="1629191909066">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="713" y="127" width="1052" height="689" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1619545946101" />
-    <state x="342" y="127" key="new project wizard" timestamp="1619073090759">
+    <state width="1877" height="318" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909066" />
+    <state width="1877" height="318" key="GridCell.Tab.1.right" timestamp="1629191909066">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="342" y="127" key="new project wizard/0.0.1920.1040@0.0.1920.1040" timestamp="1619073090759" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1618984837843">
+    <state width="1877" height="318" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909066" />
+    <state x="461" y="164" key="SettingsEditor" timestamp="1624444845935">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1618984837843" />
+    <state x="461" y="164" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1624444845935" />
+    <state x="713" y="127" width="1052" height="689" key="find.popup" timestamp="1629196856336">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="713" y="127" width="1052" height="689" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1629196856336" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/explorers/pars_test.go</url>
-          <line>27</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/explorers/Explorer_test.go</url>
           <line>234</line>
           <option name="timeStamp" value="11" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/main.go</url>
-          <line>46</line>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="GoApplicationRunConfiguration">
+        <watch expression="ex.GetName()" language="go" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>
