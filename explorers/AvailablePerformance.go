@@ -44,7 +44,7 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 
 func (this *ExplorerAvailablePerformance) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	lr.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+	this.logger.WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
 	this.ticker = time.NewTicker(timerNotyfy)
@@ -54,11 +54,11 @@ FOR:
 		// соответственно итерация будет на паузе ждать
 		this.Lock()
 		func() {
-			lr.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
+			this.logger.WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
 			if data, err := this.dataGetter(); err == nil {
-				lr.StandardLogger().Debug("Количество данных: ", len(data))
+				this.logger.Debug("Количество данных: ", len(data))
 				this.summary.Reset()
 				for host, data2 := range data {
 					for type_, value := range data2 {
@@ -67,7 +67,7 @@ FOR:
 				}
 			} else {
 				this.summary.Reset()
-				lr.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
+				this.logger.WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
 			}
 
 		}()
@@ -104,7 +104,7 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
 	if result, err := this.run(cmdCommand); err != nil {
-		lr.StandardLogger().WithField("Name", this.GetName()).WithError(err).Error()
+		this.logger.WithField("Name", this.GetName()).WithError(err).Error()
 		return data, err
 	} else {
 		this.formatMultiResult(result, &procData)
