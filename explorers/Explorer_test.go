@@ -203,16 +203,7 @@ func initests() []struct {
 		}},
 		{"Проверка AvailablePerformance", func(t *testing.T) {
 			t.Parallel()
-			objectPerf.dataGetter = func() (map[string]map[string]float64, error) {
-				return map[string]map[string]float64{
-					"localhost": {
-						"available":         10,
-						"avgcalltime":       11,
-						"avgdbcalltime":     12,
-						"avglockcalltime":   13,
-						"avgservercalltime": 14,
-					}}, nil
-			}
+			objectPerf.reader = testDataAvailablePerformance
 
 			go objectPerf.Start(objectPerf)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
@@ -222,11 +213,11 @@ func initests() []struct {
 				t.Error(err)
 			} else {
 				regs := []*regexp.Regexp{
-					regexp.MustCompile(`(?m)^AvailablePerformance.+?available.+?10`),
-					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgcalltime.+?11`),
-					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgdbcalltime.+?12`),
-					regexp.MustCompile(`(?m)^AvailablePerformance.+?avglockcalltime.+?13`),
-					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgservercalltime.+?14`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?available.+?181`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgcalltime.+?0.068`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgdbcalltime.+?0.007`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avglockcalltime.+?0.008`),
+					regexp.MustCompile(`(?m)^AvailablePerformance.+?avgservercalltime.+?0.053`),
 				}
 				for i, r := range regs {
 					if !r.MatchString(body) {
@@ -539,6 +530,50 @@ RAC:
 MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
 MSUSER: 
 MSPAS: `
+}
+
+func testDataAvailablePerformance() (string, error) {
+	return `process              : 6a147c59-9825-4ae7-b47e-7e63fce20c78
+host                 : xxxx-win
+port                 : 1561
+pid                  : 3200
+is-enable            : yes
+running              : yes
+started-at           : 2021-08-16T23:05:10
+use                  : used
+available-perfomance : 181
+capacity             : 1000
+connections          : 4
+memory-size          : 1281672
+memory-excess-time   : 0
+selection-size       : 122859
+avg-call-time        : 0.068
+avg-db-call-time     : 0.007
+avg-lock-call-time   : 0.008
+avg-server-call-time : 0.053
+avg-threads          : 0.063
+reserve              : no
+
+process              : 886a71de-8634-49e8-9d0a-7119168756f0
+host                 : xxx-lin
+port                 : 1960
+pid                  : 3396487
+is-enable            : yes
+running              : yes
+started-at           : 2021-08-19T00:30:13
+use                  : used
+available-perfomance : 243
+capacity             : 1000
+connections          : 3
+memory-size          : 193232
+memory-excess-time   : 0
+selection-size       : 32364
+avg-call-time        : 0.014
+avg-db-call-time     : 0.000
+avg-lock-call-time   : 0.000
+avg-server-call-time : 0.014
+avg-threads          : 0.005
+reserve              : no`, nil
 }
 
 // go test -coverprofile="cover.out"

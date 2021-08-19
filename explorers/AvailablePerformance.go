@@ -15,7 +15,8 @@ import (
 type ExplorerAvailablePerformance struct {
 	BaseRACExplorer
 
-	dataGetter func() (map[string]map[string]float64, error)
+	//dataGetter func() (map[string]map[string]float64, error)
+	reader func() (string, error)
 }
 
 func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
@@ -31,9 +32,9 @@ func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan err
 		[]string{"host", "type"},
 	)
 
-	// dataGetter - типа мок. Инициализируется из тестов
-	if this.dataGetter == nil {
-		this.dataGetter = this.getData
+	// типа мок. Инициализируется из тестов
+	if this.reader == nil {
+		this.reader = this.readData
 	}
 
 	this.settings = s
@@ -57,8 +58,10 @@ FOR:
 			this.logger.WithField("Name", this.GetName()).Trace("Старт итерации таймера")
 			defer this.Unlock()
 
-			if data, err := this.dataGetter(); err == nil {
+			if data, err := this.getData(); err == nil {
 				this.logger.Debug("Количество данных: ", len(data))
+				this.logger.WithField("data", data).Trace()
+
 				this.summary.Reset()
 				for host, data2 := range data {
 					for type_, value := range data2 {
@@ -85,35 +88,14 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 
 	// /opt/1C/v8.3/x86_64/rac process --cluster=ee5adb9a-14fa-11e9-7589-005056032522 list
 	procData := []map[string]string{}
-
-	param := []string{}
-	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
-	}
-
-	param = append(param, "process")
-	param = append(param, "list")
-	if login := this.settings.RAC_Login(); login != "" {
-		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
-		if pwd := this.settings.RAC_Pass(); pwd != "" {
-			param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
-		}
-	}
-
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
-
-	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
-	if result, err := this.run(cmdCommand); err != nil {
-		this.logger.WithField("Name", this.GetName()).WithError(err).Error()
+	if sourceData, err := this.reader(); err != nil {
 		return data, err
 	} else {
-		this.formatMultiResult(result, &procData)
+		this.formatMultiResult(sourceData, &procData)
 	}
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
 	tmp := make(map[string]map[string][]float64)
-	//tmp["dsds"] = map[string][]float64{"available": []float64{}}
-
 	for _, item := range procData {
 		if _, ok := tmp[item["host"]]; !ok {
 			tmp[item["host"]] = map[string][]float64{}
@@ -142,6 +124,26 @@ func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]
 		}
 	}
 	return data, nil
+}
+
+func (this *ExplorerAvailablePerformance) readData() (string, error) {
+	param := []string{}
+	if this.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+	}
+
+	param = append(param, "process")
+	param = append(param, "list")
+	this.appendLogPass(param)
+	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+
+	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
+	if result, err := this.run(cmdCommand); err != nil {
+		this.logger.WithError(err).Error()
+		return "", err
+	} else {
+		return result, nil
+	}
 }
 
 func (this *ExplorerAvailablePerformance) GetName() string {
