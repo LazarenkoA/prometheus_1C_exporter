@@ -66,14 +66,8 @@ FOR:
 			for _, item := range ses {
 				basename := this.findBaseName(item["infobase"])
 				appid, _ := item["app-id"]
-				startedat, err := time.Parse(timeFormatIn, item["started-at"])
-				if err == nil {
-					startedat = startedat.In(time.Local)
-				}
-				lastactiveat, err := time.Parse(timeFormatIn, item["last-active-at"])
-				if err == nil {
-					lastactiveat = lastactiveat.In(time.Local)
-				}
+				startedat, _ := time.ParseInLocation(timeFormatIn, item["started-at"], time.Local)
+				lastactiveat, _ := time.ParseInLocation(timeFormatIn, item["last-active-at"], time.Local)
 
 				if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil && memorytotal > 0 {
 					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(memorytotal))
@@ -97,7 +91,7 @@ FOR:
 					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(cputimecurrent))
 				}
 				if !lastactiveat.IsZero() {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "deadtime", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(time.Now().Sub(lastactiveat).Seconds())
+					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "deadtime", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(time.Since(lastactiveat).Seconds())
 				}
 			}
 		}()
