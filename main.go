@@ -1,5 +1,9 @@
 package main
 
+//go:generate go run install/updateversion.go
+//go:generate git commit -am "bump $PROM_VERSION"
+//go:generate git tag -af $PROM_VERSION -m "$PROM_VERSION"
+
 import (
 	"flag"
 	"fmt"

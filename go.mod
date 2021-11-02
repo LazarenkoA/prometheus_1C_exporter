@@ -8,13 +8,12 @@ require (
 	github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/influxdata/telegraf v1.15.3
-	github.com/prometheus/client_golang v1.7.1
-	github.com/prometheus/procfs v0.1.3
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/procfs v0.6.0
 	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/softlandia/cpd v0.0.0-20200709134012-d8dd1a8ae52d
-	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 // indirect
 	golang.org/x/text v0.3.3
-	google.golang.org/protobuf v1.25.0 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )

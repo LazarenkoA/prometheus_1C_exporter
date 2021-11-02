@@ -23,29 +23,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/highlightedFiles.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/install/updateversion.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCPU.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCPU.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerDisk.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerDisk.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerProc.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerProc.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/SessionsData.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/SessionsData.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/pars_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/pars_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus_1C_exporter" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.go" beforeDir="false" afterPath="$PROJECT_DIR$/settings.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="GOROOT" path="D:\GoMy\src\go1.16.4" />
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go Application" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" path="C:\Users\Артем\go\go1.16.4" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -65,7 +62,9 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go Application" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="configurable.Global.GOPATH.is.expanded" value="true" />
@@ -78,14 +77,16 @@
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
-  <component name="RunManager" selected="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)">
-    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install">
+    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
           <option name="containerStateName" value="" />
         </value>
       </option>
-      <option name="TEST_OBJECT" value="class" />
+      <option name="TEST_OBJECT" value="CLASS" />
+      <properties />
+      <listeners />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -108,6 +109,15 @@
       <directory value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
+    <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter/install" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$/install/updateversion.go" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/install" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build prometheus_1C_exporter/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -118,17 +128,6 @@
       <method v="2" />
     </configuration>
     <configuration name="Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/explorers" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTest_Explorer\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$/explorers" />
       <framework value="gotest" />
@@ -163,11 +162,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
         <item itemvalue="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
         <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
         <item itemvalue="Go Test.Test_RAC in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-        <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
       </list>
     </recent_temporary>
   </component>
@@ -216,6 +215,7 @@
       <workItem from="1625169900047" duration="748000" />
       <workItem from="1628192214516" duration="2224000" />
       <workItem from="1629140990364" duration="16526000" />
+      <workItem from="1635833332498" duration="2354000" />
     </task>
     <task id="LOCAL-00001" summary="добавлены метрики для диска">
       <created>1602276839579</created>
@@ -355,37 +355,33 @@
     <integration-enabled>true</integration-enabled>
   </component>
   <component name="WindowStateProjectService">
-    <state x="752" y="450" key="#GOROOT" timestamp="1621618568852">
+    <state x="752" y="450" key="#GOROOT" timestamp="1635833498039">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="752" y="450" key="#GOROOT/0.0.1920.1040@0.0.1920.1040" timestamp="1621618568852" />
-    <state x="709" y="356" key="#com.intellij.ide.actions.ChooseComponentsToExportDialog" timestamp="1624444898496">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="709" y="356" key="#com.intellij.ide.actions.ChooseComponentsToExportDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1624444898496" />
+    <state x="752" y="450" key="#GOROOT/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635833498039" />
     <state width="638" height="466" key="DebuggerActiveHint" timestamp="1629191779439">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="638" height="466" key="DebuggerActiveHint/0.0.1920.1040@0.0.1920.1040" timestamp="1629191779439" />
-    <state x="740" y="274" key="FileChooserDialogImpl" timestamp="1624478116448">
+    <state width="1877" height="348" key="GridCell.Tab.0.bottom" timestamp="1635854592178">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1624478116448" />
-    <state width="1877" height="318" key="GridCell.Tab.0.bottom" timestamp="1629191909712">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
+    <state width="1877" height="348" key="GridCell.Tab.0.bottom/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635854592178" />
     <state width="1877" height="318" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909712" />
-    <state width="1877" height="318" key="GridCell.Tab.0.center" timestamp="1629191909711">
+    <state width="1877" height="348" key="GridCell.Tab.0.center" timestamp="1635854592178">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
+    <state width="1877" height="348" key="GridCell.Tab.0.center/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635854592178" />
     <state width="1877" height="318" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909711" />
-    <state width="1877" height="318" key="GridCell.Tab.0.left" timestamp="1629191909710">
+    <state width="1877" height="348" key="GridCell.Tab.0.left" timestamp="1635854592178">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
+    <state width="1877" height="348" key="GridCell.Tab.0.left/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635854592178" />
     <state width="1877" height="318" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909710" />
-    <state width="1877" height="318" key="GridCell.Tab.0.right" timestamp="1629191909712">
+    <state width="1877" height="348" key="GridCell.Tab.0.right" timestamp="1635854592178">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
+    <state width="1877" height="348" key="GridCell.Tab.0.right/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635854592178" />
     <state width="1877" height="318" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909712" />
     <state width="1877" height="318" key="GridCell.Tab.1.bottom" timestamp="1629191909066">
       <screen x="0" y="0" width="1920" height="1040" />
@@ -403,14 +399,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1877" height="318" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1629191909066" />
-    <state x="461" y="164" key="SettingsEditor" timestamp="1624444845935">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="461" y="164" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1624444845935" />
     <state x="713" y="127" width="1052" height="689" key="find.popup" timestamp="1629196856336">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="713" y="127" width="1052" height="689" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1629196856336" />
+    <state x="342" y="162" key="new project wizard" timestamp="1635853622814">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="342" y="162" key="new project wizard/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1635853622814" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -419,6 +415,11 @@
           <url>file://$PROJECT_DIR$/explorers/Explorer_test.go</url>
           <line>234</line>
           <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/install/updateversion.go</url>
+          <line>20</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
