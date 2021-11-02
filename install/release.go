@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -33,8 +34,15 @@ func run() (err error) {
 	}
 
 	newversion := strings.Join(splitted[:len(splitted)-1], ".") + "." + strconv.Itoa(v+1)
-	exec.Command("git", "tag", fmt.Sprintf("-af %s", newversion), fmt.Sprintf("-m %s", newversion)).Run()
-	exec.Command("git", "push", "origin", "--tags").Run()
+	cmd := exec.Command("git", "tag", "-af", newversion, fmt.Sprintf("-m %s", newversion))
+	stderr, _ := cmd.StderrPipe()
+	if err := cmd.Run(); err != nil {
+		txt, _ := ioutil.ReadAll(stderr)
+		fmt.Printf("Произошла ошибка: %v\n\tout: %s\n", err, string(txt))
+	}
+	if err := exec.Command("git", "push", "--tags").Run(); err != nil {
+		fmt.Println("Произошла ошибка: ", err)
+	}
 
 	return
 }
