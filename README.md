@@ -43,7 +43,13 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 
 **Запуск** 
 
-./1C_exporter -port=9095 --settings=/usr/local/bin/settings.yaml
+Linux:
+
+`./1C_exporter -port=9095 --settings=/usr/local/bin/settings.yaml`
+
+Windows:
+
+`1C_exporter.exe -port=9095 --settings=/usr/local/bin/settings.yaml` можно воспользоваться приложением [**nssm**](https://www.nssm.cc/download) для запуска экспортера службой. 
 
 Если порт не указать по дефолту будет порт 9091
 
