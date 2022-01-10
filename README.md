@@ -49,7 +49,7 @@ Linux:
 
 Windows:
 
-`1C_exporter.exe -port=9095 --settings=/usr/local/bin/settings.yaml` можно воспользоваться приложением [**nssm**](https://www.nssm.cc/download) для запуска экспортера службой. 
+`1C_exporter.exe -port=9095 --settings=/usr/local/bin/settings.yaml` можно воспользоваться приложением [**nssm**](https://www.nssm.cc/download) для запуска экспортера в виде службы. 
 
 Если порт не указать по дефолту будет порт 9091
 
