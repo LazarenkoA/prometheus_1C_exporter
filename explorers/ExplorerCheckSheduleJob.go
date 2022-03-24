@@ -175,7 +175,7 @@ func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map
 
 	param = append(param, "infobase")
 	param = append(param, "info")
-	this.appendLogPass(param)
+	param = this.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
@@ -226,7 +226,7 @@ func (this *ExplorerCheckSheduleJob) fillBaseList() error {
 		param = append(param, "infobase")
 		param = append(param, "summary")
 		param = append(param, "list")
-		this.appendLogPass(param)
+		param = this.appendLogPass(param)
 		param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 		if result, err := this.run(exec.Command(this.settings.RAC_Path(), param...)); err != nil {

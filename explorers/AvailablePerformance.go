@@ -134,7 +134,7 @@ func (this *ExplorerAvailablePerformance) readData() (string, error) {
 
 	param = append(param, "process")
 	param = append(param, "list")
-	this.appendLogPass(param)
+	param = this.appendLogPass(param)
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 
 	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)

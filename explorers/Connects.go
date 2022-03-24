@@ -106,7 +106,7 @@ func (this *ExplorerConnects) getConnects() (connData []map[string]string, err e
 
 	param = append(param, "connection")
 	param = append(param, "list")
-	this.appendLogPass(param)
+	param = this.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 

@@ -109,7 +109,7 @@ func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error)
 
 	param = append(param, "session")
 	param = append(param, "list")
-	this.appendLogPass(param)
+	param = this.appendLogPass(param)
 
 	param = append(param, "--licenses")
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))

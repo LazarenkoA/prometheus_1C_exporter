@@ -100,7 +100,7 @@ func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err er
 
 	param = append(param, "session")
 	param = append(param, "list")
-	this.appendLogPass(param)
+	param = this.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
 

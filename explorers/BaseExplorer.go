@@ -243,13 +243,14 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	return result
 }
 
-func (this *BaseRACExplorer) appendLogPass(param []string) {
+func (this *BaseRACExplorer) appendLogPass(param []string) []string {
 	if login := this.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := this.settings.RAC_Pass(); pwd != "" {
 			param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
 		}
 	}
+	return param
 }
 
 func normalizeEncoding(str string) string {
