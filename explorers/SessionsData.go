@@ -58,6 +58,7 @@ FOR:
 	for {
 		this.Lock()
 		func() {
+
 			this.logger.Trace("Старт итерации таймера")
 			defer this.Unlock()
 
@@ -69,30 +70,43 @@ FOR:
 				startedat, _ := time.ParseInLocation(timeFormatIn, item["started-at"], time.Local)
 				lastactiveat, _ := time.ParseInLocation(timeFormatIn, item["last-active-at"], time.Local)
 
-				if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil && memorytotal > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(memorytotal))
-				}
-				if memorycurrent, err := strconv.Atoi(item["memory-current"]); err == nil && memorycurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorycurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(memorycurrent))
-				}
-				if readcurrent, err := strconv.Atoi(item["read-current"]); err == nil && readcurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "readcurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(readcurrent))
-				}
-				if writecurrent, err := strconv.Atoi(item["write-current"]); err == nil && writecurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "writecurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(writecurrent))
-				}
-				if durationcurrent, err := strconv.Atoi(item["duration-current"]); err == nil && durationcurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(durationcurrent))
-				}
-				if durationcurrentdbms, err := strconv.Atoi(item["duration current-dbms"]); err == nil && durationcurrentdbms > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(durationcurrentdbms))
-				}
-				if cputimecurrent, err := strconv.Atoi(item["cpu-time-current"]); err == nil && cputimecurrent > 0 {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(cputimecurrent))
-				}
-				if !lastactiveat.IsZero() {
-					this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "deadtime", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(time.Since(lastactiveat).Seconds())
-				}
+				// try/catch временное решение по https://github.com/LazarenkoA/prometheus_1C_exporter/issues/16
+				// TODO: нужно разобраться с кодировкой, почему так происходит
+				func() {
+					defer func() {
+						if Ierr := recover(); Ierr != nil {
+							if err, ok := Ierr.(error); ok {
+								this.logger.WithError(err).Error("произошла непредвиденная ошибка")
+							}
+						}
+					}()
+
+					if memorytotal, err := strconv.Atoi(item["memory-total"]); err == nil && memorytotal > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorytotal", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(memorytotal))
+					}
+					if memorycurrent, err := strconv.Atoi(item["memory-current"]); err == nil && memorycurrent > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "memorycurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(memorycurrent))
+					}
+					if readcurrent, err := strconv.Atoi(item["read-current"]); err == nil && readcurrent > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "readcurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(readcurrent))
+					}
+					if writecurrent, err := strconv.Atoi(item["write-current"]); err == nil && writecurrent > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "writecurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(writecurrent))
+					}
+					if durationcurrent, err := strconv.Atoi(item["duration-current"]); err == nil && durationcurrent > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(durationcurrent))
+					}
+					if durationcurrentdbms, err := strconv.Atoi(item["duration current-dbms"]); err == nil && durationcurrentdbms > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(durationcurrentdbms))
+					}
+					if cputimecurrent, err := strconv.Atoi(item["cpu-time-current"]); err == nil && cputimecurrent > 0 {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "cputimecurrent", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(float64(cputimecurrent))
+					}
+					if !lastactiveat.IsZero() {
+						this.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "deadtime", item["current-service-name"], appid, startedat.Format(timeFormatOut)).Observe(time.Since(lastactiveat).Seconds())
+					}
+
+				}()
 			}
 		}()
 
