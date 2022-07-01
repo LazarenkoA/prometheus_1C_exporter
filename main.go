@@ -112,7 +112,7 @@ func main() {
 
 	for err := range cerror {
 		logrusRotate.StandardLogger().WithError(err).Error()
-		fmt.Printf("Произошла ошибка:\n\t %v", err)
+		fmt.Printf("Произошла ошибка:\n\t %v\n", err)
 	}
 
 }
