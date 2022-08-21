@@ -56,7 +56,7 @@ Windows:
 
 
 
-в конфииге прометеуса (prometheus.yml) нужно указать хосты на которых запущен explorer
+в конфиге прометеуса (prometheus.yml) нужно указать хосты на которых запущен explorer
 ```yaml
   - job_name: '1С_Metrics'
     metrics_path: '/1С_Metrics' 
