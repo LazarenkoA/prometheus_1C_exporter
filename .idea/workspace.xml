@@ -22,7 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="костыль по #16">
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг">
       <change afterPath="$PROJECT_DIR$/explorers/model/interface.go" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/settings/settings_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
@@ -404,7 +404,8 @@
     <MESSAGE value="." />
     <MESSAGE value="автоматизация выпуска релизов" />
     <MESSAGE value="костыль по #16" />
-    <option name="LAST_COMMIT_MESSAGE" value="костыль по #16" />
+    <MESSAGE value="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг" />
+    <option name="LAST_COMMIT_MESSAGE" value="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
@@ -415,5 +416,8 @@
         <watch expression="ex.GetName()" language="go" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_GetDeactivateAndReset_in_github_com_LazarenkoA_prometheus_1C_exporter_settings.out" NAME="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings Coverage Results" MODIFIED="1665607328797" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
