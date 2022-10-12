@@ -133,7 +133,7 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 	}
 
 	// таймер для периодического обновления кредов БД
-	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // разброс по задержке (2-8 часа), что бы не получилось так, что все экспортеры разом ломануться в REST
+	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // разброс по задержке (2-8 часа), что бы не получилось так, что все экспортеры (если их несколько) разом ломануться в REST
 	get()
 
 	defer timer.Stop()
