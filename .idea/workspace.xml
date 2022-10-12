@@ -22,31 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг">
-      <change afterPath="$PROJECT_DIR$/explorers/model/interface.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/settings_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1c_exporter" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/1c_exporter.service" beforeDir="false" afterPath="$PROJECT_DIR$/examples linux unit/1c_exporter.service" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/AvailablePerformance.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/AvailablePerformance.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCPU.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCPU.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerClientLic.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerDisk.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerDisk.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/ExplorerProc.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerProc.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/explorers/SessionsData.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/SessionsData.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus_1C_exporter" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.go" beforeDir="false" afterPath="$PROJECT_DIR$/settings/settings.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/examples_settings.yaml" afterDir="false" />
-    </list>
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="better" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -405,7 +381,8 @@
     <MESSAGE value="автоматизация выпуска релизов" />
     <MESSAGE value="костыль по #16" />
     <MESSAGE value="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг" />
-    <option name="LAST_COMMIT_MESSAGE" value="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг" />
+    <MESSAGE value="better" />
+    <option name="LAST_COMMIT_MESSAGE" value="better" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

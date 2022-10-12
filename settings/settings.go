@@ -128,7 +128,7 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 			logrusRotate.StandardLogger().WithError(err).Error("ошибка получения данных по БД")
 		}
 		if err := json.Unmarshal(data, &s.bases); err != nil {
-			logrusRotate.StandardLogger().WithError(err).Error("не удалось сериализовать данные от REST")
+			logrusRotate.StandardLogger().WithError(err).Error("не удалось десериализовать данные от REST")
 		}
 	}
 
