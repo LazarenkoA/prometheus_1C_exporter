@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,7 +17,7 @@ type ExplorerSessions struct {
 	ExplorerCheckSheduleJob
 }
 
-func (this *ExplorerSessions) Construct(s Isettings, cerror chan error) *ExplorerSessions {
+func (this *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 
@@ -79,7 +80,7 @@ FOR:
 				this.summary.WithLabelValues(host, k).Observe(float64(v))
 			}
 			// общее кол-во по хосту
-			//this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
+			// this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
 		}()
 
 		select {

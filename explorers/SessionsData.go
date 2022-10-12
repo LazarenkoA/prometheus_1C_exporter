@@ -7,6 +7,7 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -17,7 +18,7 @@ type ExplorerSessionsMemory struct {
 const timeFormatIn = "2006-01-02T15:04:05"
 const timeFormatOut = "2006-01-02 15:04:05"
 
-func (this *ExplorerSessionsMemory) Construct(s Isettings, cerror chan error) *ExplorerSessionsMemory {
+func (this *ExplorerSessionsMemory) Construct(s model.Isettings, cerror chan error) *ExplorerSessionsMemory {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 

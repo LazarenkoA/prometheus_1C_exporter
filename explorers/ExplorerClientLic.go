@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,7 +17,7 @@ type ExplorerClientLic struct {
 	BaseRACExplorer
 }
 
-func (this *ExplorerClientLic) Construct(s Isettings, cerror chan error) *ExplorerClientLic {
+func (this *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *ExplorerClientLic {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 
@@ -75,7 +76,7 @@ FOR:
 
 				this.summary.Reset()
 				for k, v := range group {
-					//logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
+					// logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
 					this.summary.WithLabelValues(host, k).Observe(float64(v))
 				}
 

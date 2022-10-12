@@ -9,17 +9,18 @@ import (
 	"time"
 
 	lr "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExplorerAvailablePerformance struct {
 	BaseRACExplorer
 
-	//dataGetter func() (map[string]map[string]float64, error)
+	// dataGetter func() (map[string]map[string]float64, error)
 	reader func() (string, error)
 }
 
-func (this *ExplorerAvailablePerformance) Construct(s Isettings, cerror chan error) *ExplorerAvailablePerformance {
+func (this *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror chan error) *ExplorerAvailablePerformance {
 	this.logger = lr.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 

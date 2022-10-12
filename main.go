@@ -1,10 +1,11 @@
 package main
 
 //go:generate go run install/release.go
-////go:generate git commit -am "bump $PROM_VERSION"
-////go:generate git tag -af $PROM_VERSION -m "$PROM_VERSION"
+// //go:generate git commit -am "bump $PROM_VERSION"
+// //go:generate git tag -af $PROM_VERSION -m "$PROM_VERSION"
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 
@@ -24,11 +26,11 @@ import (
 )
 
 type RotateConf struct {
-	settings *settings
+	settings *settings.Settings
 }
 
 func init() {
-	exp.CForce = make(chan bool, 1)
+	exp.CForce = make(chan struct{}, 1)
 }
 
 func main() {
@@ -45,13 +47,13 @@ func main() {
 		return
 	}
 
-	//settingsPath = "settings.yaml" // debug
-	s := loadSettings(settingsPath)
+	// settingsPath = "settings.yaml" // debug
+	s := settings.LoadSettings(settingsPath)
 
 	lw := new(logrusRotate.Rotate).Construct()
 	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
 	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
-	s.getMSdata(exp.CForce)
+	go s.GetDBCredentials(context.Background(), exp.CForce)
 
 	cerror := make(chan error)
 	metric := new(exp.Metrics).Construct(s)
@@ -72,7 +74,7 @@ func main() {
 	go func() {
 		for range c {
 			if settingsPath != "" {
-				*s = *loadSettings(settingsPath)
+				*s = *settings.LoadSettings(settingsPath)
 				cancel()
 				lw = new(logrusRotate.Rotate).Construct()
 				cancel = lw.Start(s.LogLevel, new(RotateConf).Construct(s))
@@ -118,7 +120,7 @@ func main() {
 }
 
 // /////////////// RotateConf /////////////////////////////
-func (w *RotateConf) Construct(s *settings) *RotateConf {
+func (w *RotateConf) Construct(s *settings.Settings) *RotateConf {
 	w.settings = s
 	return w
 }

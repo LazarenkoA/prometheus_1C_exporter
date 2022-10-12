@@ -1,11 +1,13 @@
 package explorer
 
 import (
-	"github.com/shirou/gopsutil/disk"
 	"os"
 	"reflect"
-	//"os"
+	// "os"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/shirou/gopsutil/disk"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,7 +19,7 @@ type (
 	}
 )
 
-func (this *ExplorerDisk) Construct(s Isettings, cerror chan error) *ExplorerDisk {
+func (this *ExplorerDisk) Construct(s model.Isettings, cerror chan error) *ExplorerDisk {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 

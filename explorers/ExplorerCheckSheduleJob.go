@@ -10,17 +10,17 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExplorerCheckSheduleJob struct {
 	BaseRACExplorer
 
-	baseList      []map[string]string
-	attemptsCount map[string]int
-	dataGetter    func() (map[string]bool, error)
-	mx            *sync.RWMutex
-	one           sync.Once
+	baseList   []map[string]string
+	dataGetter func() (map[string]bool, error)
+	mx         *sync.RWMutex
+	one        sync.Once
 }
 
 func (this *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
@@ -31,7 +31,7 @@ func (this *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
 	return this.mx
 }
 
-func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *ExplorerCheckSheduleJob {
+func (this *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan error) *ExplorerCheckSheduleJob {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 
@@ -48,7 +48,6 @@ func (this *ExplorerCheckSheduleJob) Construct(s Isettings, cerror chan error) *
 		this.dataGetter = this.getData
 	}
 
-	this.attemptsCount = make(map[string]int, 0)
 	this.settings = s
 	this.cerror = cerror
 	prometheus.MustRegister(this.gauge)
@@ -157,14 +156,7 @@ func (this *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error)
 func (this *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
 	login, pass := this.settings.GetLogPass(basename)
 	if login == "" {
-		if v, ok := this.attemptsCount[basename]; !ok || v <= 3 {
-			this.mutex().Lock()
-			this.attemptsCount[basename]++ // да, не совсем потокобезопасно и может быть что по одной базе более 3х попыток, но это не критично
-			this.mutex().Unlock()
-
-			time.Sleep(time.Second * 5) // что б растянуть во времени
-			CForce <- true              // принудительно запрашиваем данные из МС, делаем 3 попытки что б не получилось что постоянно запросы идут по базам которых нет в МС
-		}
+		CForce <- struct{}{} // принудительно запрашиваем данные из REST
 		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
 	}
 

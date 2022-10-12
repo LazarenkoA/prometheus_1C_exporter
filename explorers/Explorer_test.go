@@ -2,107 +2,70 @@ package explorer
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/golang/mock/gomock"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
-type settings struct {
-	mx          *sync.RWMutex `yaml:"-"`
-	login, pass string        `yaml:"-"`
-	bases       []Bases       `yaml:"-"`
-
-	Explorers []*struct {
-		Name     string                 `yaml:"Name"`
-		Property map[string]interface{} `yaml:"Property"`
-	} `yaml:"Explorers"`
-
-	MSURL  string `yaml:"MSURL"`
-	MSUSER string `yaml:"MSUSER"`
-	MSPAS  string `yaml:"MSPAS"`
-}
-
-type Bases struct {
-	Caption  string `json:"Caption"`
-	Name     string `json:"Name"`
-	UUID     string `json:"UUID"`
-	UserName string `json:"UserName"`
-	UserPass string `json:"UserPass"`
-	Cluster  *struct {
-		MainServer string `json:"MainServer"`
-		RASServer  string `json:"RASServer"`
-		RASPort    int    `json:"RASPort"`
-	} `json:"Cluster"`
-	URL string `json:"URL"`
-}
-
-func (s *settings) GetLogPass(ibname string) (login, pass string) {
-	for _, base := range s.bases {
-		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
-			pass = base.UserPass
-			login = base.UserName
-			break
-		}
-	}
-
-	return
-}
-
-func (s *settings) RAC_Path() string {
-	return "/opt/1C/v8.3/x86_64/rac"
-}
-func (s *settings) RAC_Port() string {
-	return "1545"
-}
-func (s *settings) RAC_Host() string {
-	return "localhost"
-}
-func (s *settings) RAC_Login() string {
-	return ""
-}
-func (s *settings) RAC_Pass() string {
-	return ""
-}
-
-func (s *settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
-	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {
-		return v
-	} else {
-		return defaultValue
-	}
-}
-
-func (s *settings) GetExplorers() map[string]map[string]interface{} {
-	result := make(map[string]map[string]interface{}, 0)
-	for _, item := range s.Explorers {
-		result[item.Name] = item.Property
-	}
-
-	return result
-}
-
-//////////////////////////////////////////
-
 func Test_Explorer(t *testing.T) {
-	for id, test := range initests() {
+	for id, test := range initests(t) {
 		t.Run(fmt.Sprintf("Выполняем тест %d (%v)", id, test.name), test.f)
 	}
 }
 
-func initests() []struct {
+func Test_Unmarshal(t *testing.T) {
+	s := &settings.Settings{}
+	err := yaml.Unmarshal([]byte(settingstext()), s)
+
+	assert.NoError(t, err)
+	assert.NotEqual(t, nil, s.DBCredentials)
+	assert.NotEqual(t, nil, s.RAC)
+	assert.Equal(t, 9, len(s.Explorers))
+}
+
+func initests(t *testing.T) []struct {
 	name string
 	f    func(*testing.T)
 } {
-	s := new(settings)
-	if err := yaml.Unmarshal([]byte(settingstext()), s); err != nil {
-		panic("Ошибка десириализации настроек")
-	}
+	c := gomock.NewController(t)
+	defer c.Finish()
+
+	s := mock_model.NewMockIsettings(c)
+	s.EXPECT().GetExplorers().Return(map[string]map[string]interface{}{
+		"ClientLic": {
+			"timerNotyfy": 10,
+		},
+		"AvailablePerformance": {
+			"timerNotyfy": 10,
+		},
+		"SheduleJob": {
+			"timerNotyfy": 10,
+		},
+		"Session": {
+			"timerNotyfy": 10,
+		},
+	}).AnyTimes()
+
+	s.EXPECT().GetProperty("ClientLic", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("AvailablePerformance", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("CPU", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("disk", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("Connect", "timerNotyfy", gomock.Any()).Return(1).AnyTimes()
+	s.EXPECT().GetProperty("SessionsData", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("ProcData", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("Session", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("SheduleJob", "timerNotyfy", gomock.Any()).Return(1).AnyTimes()
+
 	metric := new(Metrics).Construct(s)
 
 	siteMux := http.NewServeMux()
@@ -125,9 +88,9 @@ func initests() []struct {
 	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 	objecеDisk := new(ExplorerDisk).Construct(s, cerror)
 	objectCPU := new(ExplorerCPU).Construct(s, cerror)
-	//objectCon2 := new(ExplorerConnects).Construct(s, cerror)
-	//objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
-	//objectProc := new(ExplorerProc).Construct(s, cerror)
+	// objectCon2 := new(ExplorerConnects).Construct(s, cerror)
+	// objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
+	// objectProc := new(ExplorerProc).Construct(s, cerror)
 
 	metric.Append(objectlic, objectPerf, objectMem, objectSes, objectCon, objectCSJ)
 
@@ -378,12 +341,12 @@ func initests() []struct {
 		},
 		{
 			"Проверка паузы", func(t *testing.T) {
-				//Должны быть запущены с предыдущего теста
-				//go objectCSJ.Start(objectCSJ)
-				//go objectCon.Start(objectCon)
+				// Должны быть запущены с предыдущего теста
+				// go objectCSJ.Start(objectCSJ)
+				// go objectCon.Start(objectCon)
 				time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-				//get(url)
+				// get(url)
 
 				code, _, _ := get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
 				if code != http.StatusOK {
@@ -402,13 +365,13 @@ func initests() []struct {
 		},
 		{
 			"Проверка снятие с паузы", func(t *testing.T) {
-				//Должны быть запущены с предыдущего теста
-				//go objectCSJ.Start(objectCSJ)
-				//go objectCon.Start(objectCon)
-				//time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
+				// Должны быть запущены с предыдущего теста
+				// go objectCSJ.Start(objectCSJ)
+				// go objectCon.Start(objectCon)
+				// time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
 
-				//_, body1, err := get(url)
-				//fmt.Println(body1)
+				// _, body1, err := get(url)
+				// fmt.Println(body1)
 
 				get("http://localhost:" + port + "/Pause?metricNames=SheduleJob,Connect")
 				time.Sleep(time.Second)
@@ -431,16 +394,16 @@ func initests() []struct {
 		{
 			"", func(t *testing.T) {
 				// Нет смысла т.к. эта метрика только под линуксом работает
-				//t.Parallel()
-				//go objectProc.Start(objectProc)
-				//time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
+				// t.Parallel()
+				// go objectProc.Start(objectProc)
+				// time.Sleep(time.Second*2) // Нужно подождать, что бы Explore успел отработаь
 				//
-				//_, body, err := get()
-				//if err != nil {
+				// _, body, err := get()
+				// if err != nil {
 				//	t.Error(err)
-				//} else if str := body; strings.Index(str, "ProcData") < 0 {
+				// } else if str := body; strings.Index(str, "ProcData") < 0 {
 				//	t.Error("В ответе не найден ProcData")
-				//}
+				// }
 			},
 		},
 		{
@@ -527,9 +490,10 @@ RAC:
   Path: "/opt/1C/v8.3/x86_64/rac"
   Port: "1545"      # Не обязательный параметр
   Host: "localhost" # Не обязательный параметр
-MSURL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
-MSUSER: 
-MSPAS: `
+DBCredentials:
+  URL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
+  User: ""
+  Password: ""`
 }
 
 func testDataAvailablePerformance() (string, error) {

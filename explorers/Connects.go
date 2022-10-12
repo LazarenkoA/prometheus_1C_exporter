@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -23,7 +24,7 @@ func appendParam(in []string, value string) []string {
 	return in
 }
 
-func (this *ExplorerConnects) Construct(s Isettings, cerror chan error) *ExplorerConnects {
+func (this *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *ExplorerConnects {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 
@@ -85,7 +86,7 @@ FOR:
 				this.summary.WithLabelValues(host, k).Observe(float64(v))
 			}
 			// общее кол-во по хосту
-			//this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
+			// this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
 		}()
 
 		select {

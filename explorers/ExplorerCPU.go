@@ -3,10 +3,11 @@ package explorer
 import (
 	"os"
 	"reflect"
-	//"os"
+	// "os"
 	"time"
 
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/shirou/gopsutil/cpu"
 )
@@ -17,7 +18,7 @@ type (
 	}
 )
 
-func (this *ExplorerCPU) Construct(s Isettings, cerror chan error) *ExplorerCPU {
+func (this *ExplorerCPU) Construct(s model.Isettings, cerror chan error) *ExplorerCPU {
 	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
 	this.logger.Debug("Создание объекта")
 

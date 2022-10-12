@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -15,43 +14,21 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/softlandia/cpd"
 	"golang.org/x/text/encoding/charmap"
 )
 
 var (
-	// Канал для передачи флага принудительного обновления данных из МС
-	CForce chan bool
+	// Канал для передачи флага принудительного обновления данных из REST
+	CForce chan struct{}
 )
 
-//////////////////////// Интерфейсы ////////////////////////////
-type Isettings interface {
-	GetLogPass(string) (log string, pass string)
-	RAC_Path() string
-	RAC_Port() string
-	RAC_Host() string
-	RAC_Login() string
-	RAC_Pass() string
-	GetExplorers() map[string]map[string]interface{}
-	GetProperty(string, string, interface{}) interface{}
-}
-
-type IExplorers interface {
-	StartExplore()
-}
-
-type Iexplorer interface {
-	Start(IExplorers)
-	Stop()
-	Pause()
-	Continue()
-	StartExplore()
-	GetName() string
-}
-
-//////////////////////// Типы ////////////////////////////
+// ////////////////////// Типы ////////////////////////////
 
 // базовый класс для всех метрик
 type BaseExplorer struct {
@@ -63,11 +40,11 @@ type BaseExplorer struct {
 	gauge       *prometheus.GaugeVec
 	ticker      *time.Ticker
 	timerNotyfy time.Duration
-	settings    Isettings
+	settings    model.Isettings
 	cerror      chan error
 	ctx         context.Context
 	ctxFunc     context.CancelFunc
-	//mutex       *sync.Mutex
+	// mutex       *sync.Mutex
 	isLocked int32
 	// mock object
 	dataGetter func() ([]map[string]string, error)
@@ -83,29 +60,29 @@ type BaseRACExplorer struct {
 }
 
 type Metrics struct {
-	Explorers []Iexplorer
+	Explorers []model.Iexplorer
 	Metrics   []string // метрики
 }
 
-//////////////////////// Методы /////////////////////////////
+// ////////////////////// Методы /////////////////////////////
 
-//func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
+// func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
 //	//if this.mutex == nil {
 //	//	return
 //	//}
 //
 //	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
 //	this.mutex.Lock()
-//}
+// }
 
-//func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
+// func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
 //	//if this.mutex == nil {
 //	//	return
 //	//}
 //
 //	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
 //	this.mutex.Unlock()
-//}
+// }
 
 func (this *BaseExplorer) StartExplore() {
 
@@ -155,9 +132,9 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 }
 
 // Своеобразный middleware
-func (this *BaseExplorer) Start(exp IExplorers) {
+func (this *BaseExplorer) Start(exp model.IExplorers) {
 	this.ctx, this.ctxFunc = context.WithCancel(context.Background())
-	//this.mutex = &sync.Mutex{}
+	// this.mutex = &sync.Mutex{}
 
 	go func() {
 		<-this.ctx.Done() // Stop
@@ -276,8 +253,8 @@ func (this *BaseRACExplorer) mutex() *sync.RWMutex {
 func (this *BaseRACExplorer) GetClusterID() string {
 	this.logger.Debug("Получаем идентификатор кластера")
 	defer this.logger.Debug("Получен идентификатор кластера ", this.clusterID)
-	//this.mutex().RLock()
-	//defer this.mutex().RUnlock()
+	// this.mutex().RLock()
+	// defer this.mutex().RUnlock()
 
 	update := func() {
 		this.mutex().Lock()
@@ -314,11 +291,11 @@ func (this *BaseRACExplorer) GetClusterID() string {
 	return this.clusterID
 }
 
-func (this *Metrics) Append(ex ...Iexplorer) {
+func (this *Metrics) Append(ex ...model.Iexplorer) {
 	this.Explorers = append(this.Explorers, ex...)
 }
 
-func (this *Metrics) Construct(set Isettings) *Metrics {
+func (this *Metrics) Construct(set model.Isettings) *Metrics {
 	this.Metrics = []string{}
 	for k, _ := range set.GetExplorers() {
 		this.Metrics = append(this.Metrics, k)
@@ -340,7 +317,7 @@ func (this *Metrics) Contains(name string) bool {
 	return false
 }
 
-func (this *Metrics) findExplorer(name string) Iexplorer {
+func (this *Metrics) findExplorer(name string) model.Iexplorer {
 	for _, item := range this.Explorers {
 		if strings.ToLower(item.GetName()) == strings.ToLower(strings.Trim(name, " ")) {
 			return item
