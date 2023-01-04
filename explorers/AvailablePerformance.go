@@ -30,7 +30,7 @@ func (this *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror ch
 			Help:       "Доступная производительность хоста",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
-		[]string{"host", "type"},
+		[]string{"host", "cluster", "pid", "type"},
 	)
 
 	// типа мок. Инициализируется из тестов
@@ -64,10 +64,8 @@ FOR:
 				this.logger.WithField("data", data).Trace()
 
 				this.summary.Reset()
-				for host, data2 := range data {
-					for type_, value := range data2 {
-						this.summary.WithLabelValues(host, type_).Observe(value)
-					}
+				for _, item := range data {
+					this.summary.WithLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string)).Observe(item["value"].(float64))
 				}
 			} else {
 				this.summary.Reset()
@@ -84,47 +82,87 @@ FOR:
 	}
 }
 
-func (this *ExplorerAvailablePerformance) getData() (data map[string]map[string]float64, err error) {
-	data = make(map[string]map[string]float64)
+func (this *ExplorerAvailablePerformance) getData() (result []map[string]interface{}, err error) {
 
 	// /opt/1C/v8.3/x86_64/rac process --cluster=ee5adb9a-14fa-11e9-7589-005056032522 list
 	procData := []map[string]string{}
 	if sourceData, err := this.reader(); err != nil {
-		return data, err
+		return result, err
 	} else {
 		this.formatMultiResult(sourceData, &procData)
 	}
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
-	tmp := make(map[string]map[string][]float64)
+	// tmp := make(map[string]map[string][]float64)
+	// for _, item := range procData {
+	// 	if _, ok := tmp[item["host"]]; !ok {
+	// 		tmp[item["host"]] = map[string][]float64{}
+	// 	}
+	//
+	// 	if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil { // Доступная производительность
+	// 		tmp[item["host"]]["available"] = append(tmp[item["host"]]["available"], perfomance)
+	// 	}
+	// 	if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil { // среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из: значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
+	// 		tmp[item["host"]]["avgcalltime"] = append(tmp[item["host"]]["avgcalltime"], avgcalltime)
+	// 	}
+	// 	if avgdbcalltime, err := strconv.ParseFloat(item["avg-db-call-time"], 64); err == nil { // среднее время, затрачиваемое рабочим процессом на обращения к серверу баз данных при выполнении одного клиентского обращения
+	// 		tmp[item["host"]]["avgdbcalltime"] = append(tmp[item["host"]]["avgdbcalltime"], avgdbcalltime)
+	// 	}
+	// 	if avglockcalltime, err := strconv.ParseFloat(item["avg-lock-call-time"], 64); err == nil { // среднее время обращения к менеджеру блокировок
+	// 		tmp[item["host"]]["avglockcalltime"] = append(tmp[item["host"]]["avglockcalltime"], avglockcalltime)
+	// 	}
+	// 	if avgservercalltime, err := strconv.ParseFloat(item["avg-server-call-time"], 64); err == nil { // среднее время, затрачиваемое самим рабочим процессом на выполнение одного клиентского обращения
+	// 		tmp[item["host"]]["avgservercalltime"] = append(tmp[item["host"]]["avgservercalltime"], avgservercalltime)
+	// 	}
+	// }
+	// for host, value := range tmp {
+	// 	data[host] = map[string]float64{}
+	// 	for type_, values := range value {
+	// 		data[host][type_] = sum(values) / float64(len(values))
+	// 	}
+	// }
+
+	clusterID := this.GetClusterID()
 	for _, item := range procData {
-		if _, ok := tmp[item["host"]]; !ok {
-			tmp[item["host"]] = map[string][]float64{}
+
+		tmp := make(map[string]float64)
+		// Доступная производительность
+		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil {
+			tmp["available"] = perfomance
 		}
 
-		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil { // Доступная производительность
-			tmp[item["host"]]["available"] = append(tmp[item["host"]]["available"], perfomance)
+		// среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из: значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
+		if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil {
+			tmp["avgcalltime"] = avgcalltime
 		}
-		if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil { // среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из: значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
-			tmp[item["host"]]["avgcalltime"] = append(tmp[item["host"]]["avgcalltime"], avgcalltime)
+
+		// среднее время, затрачиваемое рабочим процессом на обращения к серверу баз данных при выполнении одного клиентского обращения
+		if avgdbcalltime, err := strconv.ParseFloat(item["avg-db-call-time"], 64); err == nil {
+			tmp["avgdbcalltime"] = avgdbcalltime
 		}
-		if avgdbcalltime, err := strconv.ParseFloat(item["avg-db-call-time"], 64); err == nil { // среднее время, затрачиваемое рабочим процессом на обращения к серверу баз данных при выполнении одного клиентского обращения
-			tmp[item["host"]]["avgdbcalltime"] = append(tmp[item["host"]]["avgdbcalltime"], avgdbcalltime)
+
+		// среднее время обращения к менеджеру блокировок
+		if avglockcalltime, err := strconv.ParseFloat(item["avg-lock-call-time"], 64); err == nil {
+			tmp["avglockcalltime"] = avglockcalltime
 		}
-		if avglockcalltime, err := strconv.ParseFloat(item["avg-lock-call-time"], 64); err == nil { // среднее время обращения к менеджеру блокировок
-			tmp[item["host"]]["avglockcalltime"] = append(tmp[item["host"]]["avglockcalltime"], avglockcalltime)
+
+		// среднее время, затрачиваемое самим рабочим процессом на выполнение одного клиентского обращения
+		if avgservercalltime, err := strconv.ParseFloat(item["avg-server-call-time"], 64); err == nil {
+			tmp["avgservercalltime"] = avgservercalltime
 		}
-		if avgservercalltime, err := strconv.ParseFloat(item["avg-server-call-time"], 64); err == nil { // среднее время, затрачиваемое самим рабочим процессом на выполнение одного клиентского обращения
-			tmp[item["host"]]["avgservercalltime"] = append(tmp[item["host"]]["avgservercalltime"], avgservercalltime)
+
+		for k, v := range tmp {
+			result = append(result, map[string]interface{}{
+				"host":    item["host"],
+				"pid":     item["pid"],
+				"cluster": clusterID,
+				"type":    k,
+				"value":   v,
+			})
 		}
 	}
-	for host, value := range tmp {
-		data[host] = map[string]float64{}
-		for type_, values := range value {
-			data[host][type_] = sum(values) / float64(len(values))
-		}
-	}
-	return data, nil
+
+	return result, nil
 }
 
 func (this *ExplorerAvailablePerformance) readData() (string, error) {

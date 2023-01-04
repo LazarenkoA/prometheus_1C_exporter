@@ -167,6 +167,7 @@ func initests(t *testing.T) []struct {
 		{"Проверка AvailablePerformance", func(t *testing.T) {
 			t.Parallel()
 			objectPerf.reader = testDataAvailablePerformance
+			objectPerf.clusterID = "111"
 
 			go objectPerf.Start(objectPerf)
 			time.Sleep(time.Second) // Нужно подождать, что бы Explore успел отработаь
