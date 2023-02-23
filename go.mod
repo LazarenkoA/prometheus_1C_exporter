@@ -15,6 +15,6 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/softlandia/cpd v0.0.0-20200709134012-d8dd1a8ae52d
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/text v0.3.3
+	golang.org/x/text v0.3.8
 	gopkg.in/yaml.v2 v2.3.0
 )
