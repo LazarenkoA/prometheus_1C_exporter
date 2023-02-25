@@ -43,3 +43,45 @@ func Test_GetDeactivateAndReset(t *testing.T) {
 		assert.Equal(t, "***", s.bases[0].UserPass)
 	}
 }
+
+func Test_GetLogPass(t *testing.T) {
+	s := &Settings{
+		mx: new(sync.RWMutex),
+		bases: []Bases{
+			{
+				Name:     "test",
+				UserName: "user1",
+				UserPass: "1111",
+			},
+			{
+				Name:     "test2",
+				UserName: "user2",
+				UserPass: "2222",
+			},
+		},
+	}
+
+	login, pass := s.GetLogPass("test")
+	assert.Equal(t, "user1", login)
+	assert.Equal(t, "1111", pass)
+}
+
+// go test -fuzz=Fuzz .\settings\...
+func Fuzz_GetLogPass(f *testing.F) {
+	s := &Settings{
+		mx: new(sync.RWMutex),
+		bases: []Bases{
+			{
+				Name:     "test",
+				UserName: "user1",
+				UserPass: "1111",
+			},
+		},
+	}
+
+	f.Fuzz(func(t *testing.T, ibname string) {
+		login, pass := s.GetLogPass(ibname)
+		assert.Equal(t, "", login)
+		assert.Equal(t, "", pass)
+	})
+}
