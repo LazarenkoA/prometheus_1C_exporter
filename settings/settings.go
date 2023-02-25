@@ -51,31 +51,31 @@ type Settings struct {
 "Name": "hrmcorp-n17",
 "UserName": "",
 "UserPass": ""
-}*/
+}
+*/
 type Bases struct {
 	Name     string `json:"Name"`
 	UserName string `json:"UserName"`
 	UserPass string `json:"UserPass"`
 }
 
-func LoadSettings(filePath string) *Settings {
+func LoadSettings(filePath string) (*Settings, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		panic(fmt.Sprintf("Файл настроек %q не найден", filePath))
+		return nil, fmt.Errorf("файл настроек %q не найден", filePath)
 	}
-	file, err := ioutil.ReadFile(filePath)
+	file, err := os.ReadFile(filePath)
 	if err != nil {
-		panic(fmt.Sprintf("Ошибка чтения файла %q\n%v", filePath, err))
+		return nil, fmt.Errorf("ошибка чтения файла %q\n%v", filePath, err)
 	}
 
 	s := new(Settings)
 	if err := yaml.Unmarshal(file, s); err != nil {
-		logrusRotate.StandardLogger().Panic(fmt.Sprintf("Ошибка десириализации настроек: %v", err))
+		return nil, fmt.Errorf("ошибка десириализации настроек: %v", err)
 	}
 
-	rand.Seed(time.Now().Unix())
 	s.mx = new(sync.RWMutex)
 
-	return s
+	return s, nil
 }
 
 func (s *Settings) GetLogPass(ibname string) (login, pass string) {

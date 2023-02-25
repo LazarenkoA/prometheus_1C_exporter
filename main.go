@@ -31,6 +31,7 @@ type RotateConf struct {
 
 func init() {
 	exp.CForce = make(chan struct{}, 1)
+	rand.Seed(time.Now().Unix())
 }
 
 func main() {
@@ -44,11 +45,15 @@ func main() {
 
 	if help {
 		flag.Usage()
-		return
+		os.Exit(1)
 	}
 
 	// settingsPath = "settings.yaml" // debug
-	s := settings.LoadSettings(settingsPath)
+	s, err := settings.LoadSettings(settingsPath)
+	if err != nil {
+		logrusRotate.StandardLogger().Error(err)
+		os.Exit(1)
+	}
 
 	lw := new(logrusRotate.Rotate).Construct()
 	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
@@ -74,7 +79,13 @@ func main() {
 	go func() {
 		for range c {
 			if settingsPath != "" {
-				*s = *settings.LoadSettings(settingsPath)
+				news, err := settings.LoadSettings(settingsPath)
+				if err != nil {
+					logrusRotate.StandardLogger().Error(err)
+					os.Exit(1)
+				}
+				*s = *news
+
 				cancel()
 				lw = new(logrusRotate.Rotate).Construct()
 				cancel = lw.Start(s.LogLevel, new(RotateConf).Construct(s))
