@@ -22,10 +22,9 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="typo">
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="better">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings/settings_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/settings/settings_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -388,11 +387,11 @@
     <MESSAGE value="автоматизация выпуска релизов" />
     <MESSAGE value="костыль по #16" />
     <MESSAGE value="в настройки вынес возможность задать url http сервиса для получение кредов БД. Рефакторинг" />
-    <MESSAGE value="better" />
     <MESSAGE value="коммент" />
     <MESSAGE value="#21" />
     <MESSAGE value="typo" />
-    <option name="LAST_COMMIT_MESSAGE" value="typo" />
+    <MESSAGE value="better" />
+    <option name="LAST_COMMIT_MESSAGE" value="better" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
