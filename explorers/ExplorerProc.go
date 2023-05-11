@@ -19,66 +19,66 @@ type (
 	}
 )
 
-func (this *ExplorerProc) Construct(s model.Isettings, cerror chan error) *ExplorerProc {
-	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
-	this.logger.Debug("Создание объекта")
+func (exp *ExplorerProc) Construct(s model.Isettings, cerror chan error) *ExplorerProc {
+	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger.Debug("Создание объекта")
 
-	this.summary = prometheus.NewSummaryVec(
+	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       this.GetName(),
+			Name:       exp.GetName(),
 			Help:       "Память процессов",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "name", "pid", "metrics"},
 	)
 
-	this.settings = s
-	this.cerror = cerror
-	prometheus.MustRegister(this.summary)
-	return this
+	exp.settings = s
+	exp.cerror = cerror
+	prometheus.MustRegister(exp.summary)
+	return exp
 }
 
-func (this *ExplorerProc) StartExplore() {
-	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	this.logger.WithField("delay", delay).Debug("Start")
+func (exp *ExplorerProc) StartExplore() {
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	exp.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
-	this.ticker = time.NewTicker(timerNotyfy)
+	exp.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 
 FOR:
 	for {
-		this.Lock()
+		exp.Lock()
 		func() {
-			this.logger.Trace("Старт итерации таймера")
-			defer this.Unlock()
+			exp.logger.Trace("Старт итерации таймера")
+			defer exp.Unlock()
 
 			proc, err := newProcData()
 			if err != nil {
-				this.logger.WithError(err).Error()
+				exp.logger.WithError(err).Error()
 				return
 			}
 
-			this.summary.Reset()
+			exp.summary.Reset()
 			for _, p := range proc.GetAllProc() {
-				if p.ResidentMemory() > 0 && this.ContainsProc(p.Name()) {
-					this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "memory").Observe(float64(p.ResidentMemory()))
-					this.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
+				if p.ResidentMemory() > 0 && exp.ContainsProc(p.Name()) {
+					exp.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "memory").Observe(float64(p.ResidentMemory()))
+					exp.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
 				}
 			}
 		}()
 
 		select {
-		case <-this.ctx.Done():
+		case <-exp.ctx.Done():
 			break FOR
-		case <-this.ticker.C:
+		case <-exp.ticker.C:
 		}
 	}
 }
 
-func (this *ExplorerProc) ContainsProc(procname string) bool {
-	explorers := this.settings.GetExplorers()
-	if v, ok := explorers[this.GetName()]["processes"]; ok {
+func (exp *ExplorerProc) ContainsProc(procname string) bool {
+	explorers := exp.settings.GetExplorers()
+	if v, ok := explorers[exp.GetName()]["processes"]; ok {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Array && rv.Kind() != reflect.Slice {
 			return false
@@ -93,6 +93,6 @@ func (this *ExplorerProc) ContainsProc(procname string) bool {
 	return false
 }
 
-func (this *ExplorerProc) GetName() string {
+func (exp *ExplorerProc) GetName() string {
 	return "ProcData"
 }

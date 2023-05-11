@@ -117,7 +117,7 @@ func main() {
 	metric.Append(new(exp.ExplorerConnects).Construct(s, cerror))             // Соединения
 	metric.Append(new(exp.ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
 	metric.Append(new(exp.ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
-	metric.Append(new(exp.ExplorerCPU).Construct(s, cerror))                  // CPU
+	metric.Append(new(exp.CPU).Construct(s, cerror))                          // CPU
 	metric.Append(new(exp.ExplorerDisk).Construct(s, cerror))                 // Диск
 
 	logrusRotate.StandardLogger().Info("Сбор метрик:", strings.Join(metric.Metrics, ","))

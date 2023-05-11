@@ -66,33 +66,33 @@ type Metrics struct {
 
 // ////////////////////// Методы /////////////////////////////
 
-// func (this *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
-//	//if this.mutex == nil {
+// func (exp *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
+//	//if exp.mutex == nil {
 //	//	return
 //	//}
 //
 //	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
-//	this.mutex.Lock()
+//	exp.mutex.Lock()
 // }
 
-// func (this *BaseExplorer) Unlock(descendant Iexplorer)  {
-//	//if this.mutex == nil {
+// func (exp *BaseExplorer) Unlock(descendant Iexplorer)  {
+//	//if exp.mutex == nil {
 //	//	return
 //	//}
 //
 //	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
-//	this.mutex.Unlock()
+//	exp.mutex.Unlock()
 // }
 
-func (this *BaseExplorer) StartExplore() {
+func (exp *BaseExplorer) StartExplore() {
 
 }
-func (this *BaseExplorer) GetName() string {
+func (exp *BaseExplorer) GetName() string {
 	return "Base"
 }
 
-func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
-	this.logger.WithField("Исполняемый файл", cmd.Path).
+func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
+	exp.logger.WithField("Исполняемый файл", cmd.Path).
 		WithField("Параметры", cmd.Args).
 		Debug("Выполнение команды")
 
@@ -132,72 +132,72 @@ func (this *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 }
 
 // Своеобразный middleware
-func (this *BaseExplorer) Start(exp model.IExplorers) {
-	this.ctx, this.ctxFunc = context.WithCancel(context.Background())
-	// this.mutex = &sync.Mutex{}
+func (exp *BaseExplorer) Start(explorers model.IExplorers) {
+	exp.ctx, exp.ctxFunc = context.WithCancel(context.Background())
+	// exp.mutex = &sync.Mutex{}
 
 	go func() {
-		<-this.ctx.Done() // Stop
-		this.logger.Debug("Остановка сбора метрик")
+		<-exp.ctx.Done() // Stop
+		exp.logger.Debug("Остановка сбора метрик")
 
-		this.Continue() // что б снять лок
-		if this.ticker != nil {
-			this.ticker.Stop()
+		exp.Continue() // что б снять лок
+		if exp.ticker != nil {
+			exp.ticker.Stop()
 		}
-		if this.summary != nil {
-			this.summary.Reset()
+		if exp.summary != nil {
+			exp.summary.Reset()
 		}
-		if this.gauge != nil {
-			this.gauge.Reset()
+		if exp.gauge != nil {
+			exp.gauge.Reset()
 		}
 	}()
 
-	exp.StartExplore()
+	explorers.StartExplore()
 }
 
-func (this *BaseExplorer) Stop() {
-	if this.ctxFunc != nil {
-		this.ctxFunc()
+func (exp *BaseExplorer) Stop() {
+	if exp.ctxFunc != nil {
+		exp.ctxFunc()
 	}
 }
 
-func (this *BaseExplorer) Pause() {
-	this.logger.Trace("Pause. begin")
-	defer this.logger.Trace("Pause. end")
+func (exp *BaseExplorer) Pause() {
+	exp.logger.Trace("Pause. begin")
+	defer exp.logger.Trace("Pause. end")
 
-	if this.summary != nil {
-		this.summary.Reset()
+	if exp.summary != nil {
+		exp.summary.Reset()
 	}
-	if this.gauge != nil {
-		this.gauge.Reset()
+	if exp.gauge != nil {
+		exp.gauge.Reset()
 	}
 
-	if atomic.CompareAndSwapInt32(&this.isLocked, 0, 1) { // нужно что бы 2 раза не наложить lock
-		this.Lock()
-		this.logger.Trace("Pause. Блокировка установлена")
+	if atomic.CompareAndSwapInt32(&exp.isLocked, 0, 1) { // нужно что бы 2 раза не наложить lock
+		exp.Lock()
+		exp.logger.Trace("Pause. Блокировка установлена")
 	} else {
-		this.logger.WithField("isLocked", this.isLocked).Trace("Pause. Уже заблокировано")
+		exp.logger.WithField("isLocked", exp.isLocked).Trace("Pause. Уже заблокировано")
 	}
 }
 
-func (this *BaseExplorer) Continue() {
-	if atomic.CompareAndSwapInt32(&this.isLocked, 1, 0) {
-		this.Unlock()
-		this.logger.Trace("Continue. Блокировка снята")
+func (exp *BaseExplorer) Continue() {
+	if atomic.CompareAndSwapInt32(&exp.isLocked, 1, 0) {
+		exp.Unlock()
+		exp.logger.Trace("Continue. Блокировка снята")
 	} else {
-		this.logger.WithField("isLocked", this.isLocked).Trace("Continue. Блокировка не была установлена")
+		exp.logger.WithField("isLocked", exp.isLocked).Trace("Continue. Блокировка не была установлена")
 	}
 }
 
-func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
-	this.logger.Trace("Парс многострочного результата")
+func (exp *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
+	exp.logger.Trace("Парс многострочного результата")
 
 	strIn = normalizeEncoding(strIn)
 	strIn = strings.Replace(strIn, "\r", "", -1)
 	*licData = []map[string]string{} // очистка
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(strIn, -1) {
-		data := this.formatResult(part)
+		data := exp.formatResult(part)
 		if len(data) == 0 {
 			continue
 		}
@@ -205,7 +205,7 @@ func (this *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[stri
 	}
 }
 
-func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
+func (exp *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	strIn = normalizeEncoding(strIn)
 	result := make(map[string]string)
 	for _, line := range strings.Split(strIn, "\n") {
@@ -216,14 +216,14 @@ func (this *BaseRACExplorer) formatResult(strIn string) map[string]string {
 		}
 	}
 
-	this.logger.WithField("strIn", strIn).WithField("out", result).Trace("Парс результата")
+	exp.logger.WithField("strIn", strIn).WithField("out", result).Trace("Парс результата")
 	return result
 }
 
-func (this *BaseRACExplorer) appendLogPass(param []string) []string {
-	if login := this.settings.RAC_Login(); login != "" {
+func (exp *BaseRACExplorer) appendLogPass(param []string) []string {
+	if login := exp.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
-		if pwd := this.settings.RAC_Pass(); pwd != "" {
+		if pwd := exp.settings.RAC_Pass(); pwd != "" {
 			param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
 		}
 	}
@@ -243,72 +243,72 @@ func normalizeEncoding(str string) string {
 	return str
 }
 
-func (this *BaseRACExplorer) mutex() *sync.RWMutex {
-	this.one.Do(func() {
-		this.mx = new(sync.RWMutex)
+func (exp *BaseRACExplorer) mutex() *sync.RWMutex {
+	exp.one.Do(func() {
+		exp.mx = new(sync.RWMutex)
 	})
-	return this.mx
+	return exp.mx
 }
 
-func (this *BaseRACExplorer) GetClusterID() string {
-	this.logger.Debug("Получаем идентификатор кластера")
-	defer this.logger.Debug("Получен идентификатор кластера ", this.clusterID)
-	// this.mutex().RLock()
-	// defer this.mutex().RUnlock()
+func (exp *BaseRACExplorer) GetClusterID() string {
+	exp.logger.Debug("Получаем идентификатор кластера")
+	defer exp.logger.Debug("Получен идентификатор кластера ", exp.clusterID)
+	// exp.mutex().RLock()
+	// defer exp.mutex().RUnlock()
 
 	update := func() {
-		this.mutex().Lock()
-		defer this.mutex().Unlock()
+		exp.mutex().Lock()
+		defer exp.mutex().Unlock()
 
 		param := []string{}
-		if this.settings.RAC_Host() != "" {
-			param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+		if exp.settings.RAC_Host() != "" {
+			param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 		}
 
 		param = append(param, "cluster")
 		param = append(param, "list")
 
-		cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
+		cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
-		if result, err := this.run(cmdCommand); err != nil {
-			this.cerror <- fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error()) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
+		if result, err := exp.run(cmdCommand); err != nil {
+			exp.cerror <- fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error()) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
 		} else {
-			cluster = this.formatResult(result)
+			cluster = exp.formatResult(result)
 		}
 
 		if id, ok := cluster["cluster"]; !ok {
-			this.cerror <- errors.New("Не удалось получить идентификатор кластера")
+			exp.cerror <- errors.New("Не удалось получить идентификатор кластера")
 		} else {
-			this.clusterID = id
+			exp.clusterID = id
 		}
 	}
 
-	if this.clusterID == "" {
+	if exp.clusterID == "" {
 		// обновляем
 		update()
 	}
 
-	return this.clusterID
+	return exp.clusterID
 }
 
-func (this *Metrics) Append(ex ...model.Iexplorer) {
-	this.Explorers = append(this.Explorers, ex...)
+func (exp *Metrics) Append(ex ...model.Iexplorer) {
+	exp.Explorers = append(exp.Explorers, ex...)
 }
 
-func (this *Metrics) Construct(set model.Isettings) *Metrics {
-	this.Metrics = []string{}
+func (exp *Metrics) Construct(set model.Isettings) *Metrics {
+	exp.Metrics = []string{}
 	for k, _ := range set.GetExplorers() {
-		this.Metrics = append(this.Metrics, k)
+		exp.Metrics = append(exp.Metrics, k)
 	}
 
-	return this
+	return exp
 }
 
-func (this *Metrics) Contains(name string) bool {
-	if len(this.Metrics) == 0 {
+func (exp *Metrics) Contains(name string) bool {
+	if len(exp.Metrics) == 0 {
 		return true // Если не задали метрики через парамет, то используем все метрики
 	}
-	for _, item := range this.Metrics {
+	for _, item := range exp.Metrics {
 		if strings.Trim(item, " ") == strings.Trim(name, " ") {
 			return true
 		}
@@ -317,8 +317,8 @@ func (this *Metrics) Contains(name string) bool {
 	return false
 }
 
-func (this *Metrics) findExplorer(name string) model.Iexplorer {
-	for _, item := range this.Explorers {
+func (exp *Metrics) findExplorer(name string) model.Iexplorer {
+	for _, item := range exp.Explorers {
 		if strings.ToLower(item.GetName()) == strings.ToLower(strings.Trim(name, " ")) {
 			return item
 		}

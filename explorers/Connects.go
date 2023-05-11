@@ -24,13 +24,13 @@ func appendParam(in []string, value string) []string {
 	return in
 }
 
-func (this *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *ExplorerConnects {
-	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
-	this.logger.Debug("Создание объекта")
+func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *ExplorerConnects {
+	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger.Debug("Создание объекта")
 
-	this.summary = prometheus.NewSummaryVec(
+	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       this.GetName(),
+			Name:       exp.GetName(),
 			Help:       "Соединения 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
@@ -38,89 +38,89 @@ func (this *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *E
 	)
 
 	// dataGetter - типа мок. Инициализируется из тестов
-	if this.BaseExplorer.dataGetter == nil {
-		this.BaseExplorer.dataGetter = this.getConnects
+	if exp.BaseExplorer.dataGetter == nil {
+		exp.BaseExplorer.dataGetter = exp.getConnects
 	}
 
-	this.settings = s
-	this.cerror = cerror
-	prometheus.MustRegister(this.summary)
-	return this
+	exp.settings = s
+	exp.cerror = cerror
+	prometheus.MustRegister(exp.summary)
+	return exp
 }
 
-func (this *ExplorerConnects) StartExplore() {
-	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+func (exp *ExplorerConnects) StartExplore() {
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
 
-	this.ticker = time.NewTicker(time.Second * time.Duration(delay))
+	exp.ticker = time.NewTicker(time.Second * time.Duration(delay))
 	host, _ := os.Hostname()
 
-	this.ExplorerCheckSheduleJob.settings = this.settings
-	if err := this.fillBaseList(); err != nil {
+	exp.ExplorerCheckSheduleJob.settings = exp.settings
+	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", this.GetName()).Warning("Не удалось получить список баз")
+		logrusRotate.StandardLogger().WithError(err).WithField("Name", exp.GetName()).Warning("Не удалось получить список баз")
 	}
 
 FOR:
 	for {
-		this.Lock()
+		exp.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock()
+			logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			defer exp.Unlock()
 
-			connects, _ := this.BaseExplorer.dataGetter()
+			connects, _ := exp.BaseExplorer.dataGetter()
 			if len(connects) == 0 {
-				this.summary.Reset()
+				exp.summary.Reset()
 				return
 			}
 
 			groupByDB := map[string]int{}
 			for _, item := range connects {
-				groupByDB[this.findBaseName(item["infobase"])]++
+				groupByDB[exp.findBaseName(item["infobase"])]++
 			}
 
-			this.summary.Reset()
+			exp.summary.Reset()
 			// с разбивкой по БД
 			for k, v := range groupByDB {
-				this.summary.WithLabelValues(host, k).Observe(float64(v))
+				exp.summary.WithLabelValues(host, k).Observe(float64(v))
 			}
 			// общее кол-во по хосту
-			// this.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
+			// exp.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
 		}()
 
 		select {
-		case <-this.ctx.Done():
+		case <-exp.ctx.Done():
 			break FOR
-		case <-this.ticker.C:
+		case <-exp.ticker.C:
 		}
 	}
 }
 
-func (this *ExplorerConnects) getConnects() (connData []map[string]string, err error) {
+func (exp *ExplorerConnects) getConnects() (connData []map[string]string, err error) {
 	connData = []map[string]string{}
 
 	param := []string{}
-	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+	if exp.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "connection")
 	param = append(param, "list")
-	param = this.appendLogPass(param)
+	param = exp.appendLogPass(param)
 
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
-	if result, err := this.run(cmdCommand); err != nil {
-		this.logger.WithError(err).Error()
+	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
+	if result, err := exp.run(cmdCommand); err != nil {
+		exp.logger.WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
-		this.formatMultiResult(result, &connData)
+		exp.formatMultiResult(result, &connData)
 	}
 
 	return connData, nil
 }
 
-func (this *ExplorerConnects) GetName() string {
+func (exp *ExplorerConnects) GetName() string {
 	return "Connect"
 }

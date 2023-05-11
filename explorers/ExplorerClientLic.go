@@ -17,13 +17,13 @@ type ExplorerClientLic struct {
 	BaseRACExplorer
 }
 
-func (this *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *ExplorerClientLic {
-	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
-	this.logger.Debug("Создание объекта")
+func (exp *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *ExplorerClientLic {
+	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger.Debug("Создание объекта")
 
-	this.summary = prometheus.NewSummaryVec(
+	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       this.GetName(),
+			Name:       exp.GetName(),
 			Help:       "Киентские лицензии 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
@@ -31,39 +31,39 @@ func (this *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *
 	)
 
 	// dataGetter - типа мок. Инициализируется из тестов
-	if this.dataGetter == nil {
-		this.dataGetter = this.getLic
+	if exp.dataGetter == nil {
+		exp.dataGetter = exp.getLic
 	}
 
-	this.settings = s
-	this.cerror = cerror
-	prometheus.MustRegister(this.summary)
-	return this
+	exp.settings = s
+	exp.cerror = cerror
+	prometheus.MustRegister(exp.summary)
+	return exp
 }
 
-func (this *ExplorerClientLic) StartExplore() {
-	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	this.logger.WithField("delay", delay).Debug("Start")
+func (exp *ExplorerClientLic) StartExplore() {
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	exp.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
-	this.ticker = time.NewTicker(timerNotyfy)
+	exp.ticker = time.NewTicker(timerNotyfy)
 
 	host, _ := os.Hostname()
 	var group map[string]int
 
 FOR:
 	for {
-		this.logger.Trace("Lock")
-		this.Lock()
+		exp.logger.Trace("Lock")
+		exp.Lock()
 		func() {
-			this.logger.Trace("Старт итерации таймера")
+			exp.logger.Trace("Старт итерации таймера")
 			defer func() {
-				this.logger.Trace("Unlock")
-				this.Unlock()
+				exp.logger.Trace("Unlock")
+				exp.Unlock()
 			}()
 
-			lic, _ := this.dataGetter()
-			this.logger.Tracef("Количество лиц. %v", len(lic))
+			lic, _ := exp.dataGetter()
+			exp.logger.Tracef("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
 				for _, item := range lic {
@@ -74,61 +74,61 @@ FOR:
 					group[key]++
 				}
 
-				this.summary.Reset()
+				exp.summary.Reset()
 				for k, v := range group {
-					// logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Observe")
-					this.summary.WithLabelValues(host, k).Observe(float64(v))
+					// logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Observe")
+					exp.summary.WithLabelValues(host, k).Observe(float64(v))
 				}
 
 			} else {
-				this.summary.Reset()
+				exp.summary.Reset()
 			}
 
-			this.logger.Trace("return")
+			exp.logger.Trace("return")
 		}()
 
 		select {
-		case <-this.ctx.Done():
+		case <-exp.ctx.Done():
 			break FOR
-		case <-this.ticker.C:
+		case <-exp.ticker.C:
 		}
 	}
 }
 
-func (this *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
-	this.logger.Trace("getLic start")
-	defer this.logger.Trace("getLic return")
+func (exp *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
+	exp.logger.Trace("getLic start")
+	defer exp.logger.Trace("getLic return")
 	// /opt/1C/v8.3/x86_64/rac session list --licenses --cluster=5c4602fc-f704-11e8-fa8d-005056031e96
 	licData = []map[string]string{}
 
 	param := []string{}
 
 	// если заполнен хост то порт может быть не заполнен, если не заполнен хост, а заполнен порт, так не будет работать, по этому условие с портом внутри
-	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+	if exp.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "session")
 	param = append(param, "list")
-	param = this.appendLogPass(param)
+	param = exp.appendLogPass(param)
 
 	param = append(param, "--licenses")
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
+	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 
-	this.logger.WithField("Command", cmdCommand.Args).Trace("Выполняем команду")
+	exp.logger.WithField("Command", cmdCommand.Args).Trace("Выполняем команду")
 
-	if result, err := this.run(cmdCommand); err != nil {
-		this.logger.WithError(err).Error()
+	if result, err := exp.run(cmdCommand); err != nil {
+		exp.logger.WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
-		this.formatMultiResult(result, &licData)
+		exp.formatMultiResult(result, &licData)
 	}
 
 	return licData, nil
 }
 
-func (this *ExplorerClientLic) GetName() string {
+func (exp *ExplorerClientLic) GetName() string {
 	return "ClientLic"
 }

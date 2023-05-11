@@ -20,13 +20,13 @@ type ExplorerAvailablePerformance struct {
 	reader func() (string, error)
 }
 
-func (this *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror chan error) *ExplorerAvailablePerformance {
-	this.logger = lr.StandardLogger().WithField("Name", this.GetName())
-	this.logger.Debug("Создание объекта")
+func (exp *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror chan error) *ExplorerAvailablePerformance {
+	exp.logger = lr.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger.Debug("Создание объекта")
 
-	this.summary = prometheus.NewSummaryVec(
+	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       this.GetName(),
+			Name:       exp.GetName(),
 			Help:       "Доступная производительность хоста",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
@@ -34,62 +34,62 @@ func (this *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror ch
 	)
 
 	// типа мок. Инициализируется из тестов
-	if this.reader == nil {
-		this.reader = this.readData
+	if exp.reader == nil {
+		exp.reader = exp.readData
 	}
 
-	this.settings = s
-	this.cerror = cerror
-	prometheus.MustRegister(this.summary)
-	return this
+	exp.settings = s
+	exp.cerror = cerror
+	prometheus.MustRegister(exp.summary)
+	return exp
 }
 
-func (this *ExplorerAvailablePerformance) StartExplore() {
-	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	this.logger.WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
+func (exp *ExplorerAvailablePerformance) StartExplore() {
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	exp.logger.WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
-	this.ticker = time.NewTicker(timerNotyfy)
+	exp.ticker = time.NewTicker(timerNotyfy)
 FOR:
 	for {
 		// Для обеспечения паузы. Логика такая, при каждой итерайии нам нужно лочить мьютекс, в конце разлочить, как только придет запрос на паузу этот же мьютекс будет залочен во вне
 		// соответственно итерация будет на паузе ждать
-		this.Lock()
+		exp.Lock()
 		func() {
-			this.logger.WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock()
+			exp.logger.WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			defer exp.Unlock()
 
-			if data, err := this.getData(); err == nil {
-				this.logger.Debug("Количество данных: ", len(data))
-				this.logger.WithField("data", data).Trace()
+			if data, err := exp.getData(); err == nil {
+				exp.logger.Debug("Количество данных: ", len(data))
+				exp.logger.WithField("data", data).Trace()
 
-				this.summary.Reset()
+				exp.summary.Reset()
 				for _, item := range data {
-					this.summary.WithLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string)).Observe(item["value"].(float64))
+					exp.summary.WithLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string)).Observe(item["value"].(float64))
 				}
 			} else {
-				this.summary.Reset()
-				this.logger.WithField("Name", this.GetName()).WithError(err).Error("Произошла ошибка")
+				exp.summary.Reset()
+				exp.logger.WithField("Name", exp.GetName()).WithError(err).Error("Произошла ошибка")
 			}
 
 		}()
 
 		select {
-		case <-this.ctx.Done():
+		case <-exp.ctx.Done():
 			break FOR
-		case <-this.ticker.C:
+		case <-exp.ticker.C:
 		}
 	}
 }
 
-func (this *ExplorerAvailablePerformance) getData() (result []map[string]interface{}, err error) {
+func (exp *ExplorerAvailablePerformance) getData() (result []map[string]interface{}, err error) {
 
 	// /opt/1C/v8.3/x86_64/rac process --cluster=ee5adb9a-14fa-11e9-7589-005056032522 list
 	procData := []map[string]string{}
-	if sourceData, err := this.reader(); err != nil {
+	if sourceData, err := exp.reader(); err != nil {
 		return result, err
 	} else {
-		this.formatMultiResult(sourceData, &procData)
+		exp.formatMultiResult(sourceData, &procData)
 	}
 
 	// У одного хоста может быть несколько рабочих процессов в таком случаи мы берем среднее арифметическое по процессам
@@ -122,7 +122,7 @@ func (this *ExplorerAvailablePerformance) getData() (result []map[string]interfa
 	// 	}
 	// }
 
-	clusterID := this.GetClusterID()
+	clusterID := exp.GetClusterID()
 	for _, item := range procData {
 
 		tmp := make(map[string]float64)
@@ -165,27 +165,27 @@ func (this *ExplorerAvailablePerformance) getData() (result []map[string]interfa
 	return result, nil
 }
 
-func (this *ExplorerAvailablePerformance) readData() (string, error) {
+func (exp *ExplorerAvailablePerformance) readData() (string, error) {
 	param := []string{}
-	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+	if exp.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "process")
 	param = append(param, "list")
-	param = this.appendLogPass(param)
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+	param = exp.appendLogPass(param)
+	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
-	if result, err := this.run(cmdCommand); err != nil {
-		this.logger.WithError(err).Error()
+	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
+	if result, err := exp.run(cmdCommand); err != nil {
+		exp.logger.WithError(err).Error()
 		return "", err
 	} else {
 		return result, nil
 	}
 }
 
-func (this *ExplorerAvailablePerformance) GetName() string {
+func (exp *ExplorerAvailablePerformance) GetName() string {
 	return "AvailablePerformance"
 }
 

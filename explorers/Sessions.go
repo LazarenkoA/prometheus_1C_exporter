@@ -17,13 +17,13 @@ type ExplorerSessions struct {
 	ExplorerCheckSheduleJob
 }
 
-func (this *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
-	this.logger = logrusRotate.StandardLogger().WithField("Name", this.GetName())
-	this.logger.Debug("Создание объекта")
+func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
+	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger.Debug("Создание объекта")
 
-	this.summary = prometheus.NewSummaryVec(
+	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       this.GetName(),
+			Name:       exp.GetName(),
 			Help:       "Сессии 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
@@ -31,91 +31,91 @@ func (this *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *E
 	)
 
 	// dataGetter - типа мок. Инициализируется из тестов
-	if this.BaseExplorer.dataGetter == nil {
-		this.BaseExplorer.dataGetter = this.getSessions
+	if exp.BaseExplorer.dataGetter == nil {
+		exp.BaseExplorer.dataGetter = exp.getSessions
 	}
 
-	this.settings = s
-	this.cerror = cerror
-	prometheus.MustRegister(this.summary)
-	return this
+	exp.settings = s
+	exp.cerror = cerror
+	prometheus.MustRegister(exp.summary)
+	return exp
 }
 
-func (this *ExplorerSessions) StartExplore() {
-	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
-	this.logger.WithField("delay", delay).Debug("Start")
+func (exp *ExplorerSessions) StartExplore() {
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	exp.logger.WithField("delay", delay).Debug("Start")
 
 	timerNotyfy := time.Second * time.Duration(delay)
-	this.ticker = time.NewTicker(timerNotyfy)
+	exp.ticker = time.NewTicker(timerNotyfy)
 	host, _ := os.Hostname()
 	var groupByDB map[string]int
 
-	this.ExplorerCheckSheduleJob.settings = this.settings
-	if err := this.fillBaseList(); err != nil {
+	exp.ExplorerCheckSheduleJob.settings = exp.settings
+	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		this.logger.WithError(err).Warning("Не удалось получить список баз")
+		exp.logger.WithError(err).Warning("Не удалось получить список баз")
 	}
 
 FOR:
 	for {
-		this.Lock()
+		exp.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", this.GetName()).Trace("Старт итерации таймера")
-			defer this.Unlock()
+			logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			defer exp.Unlock()
 
-			ses, _ := this.BaseExplorer.dataGetter()
+			ses, _ := exp.BaseExplorer.dataGetter()
 			if len(ses) == 0 {
-				this.summary.Reset()
+				exp.summary.Reset()
 				return
 			}
 
 			groupByDB = map[string]int{}
 			for _, item := range ses {
-				groupByDB[this.findBaseName(item["infobase"])]++
+				groupByDB[exp.findBaseName(item["infobase"])]++
 			}
 
-			this.summary.Reset()
+			exp.summary.Reset()
 			// с разбивкой по БД
 			for k, v := range groupByDB {
-				this.summary.WithLabelValues(host, k).Observe(float64(v))
+				exp.summary.WithLabelValues(host, k).Observe(float64(v))
 			}
 			// общее кол-во по хосту
-			// this.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
+			// exp.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
 		}()
 
 		select {
-		case <-this.ctx.Done():
+		case <-exp.ctx.Done():
 			break FOR
-		case <-this.ticker.C:
+		case <-exp.ticker.C:
 		}
 	}
 }
 
-func (this *ExplorerSessions) getSessions() (sesData []map[string]string, err error) {
+func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err error) {
 	sesData = []map[string]string{}
 
 	param := []string{}
-	if this.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{this.settings.RAC_Host()}, this.settings.RAC_Port()), ":"))
+	if exp.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
 	param = append(param, "session")
 	param = append(param, "list")
-	param = this.appendLogPass(param)
+	param = exp.appendLogPass(param)
 
-	param = append(param, fmt.Sprintf("--cluster=%v", this.GetClusterID()))
+	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.Command(this.settings.RAC_Path(), param...)
-	if result, err := this.run(cmdCommand); err != nil {
-		this.logger.WithError(err).Error()
+	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
+	if result, err := exp.run(cmdCommand); err != nil {
+		exp.logger.WithError(err).Error()
 		return []map[string]string{}, err
 	} else {
-		this.formatMultiResult(result, &sesData)
+		exp.formatMultiResult(result, &sesData)
 	}
 
 	return sesData, nil
 }
 
-func (this *ExplorerSessions) GetName() string {
+func (exp *ExplorerSessions) GetName() string {
 	return "Session"
 }

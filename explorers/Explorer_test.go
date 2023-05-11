@@ -87,7 +87,7 @@ func initests(t *testing.T) []struct {
 	objectCon := new(ExplorerConnects).Construct(s, cerror)
 	objectCSJ := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 	objecеDisk := new(ExplorerDisk).Construct(s, cerror)
-	objectCPU := new(ExplorerCPU).Construct(s, cerror)
+	objectCPU := new(CPU).Construct(s, cerror)
 	// objectCon2 := new(ExplorerConnects).Construct(s, cerror)
 	// objectCSJ2 := new(ExplorerCheckSheduleJob).Construct(s, cerror)
 	// objectProc := new(ExplorerProc).Construct(s, cerror)
