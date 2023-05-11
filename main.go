@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -102,6 +103,12 @@ func main() {
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	siteMux.Handle("/Continue", exp.Continue(metric))
 	siteMux.Handle("/Pause", exp.Pause(metric))
+
+	siteMux.HandleFunc("/debug/pprof/", pprof.Index)
+	siteMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	siteMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	siteMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	siteMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	metric.Append(new(exp.ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
 	metric.Append(new(exp.ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность

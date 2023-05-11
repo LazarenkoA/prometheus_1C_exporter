@@ -9,6 +9,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/jarcoal/httpmock v1.2.0
+	github.com/loov/goda v0.5.5 // indirect
 	github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/procfs v0.6.0
 	github.com/shirou/gopsutil v2.20.8+incompatible

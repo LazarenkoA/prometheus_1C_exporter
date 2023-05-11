@@ -52,8 +52,7 @@ func (this *ExplorerConnects) StartExplore() {
 	delay := reflect.ValueOf(this.settings.GetProperty(this.GetName(), "timerNotyfy", 10)).Int()
 	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", this.GetName()).Debug("Start")
 
-	timerNotyfy := time.Second * time.Duration(delay)
-	this.ticker = time.NewTicker(timerNotyfy)
+	this.ticker = time.NewTicker(time.Second * time.Duration(delay))
 	host, _ := os.Hostname()
 
 	this.ExplorerCheckSheduleJob.settings = this.settings
