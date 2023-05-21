@@ -34,7 +34,7 @@ type Settings struct {
 
 	LogDir     string `yaml:"LogDir"`
 	LogLevel   int    `yaml:"LogLevel"`
-	TimeRotate int    `yaml:"TimeLogs"`
+	TimeRotate int    `yaml:"TimeRotate"`
 	TTLLogs    int    `yaml:"TTLLogs"`
 	RAC        *struct {
 		Path  string `yaml:"Path"`
