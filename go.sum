@@ -1,6 +1,10 @@
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
+github.com/LazarenkoA/LogrusRotate v1.0.0 h1:/dyTe5/QnouVaCLC9y48wLqOk3ipSGgrFVMbmHORxV8=
+github.com/LazarenkoA/LogrusRotate v1.0.0/go.mod h1:l10hK9r2+oQtlqBJvFzTTXDteZI0JZgsU/iUuj1dXdA=
 github.com/LazarenkoA/LogrusRotate v1.0.1-0.20200420172000-d4b9e48cb178 h1:PM3OtqhCe1RrN02/iQKZcvXS57QhlFJWJvmmRPb2z2k=
 github.com/LazarenkoA/LogrusRotate v1.0.1-0.20200420172000-d4b9e48cb178/go.mod h1:MeLoVkQYRN9RmnGzbN8YZGsp2t6EZs+o9tcIy0IX6GI=
+github.com/LazarenkoA/LogrusRotate v1.0.1 h1:r4rv1JvSKbU3hrc57C/yY0kkllhFFYRlEA+3BZ62B3w=
+github.com/LazarenkoA/LogrusRotate v1.0.1/go.mod h1:MeLoVkQYRN9RmnGzbN8YZGsp2t6EZs+o9tcIy0IX6GI=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d h1:G0m3OIz70MZUWq3EgK3CesDbo8upS2Vm9/P3FtgI+Jk=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
