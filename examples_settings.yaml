@@ -58,6 +58,7 @@ DBCredentials: # Не обязательный параметр
   URL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
   User: ""
   Password: ""
+  TLSSkipVerify: true # если true при обращении к сервису будут игнорироваться ошибки проверки сертификата
 
 RAC:
   Path: "/opt/1C/v8.3/x86_64/rac"

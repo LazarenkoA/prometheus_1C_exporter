@@ -2,6 +2,7 @@ package settings
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,9 +28,10 @@ type Settings struct {
 	} `yaml:"Explorers"`
 
 	DBCredentials *struct {
-		URL      string `yaml:"URL"`
-		User     string `yaml:"User"`
-		Password string `yaml:"Password"`
+		URL           string `yaml:"URL" json:"URL,omitempty"`
+		User          string `yaml:"User" json:"user,omitempty"`
+		Password      string `yaml:"Password" json:"password,omitempty"`
+		TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 	} `yaml:"DBCredentials"`
 
 	LogDir     string `yaml:"LogDir"`
@@ -45,14 +47,6 @@ type Settings struct {
 	} `yaml:"RAC"`
 }
 
-/*
-#################### JSON
-{
-"Name": "hrmcorp-n17",
-"UserName": "",
-"UserPass": ""
-}
-*/
 type Bases struct {
 	Name     string `json:"Name"`
 	UserName string `json:"UserName"`
@@ -83,7 +77,7 @@ func (s *Settings) GetLogPass(ibname string) (login, pass string) {
 	defer s.mx.RUnlock()
 
 	for _, base := range s.bases {
-		if strings.ToLower(base.Name) == strings.ToLower(ibname) {
+		if strings.EqualFold(base.Name, ibname) {
 			pass = base.UserPass
 			login = base.UserName
 			break
@@ -123,7 +117,8 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 		defer s.mx.Unlock()
 
 		logrusRotate.StandardLogger().WithField("URL", s.DBCredentials.URL).Info("обращаемся к REST")
-		data, err := request(s.DBCredentials.URL, s.DBCredentials.User, s.DBCredentials.Password)
+		tlsConf := &tls.Config{InsecureSkipVerify: s.DBCredentials.TLSSkipVerify}
+		data, err := request(s.DBCredentials.URL, s.DBCredentials.User, s.DBCredentials.Password, tlsConf)
 		if err != nil {
 			logrusRotate.StandardLogger().WithError(err).Error("ошибка получения данных по БД")
 		}
@@ -170,8 +165,13 @@ func (s *Settings) GetExplorers() map[string]map[string]interface{} {
 	return result
 }
 
-func request(url, log, pass string) ([]byte, error) {
-	cl := &http.Client{Timeout: time.Minute}
+func request(url, log, pass string, tlsConf *tls.Config) ([]byte, error) {
+	cl := &http.Client{
+		Timeout: time.Minute,
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConf,
+		},
+	}
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	if log != "" {
 		req.SetBasicAuth(log, pass)
