@@ -21,7 +21,7 @@ jobs:
 
     - name: Тесты
       run: |
-        go test -v -race ./...
+        go test -v ./... -gcflags=all=-l -race
       env:
         GO111MODULE: on  
 
