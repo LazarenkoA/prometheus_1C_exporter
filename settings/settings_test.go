@@ -44,7 +44,7 @@ func Test_GetDeactivateAndReset(t *testing.T) {
 
 	// из-за переопределенного транспорта не могу мок использовать
 	// httpmock.RegisterResponder(http.MethodGet, "http://localhost/DBCredentials", httpmock.NewStringResponder(200, `[{"Name":"hrmcorp-n17","UserName":"testUser","UserPass":"***"}]`))
-
+	//
 	ctx, cancel := context.WithCancel(context.Background())
 	go s.GetDBCredentials(ctx, make(chan struct{}))
 
