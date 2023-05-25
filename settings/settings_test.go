@@ -1,7 +1,9 @@
 package settings
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"os"
 	"reflect"
@@ -9,28 +11,39 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_GetDeactivateAndReset(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	// httpmock.Activate()
+	// defer httpmock.DeactivateAndReset()
 
 	s := &Settings{
 		mx: new(sync.RWMutex),
 		DBCredentials: &struct {
-			URL      string `yaml:"URL"`
-			User     string `yaml:"User"`
-			Password string `yaml:"Password"`
+			URL           string `yaml:"URL" json:"URL,omitempty"`
+			User          string `yaml:"User" json:"user,omitempty"`
+			Password      string `yaml:"Password" json:"password,omitempty"`
+			TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 		}{
-			URL:      "http://localhost/DBCredentials",
-			User:     "",
-			Password: "",
+			URL:           "http://localhost/DBCredentials",
+			User:          "",
+			Password:      "",
+			TLSSkipVerify: true,
 		},
 	}
 
-	httpmock.RegisterResponder(http.MethodGet, "http://localhost/DBCredentials", httpmock.NewStringResponder(200, `[{"Name":"hrmcorp-n17","UserName":"testUser","UserPass":"***"}]`))
+	p := gomonkey.ApplyMethod(reflect.TypeOf(new(http.Client)), "Do", func(_ *http.Client, req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader([]byte(`[{"Name":"hrmcorp-n17","UserName":"testUser","UserPass":"***"}]`))),
+		}, nil
+	})
+	defer p.Reset()
+
+	// из-за переопределенного транспорта не могу мок использовать
+	// httpmock.RegisterResponder(http.MethodGet, "http://localhost/DBCredentials", httpmock.NewStringResponder(200, `[{"Name":"hrmcorp-n17","UserName":"testUser","UserPass":"***"}]`))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go s.GetDBCredentials(ctx, make(chan struct{}))
