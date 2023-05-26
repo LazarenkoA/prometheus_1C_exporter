@@ -3,10 +3,9 @@ module github.com/LazarenkoA/prometheus_1C_exporter
 go 1.19
 
 require (
-	github.com/LazarenkoA/LogrusRotate v1.0.1
+	github.com/LazarenkoA/LogrusRotate v1.0.2
 	github.com/agiledragon/gomonkey/v2 v2.10.1
 	github.com/golang/mock v1.6.0
-	github.com/jarcoal/httpmock v1.2.0
 	github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/procfs v0.6.0
 	github.com/shirou/gopsutil v2.20.8+incompatible
