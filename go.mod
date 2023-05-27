@@ -3,7 +3,7 @@ module github.com/LazarenkoA/prometheus_1C_exporter
 go 1.19
 
 require (
-	github.com/LazarenkoA/LogrusRotate v1.0.2
+	github.com/LazarenkoA/LogrusRotate v1.0.3
 	github.com/agiledragon/gomonkey/v2 v2.10.1
 	github.com/golang/mock v1.6.0
 	github.com/prometheus/client_golang v1.11.1
