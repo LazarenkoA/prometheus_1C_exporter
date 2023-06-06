@@ -45,7 +45,7 @@ type BaseExplorer struct {
 	ctx         context.Context
 	ctxFunc     context.CancelFunc
 	// mutex       *sync.Mutex
-	isLocked int32
+	isLocked atomic.Int32
 	// mock object
 	dataGetter func() ([]map[string]string, error)
 	logger     *logrus.Entry
@@ -87,6 +87,7 @@ type Metrics struct {
 func (exp *BaseExplorer) StartExplore() {
 
 }
+
 func (exp *BaseExplorer) GetName() string {
 	return "Base"
 }
@@ -162,8 +163,9 @@ func (exp *BaseExplorer) Stop() {
 }
 
 func (exp *BaseExplorer) Pause() {
-	exp.logger.Trace("Pause. begin")
-	defer exp.logger.Trace("Pause. end")
+	l := exp.logger.WithField("name", exp.GetName())
+	l.Trace("Pause begin")
+	defer exp.logger.Trace("Pause end")
 
 	if exp.summary != nil {
 		exp.summary.Reset()
@@ -172,20 +174,20 @@ func (exp *BaseExplorer) Pause() {
 		exp.gauge.Reset()
 	}
 
-	if atomic.CompareAndSwapInt32(&exp.isLocked, 0, 1) { // нужно что бы 2 раза не наложить lock
+	if exp.isLocked.CompareAndSwap(0, 1) { // нужно что бы 2 раза не наложить lock
 		exp.Lock()
-		exp.logger.Trace("Pause. Блокировка установлена")
+		l.Trace("Pause. Блокировка установлена")
 	} else {
-		exp.logger.WithField("isLocked", exp.isLocked).Trace("Pause. Уже заблокировано")
+		l.WithField("isLocked", exp.isLocked.Load()).Trace("Pause. Уже заблокировано")
 	}
 }
 
 func (exp *BaseExplorer) Continue() {
-	if atomic.CompareAndSwapInt32(&exp.isLocked, 1, 0) {
+	if exp.isLocked.CompareAndSwap(1, 0) {
 		exp.Unlock()
 		exp.logger.Trace("Continue. Блокировка снята")
 	} else {
-		exp.logger.WithField("isLocked", exp.isLocked).Trace("Continue. Блокировка не была установлена")
+		exp.logger.WithField("isLocked", exp.isLocked.Load()).Trace("Continue. Блокировка не была установлена")
 	}
 }
 
@@ -317,14 +319,16 @@ func (exp *Metrics) Contains(name string) bool {
 	return false
 }
 
-func (exp *Metrics) findExplorer(name string) model.Iexplorer {
-	for _, item := range exp.Explorers {
-		if strings.ToLower(item.GetName()) == strings.ToLower(strings.Trim(name, " ")) {
-			return item
+func (exp *Metrics) findExplorer(names ...string) (result []model.Iexplorer) {
+	for _, name := range names {
+		for _, item := range exp.Explorers {
+			if strings.EqualFold(item.GetName(), strings.Trim(name, " ")) || name == "all" {
+				result = append(result, item)
+			}
 		}
 	}
 
-	return nil
+	return result
 }
 
 func Pause(metrics *Metrics) http.Handler {
@@ -349,20 +353,16 @@ func Pause(metrics *Metrics) http.Handler {
 		}
 
 		logrusRotate.StandardLogger().Infof("Приостановить сбор метрик %q", metricNames)
-		for _, metricName := range strings.Split(metricNames, ",") {
-			if exp := metrics.findExplorer(metricName); exp != nil {
-				exp.Pause()
+		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
+		for _, exp := range exps {
+			exp.Pause()
 
-				// автовключение паузы
-				if offsetMin > 0 {
-					t := time.NewTicker(time.Minute * time.Duration(offsetMin))
-					go func() {
-						<-t.C
-						exp.Continue()
-					}()
-				}
-			} else {
-				fmt.Fprintf(w, "Метрика %q не найдена\n", metricName)
+			// автовключение паузы
+			if offsetMin > 0 {
+				go func() {
+					<-time.After(time.Minute * time.Duration(offsetMin))
+					exp.Continue()
+				}()
 			}
 		}
 	})
@@ -377,14 +377,11 @@ func Continue(metrics *Metrics) http.Handler {
 		logrusRotate.StandardLogger().WithField("URL", r.URL.RequestURI()).Trace("Продолжить")
 
 		metricNames := r.URL.Query().Get("metricNames")
-		logrusRotate.StandardLogger().Info("Продолжить сбор метрик", metricNames)
-		for _, metricName := range strings.Split(metricNames, ",") {
-			if exp := metrics.findExplorer(metricName); exp != nil {
-				exp.Continue()
-			} else {
-				fmt.Fprintf(w, "Метрика %q не найдена", metricName)
-				logrusRotate.StandardLogger().Errorf("Метрика %q не найдена", metricName)
-			}
+		logrusRotate.StandardLogger().Info("Продолжить сбор метрик ", metricNames)
+
+		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
+		for _, exp := range exps {
+			exp.Continue()
 		}
 	})
 }
