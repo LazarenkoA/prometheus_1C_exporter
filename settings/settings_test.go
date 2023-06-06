@@ -120,10 +120,10 @@ func Test_GetProperty(t *testing.T) {
 	s, err := LoadSettings(path)
 	assert.NoError(t, err)
 	if !t.Failed() {
-		delay := reflect.ValueOf(s.GetProperty("ClientLic", "timerNotyfy_", 10)).Int()
+		delay := reflect.ValueOf(s.GetProperty("ClientLic", "timerNotify_", 10)).Int()
 		assert.Equal(t, 10, int(delay))
 
-		delay = reflect.ValueOf(s.GetProperty("ClientLic", "timerNotyfy", 10)).Int()
+		delay = reflect.ValueOf(s.GetProperty("ClientLic", "timerNotify", 10)).Int()
 		assert.Equal(t, 60, int(delay))
 
 		assert.Equal(t, 9, len(s.Explorers))
@@ -149,35 +149,35 @@ func getSettings() string {
 	return `Explorers:
   - Name: ClientLic
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: AvailablePerformance
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: CPU
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: disk
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: SheduleJob
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: Session
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: Connect
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: SessionsData
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: ProcData
     Property:
       processes:
         - rphost
         - ragent
         - rmngr
-      timerNotyfy: 10
+      timerNotify: 10
 
 DBCredentials: # Не обязательный параметр
   URL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
@@ -202,7 +202,7 @@ func getBadSettings() string {
 	return `Explorers:
   - Name: ClientLic
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   Name: AvailablePerformance
    ый параметр
   Pass: ""          # Не обязательный параметр

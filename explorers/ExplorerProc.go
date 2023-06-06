@@ -39,11 +39,11 @@ func (exp *ExplorerProc) Construct(s model.Isettings, cerror chan error) *Explor
 }
 
 func (exp *ExplorerProc) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
 	exp.logger.WithField("delay", delay).Debug("Start")
 
-	timerNotyfy := time.Second * time.Duration(delay)
-	exp.ticker = time.NewTicker(timerNotyfy)
+	timerNotify := time.Second * time.Duration(delay)
+	exp.ticker = time.NewTicker(timerNotify)
 	host, _ := os.Hostname()
 
 FOR:

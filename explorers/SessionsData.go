@@ -42,7 +42,7 @@ func (exp *ExplorerSessionsMemory) Construct(s model.Isettings, cerror chan erro
 }
 
 func (exp *ExplorerSessionsMemory) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
 	exp.logger.WithField("delay", delay).Debug("Start")
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
@@ -51,8 +51,8 @@ func (exp *ExplorerSessionsMemory) StartExplore() {
 		exp.logger.WithError(err).Warning("Не удалось получить список баз")
 	}
 
-	timerNotyfy := time.Second * time.Duration(delay)
-	exp.ticker = time.NewTicker(timerNotyfy)
+	timerNotify := time.Second * time.Duration(delay)
+	exp.ticker = time.NewTicker(timerNotify)
 	host, _ := os.Hostname()
 
 FOR:

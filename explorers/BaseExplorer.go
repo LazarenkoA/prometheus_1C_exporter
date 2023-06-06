@@ -39,7 +39,7 @@ type BaseExplorer struct {
 	counter     *prometheus.CounterVec
 	gauge       *prometheus.GaugeVec
 	ticker      *time.Ticker
-	timerNotyfy time.Duration
+	timerNotify time.Duration
 	settings    model.Isettings
 	cerror      chan error
 	ctx         context.Context

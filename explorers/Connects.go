@@ -49,7 +49,7 @@ func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *Ex
 }
 
 func (exp *ExplorerConnects) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
 	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
 
 	exp.ticker = time.NewTicker(time.Second * time.Duration(delay))

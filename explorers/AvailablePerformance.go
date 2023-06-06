@@ -45,11 +45,11 @@ func (exp *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror cha
 }
 
 func (exp *ExplorerAvailablePerformance) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
 	exp.logger.WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
 
-	timerNotyfy := time.Second * time.Duration(delay)
-	exp.ticker = time.NewTicker(timerNotyfy)
+	timerNotify := time.Second * time.Duration(delay)
+	exp.ticker = time.NewTicker(timerNotify)
 FOR:
 	for {
 		// Для обеспечения паузы. Логика такая, при каждой итерайии нам нужно лочить мьютекс, в конце разлочить, как только придет запрос на паузу этот же мьютекс будет залочен во вне

@@ -55,11 +55,11 @@ func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan err
 }
 
 func (exp *ExplorerCheckSheduleJob) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotyfy", 10)).Int()
+	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
 	exp.logger.WithField("delay", delay).Debug("Start")
 
-	timerNotyfy := time.Second * time.Duration(delay)
-	exp.ticker = time.NewTicker(timerNotyfy)
+	timerNotify := time.Second * time.Duration(delay)
+	exp.ticker = time.NewTicker(timerNotify)
 
 	// Получаем список баз в кластере
 	if err := exp.fillBaseList(); err != nil {

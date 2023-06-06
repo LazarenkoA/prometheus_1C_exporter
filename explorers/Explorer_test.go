@@ -43,28 +43,28 @@ func initests(t *testing.T) []struct {
 	s := mock_model.NewMockIsettings(c)
 	s.EXPECT().GetExplorers().Return(map[string]map[string]interface{}{
 		"ClientLic": {
-			"timerNotyfy": 10,
+			"timerNotify": 10,
 		},
 		"AvailablePerformance": {
-			"timerNotyfy": 10,
+			"timerNotify": 10,
 		},
 		"SheduleJob": {
-			"timerNotyfy": 10,
+			"timerNotify": 10,
 		},
 		"Session": {
-			"timerNotyfy": 10,
+			"timerNotify": 10,
 		},
 	}).AnyTimes()
 
-	s.EXPECT().GetProperty("ClientLic", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("AvailablePerformance", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("CPU", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("disk", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("Connect", "timerNotyfy", gomock.Any()).Return(1).AnyTimes()
-	s.EXPECT().GetProperty("SessionsData", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("ProcData", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("Session", "timerNotyfy", gomock.Any()).Return(10).AnyTimes()
-	s.EXPECT().GetProperty("SheduleJob", "timerNotyfy", gomock.Any()).Return(1).AnyTimes()
+	s.EXPECT().GetProperty("ClientLic", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("AvailablePerformance", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("CPU", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("disk", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("Connect", "timerNotify", gomock.Any()).Return(1).AnyTimes()
+	s.EXPECT().GetProperty("SessionsData", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("ProcData", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("Session", "timerNotify", gomock.Any()).Return(10).AnyTimes()
+	s.EXPECT().GetProperty("SheduleJob", "timerNotify", gomock.Any()).Return(1).AnyTimes()
 
 	metric := new(Metrics).Construct(s)
 
@@ -458,35 +458,35 @@ func settingstext() string {
 	return `Explorers:
 - Name: ClientLic
   Property:
-    timerNotyfy: 60
+    timerNotify: 60
 - Name: AvailablePerformance
   Property:
-    timerNotyfy: 10
+    timerNotify: 10
 - Name: SheduleJob
   Property:
-    timerNotyfy: 1
+    timerNotify: 1
 - Name: CPU
   Property:
-    timerNotyfy: 10
+    timerNotify: 10
 - Name: disk
   Property:
-    timerNotyfy: 10
+    timerNotify: 10
 - Name: Session
   Property:
-    timerNotyfy: 60
+    timerNotify: 60
 - Name: Connect
   Property:
-    timerNotyfy: 1
+    timerNotify: 1
 - Name: SessionsMemory
   Property:
-    timerNotyfy: 10
+    timerNotify: 10
 - Name: ProcData
   Property:
     processes:
       - rphost
       - ragent
       - rmngr
-    timerNotyfy: 10
+    timerNotify: 10
 RAC:
   Path: "/opt/1C/v8.3/x86_64/rac"
   Port: "1545"      # Не обязательный параметр

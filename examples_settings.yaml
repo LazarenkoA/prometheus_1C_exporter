@@ -10,39 +10,39 @@
 # disk - метрики дикска, пока только linux и WeightedIO
 # Property - доп. свойства, у каждой метрики свои могут быть.
 # у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
-# у всех метрик доп. свойство timerNotyfy время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
+# у всех метрик доп. свойство timerNotify время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
 Explorers:
   - Name: ClientLic
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: AvailablePerformance
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: CPU
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: disk
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: SheduleJob
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: Session
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: Connect
     Property:
-      timerNotyfy: 60
+      timerNotify: 60
   - Name: SessionsData
     Property:
-      timerNotyfy: 10
+      timerNotify: 10
   - Name: ProcData
     Property:
       processes:
         - rphost
         - ragent
         - rmngr
-      timerNotyfy: 10
+      timerNotify: 10
 
 # http сервис который возвращает массив json с кредами к БД
 # нужно для метрики SheduleJob
