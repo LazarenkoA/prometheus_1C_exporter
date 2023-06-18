@@ -128,5 +128,11 @@ func main() {
 	}
 }
 
+// add info
 // go build -o "1c_exporter" -ldflags "-s -w" - билд чутка меньше размером
 // ansible app_servers -m shell -a  "systemctl stop 1c_exporter.service && yes | cp /mnt/share/GO/prometheus_1C_exporter/1c_exporter /usr/local/bin/1c_exporter &&  systemctl start 1c_exporter.service"
+//
+// pprof
+// https://www.jajaldoang.com/post/profiling-go-app-with-pprof/
+// go tool pprof -svg heap > out.svg (визуальный граф)
+// go tool pprof -http=:8082 .\heap (просмотр в браузере)
