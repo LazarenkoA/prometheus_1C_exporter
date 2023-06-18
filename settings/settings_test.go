@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,6 +34,8 @@ func Test_GetDeactivateAndReset(t *testing.T) {
 			TLSSkipVerify: true,
 		},
 	}
+
+	logger.InitLogger(s.LogDir, 4)
 
 	p := gomonkey.ApplyMethod(reflect.TypeOf(new(http.Client)), "Do", func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		return &http.Response{
@@ -129,9 +132,7 @@ func Test_GetProperty(t *testing.T) {
 		assert.Equal(t, 9, len(s.Explorers))
 		assert.NotNil(t, s.DBCredentials)
 		assert.NotNil(t, s.RAC)
-		assert.Equal(t, 5, s.LogLevel)
-		assert.Equal(t, 1, s.TimeRotate)
-		assert.Equal(t, 8, s.TTLLogs)
+		assert.Equal(t, 4, s.LogLevel)
 		assert.Equal(t, "/var/log/1c_exporter", s.LogDir)
 	}
 
@@ -192,7 +193,6 @@ RAC:
   Pass: ""          # Не обязательный параметр
 
 LogDir: /var/log/1c_exporter  # Если на задан логи будут писаться в каталог с исполняемым файлом
-LogLevel: 5                   # Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
 TimeRotate: 1                 # Время в часах через которое будет создаваться новый файл логов
 TTLLogs: 8                    # Время жизни логов в часах
 `

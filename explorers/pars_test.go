@@ -1,10 +1,11 @@
 package explorer
 
 import (
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"testing"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func Test_RAC(t *testing.T) {
@@ -18,7 +19,7 @@ func rac_initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	object := new(BaseRACExplorer)
-	object.logger = logrusRotate.StandardLogger().WithField("Name", "test")
+	object.logger = logger.DefaultLogger.With("Name", "test")
 
 	return []func(*testing.T){
 		func(t *testing.T) {

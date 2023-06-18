@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,7 +18,7 @@ type ExplorerClientLic struct {
 }
 
 func (exp *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *ExplorerClientLic {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -43,7 +43,7 @@ func (exp *ExplorerClientLic) Construct(s model.Isettings, cerror chan error) *E
 
 func (exp *ExplorerClientLic) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)
@@ -53,17 +53,17 @@ func (exp *ExplorerClientLic) StartExplore() {
 
 FOR:
 	for {
-		exp.logger.Trace("Lock")
+		exp.logger.Debug("Lock")
 		exp.Lock()
 		func() {
-			exp.logger.Trace("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 			defer func() {
-				exp.logger.Trace("Unlock")
+				exp.logger.Debug("Unlock")
 				exp.Unlock()
 			}()
 
 			lic, _ := exp.dataGetter()
-			exp.logger.Tracef("Количество лиц. %v", len(lic))
+			exp.logger.Debugf("Количество лиц. %v", len(lic))
 			if len(lic) > 0 {
 				group = map[string]int{}
 				for _, item := range lic {
@@ -76,7 +76,7 @@ FOR:
 
 				exp.summary.Reset()
 				for k, v := range group {
-					// logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Observe")
+					// logger.DefaultLogger.With("Name", exp.GetName()).Debug("Observe")
 					exp.summary.WithLabelValues(host, k).Observe(float64(v))
 				}
 
@@ -84,7 +84,7 @@ FOR:
 				exp.summary.Reset()
 			}
 
-			exp.logger.Trace("return")
+			exp.logger.Debug("return")
 		}()
 
 		select {
@@ -96,8 +96,8 @@ FOR:
 }
 
 func (exp *ExplorerClientLic) getLic() (licData []map[string]string, err error) {
-	exp.logger.Trace("getLic start")
-	defer exp.logger.Trace("getLic return")
+	exp.logger.Debug("getLic start")
+	defer exp.logger.Debug("getLic return")
 	// /opt/1C/v8.3/x86_64/rac session list --licenses --cluster=5c4602fc-f704-11e8-fa8d-005056031e96
 	licData = []map[string]string{}
 
@@ -117,10 +117,10 @@ func (exp *ExplorerClientLic) getLic() (licData []map[string]string, err error) 
 
 	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 
-	exp.logger.WithField("Command", cmdCommand.Args).Trace("Выполняем команду")
+	exp.logger.With("Command", cmdCommand.Args).Debug("Выполняем команду")
 
 	if result, err := exp.run(cmdCommand); err != nil {
-		exp.logger.WithError(err).Error()
+		exp.logger.Error(err)
 		return []map[string]string{}, err
 	} else {
 		exp.formatMultiResult(result, &licData)

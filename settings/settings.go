@@ -13,7 +13,9 @@ import (
 	"sync"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/creasty/defaults"
+	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -34,11 +36,9 @@ type Settings struct {
 		TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 	} `yaml:"DBCredentials"`
 
-	LogDir     string `yaml:"LogDir"`
-	LogLevel   int    `yaml:"LogLevel"`
-	TimeRotate int    `yaml:"TimeRotate"`
-	TTLLogs    int    `yaml:"TTLLogs"`
-	RAC        *struct {
+	LogDir   string `yaml:"LogDir"`
+	LogLevel int    `yaml:"LogLevel" default:"4"` // Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
+	RAC      *struct {
 		Path  string `yaml:"Path"`
 		Port  string `yaml:"Port"`
 		Host  string `yaml:"Host"`
@@ -68,6 +68,10 @@ func LoadSettings(filePath string) (*Settings, error) {
 	}
 
 	s.mx = new(sync.RWMutex)
+
+	if err := defaults.Set(s); err != nil {
+		return nil, errors.Wrap(err, "set default error")
+	}
 
 	return s, nil
 }
@@ -116,14 +120,14 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 		s.mx.Lock()
 		defer s.mx.Unlock()
 
-		logrusRotate.StandardLogger().WithField("URL", s.DBCredentials.URL).Info("обращаемся к REST")
+		logger.DefaultLogger.With("URL", s.DBCredentials.URL).Info("обращаемся к REST")
 		tlsConf := &tls.Config{InsecureSkipVerify: s.DBCredentials.TLSSkipVerify}
 		data, err := request(s.DBCredentials.URL, s.DBCredentials.User, s.DBCredentials.Password, tlsConf)
 		if err != nil {
-			logrusRotate.StandardLogger().WithError(err).Error("ошибка получения данных по БД")
+			logger.DefaultLogger.Error(errors.Wrap(err, "ошибка получения данных по БД"))
 		}
 		if err := json.Unmarshal(data, &s.bases); err != nil {
-			logrusRotate.StandardLogger().WithError(err).Error("не удалось десериализовать данные от REST")
+			logger.DefaultLogger.Error(errors.Wrap(err, "не удалось десериализовать данные от REST"))
 		}
 	}
 
@@ -136,10 +140,10 @@ f:
 	for {
 		select {
 		case <-cForce:
-			logrusRotate.StandardLogger().Info("Принудительно запрашиваем список баз из REST")
+			logger.DefaultLogger.Info("Принудительно запрашиваем список баз из REST")
 			get()
 		case <-timer.C:
-			logrusRotate.StandardLogger().Info("Планово запрашиваем список баз из REST")
+			logger.DefaultLogger.Info("Планово запрашиваем список баз из REST")
 			get()
 		case <-ctx.Done():
 			break f

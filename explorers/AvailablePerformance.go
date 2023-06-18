@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	lr "github.com/LazarenkoA/LogrusRotate"
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -21,7 +22,7 @@ type ExplorerAvailablePerformance struct {
 }
 
 func (exp *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror chan error) *ExplorerAvailablePerformance {
-	exp.logger = lr.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -46,7 +47,7 @@ func (exp *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror cha
 
 func (exp *ExplorerAvailablePerformance) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)
@@ -56,12 +57,12 @@ FOR:
 		// соответственно итерация будет на паузе ждать
 		exp.Lock()
 		func() {
-			exp.logger.WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
 			if data, err := exp.getData(); err == nil {
 				exp.logger.Debug("Количество данных: ", len(data))
-				exp.logger.WithField("data", data).Trace()
+				exp.logger.With("data", data).Debug()
 
 				exp.summary.Reset()
 				for _, item := range data {
@@ -69,7 +70,7 @@ FOR:
 				}
 			} else {
 				exp.summary.Reset()
-				exp.logger.WithField("Name", exp.GetName()).WithError(err).Error("Произошла ошибка")
+				exp.logger.Error(errors.Wrap(err, "Произошла ошибка"))
 			}
 
 		}()
@@ -178,7 +179,7 @@ func (exp *ExplorerAvailablePerformance) readData() (string, error) {
 
 	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 	if result, err := exp.run(cmdCommand); err != nil {
-		exp.logger.WithError(err).Error()
+		exp.logger.Error(err)
 		return "", err
 	} else {
 		return result, nil

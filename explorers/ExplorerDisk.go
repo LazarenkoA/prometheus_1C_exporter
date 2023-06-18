@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/shirou/gopsutil/disk"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,7 +20,7 @@ type (
 )
 
 func (exp *ExplorerDisk) Construct(s model.Isettings, cerror chan error) *ExplorerDisk {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -40,7 +40,7 @@ func (exp *ExplorerDisk) Construct(s model.Isettings, cerror chan error) *Explor
 
 func (exp *ExplorerDisk) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)
@@ -50,12 +50,12 @@ FOR:
 	for {
 		exp.Lock()
 		func() {
-			exp.logger.Trace("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
 			dinfo, err := disk.IOCounters()
 			if err != nil {
-				exp.logger.WithError(err).Error()
+				exp.logger.Error(err)
 				return
 			}
 

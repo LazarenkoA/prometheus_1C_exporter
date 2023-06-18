@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,7 +19,7 @@ type ExplorerSessions struct {
 }
 
 func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -43,7 +44,7 @@ func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *Ex
 
 func (exp *ExplorerSessions) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)
@@ -53,14 +54,14 @@ func (exp *ExplorerSessions) StartExplore() {
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
 	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.WithError(err).Warning("Не удалось получить список баз")
+		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
 	}
 
 FOR:
 	for {
 		exp.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			logger.DefaultLogger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
 			ses, _ := exp.BaseExplorer.dataGetter()
@@ -107,7 +108,7 @@ func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err err
 
 	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 	if result, err := exp.run(cmdCommand); err != nil {
-		exp.logger.WithError(err).Error()
+		exp.logger.Error(err)
 		return []map[string]string{}, err
 	} else {
 		exp.formatMultiResult(result, &sesData)

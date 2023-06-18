@@ -3,7 +3,6 @@ package explorer
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os/exec"
@@ -14,9 +13,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"go.uber.org/zap"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/softlandia/cpd"
@@ -48,7 +49,7 @@ type BaseExplorer struct {
 	isLocked atomic.Int32
 	// mock object
 	dataGetter func() ([]map[string]string, error)
-	logger     *logrus.Entry
+	logger     *zap.SugaredLogger
 }
 
 // базовый класс для всех метрик собираемых через RAC
@@ -57,6 +58,7 @@ type BaseRACExplorer struct {
 
 	clusterID string
 	one       sync.Once
+	logger    *zap.SugaredLogger
 }
 
 type Metrics struct {
@@ -71,7 +73,7 @@ type Metrics struct {
 //	//	return
 //	//}
 //
-//	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Lock")
+//	logger.DefaultLogger.With("Name", descendant.GetName()).Debug("Lock")
 //	exp.mutex.Lock()
 // }
 
@@ -80,7 +82,7 @@ type Metrics struct {
 //	//	return
 //	//}
 //
-//	logrusRotate.StandardLogger().WithField("Name", descendant.GetName()).Trace("Unlock")
+//	logger.DefaultLogger.With("Name", descendant.GetName()).Debug("Unlock")
 //	exp.mutex.Unlock()
 // }
 
@@ -93,8 +95,8 @@ func (exp *BaseExplorer) GetName() string {
 }
 
 func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
-	exp.logger.WithField("Исполняемый файл", cmd.Path).
-		WithField("Параметры", cmd.Args).
+	exp.logger.With("Исполняемый файл", cmd.Path).
+		With("Параметры", cmd.Args).
 		Debug("Выполнение команды")
 
 	timeout := time.Second * 15
@@ -134,6 +136,7 @@ func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 
 // Своеобразный middleware
 func (exp *BaseExplorer) Start(explorers model.IExplorers) {
+	exp.logger = logger.DefaultLogger.Named("base")
 	exp.ctx, exp.ctxFunc = context.WithCancel(context.Background())
 	// exp.mutex = &sync.Mutex{}
 
@@ -163,9 +166,9 @@ func (exp *BaseExplorer) Stop() {
 }
 
 func (exp *BaseExplorer) Pause() {
-	l := exp.logger.WithField("name", exp.GetName())
-	l.Trace("Pause begin")
-	defer exp.logger.Trace("Pause end")
+	l := exp.logger.With("name", exp.GetName())
+	l.Debug("Pause begin")
+	defer exp.logger.Debug("Pause end")
 
 	if exp.summary != nil {
 		exp.summary.Reset()
@@ -176,23 +179,23 @@ func (exp *BaseExplorer) Pause() {
 
 	if exp.isLocked.CompareAndSwap(0, 1) { // нужно что бы 2 раза не наложить lock
 		exp.Lock()
-		l.Trace("Pause. Блокировка установлена")
+		l.Debug("Pause. Блокировка установлена")
 	} else {
-		l.WithField("isLocked", exp.isLocked.Load()).Trace("Pause. Уже заблокировано")
+		l.With("isLocked", exp.isLocked.Load()).Debug("Pause. Уже заблокировано")
 	}
 }
 
 func (exp *BaseExplorer) Continue() {
 	if exp.isLocked.CompareAndSwap(1, 0) {
 		exp.Unlock()
-		exp.logger.Trace("Continue. Блокировка снята")
+		exp.logger.Debug("Continue. Блокировка снята")
 	} else {
-		exp.logger.WithField("isLocked", exp.isLocked.Load()).Trace("Continue. Блокировка не была установлена")
+		exp.logger.With("isLocked", exp.isLocked.Load()).Debug("Continue. Блокировка не была установлена")
 	}
 }
 
 func (exp *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
-	exp.logger.Trace("Парс многострочного результата")
+	exp.logger.Debug("Парс многострочного результата")
 
 	strIn = normalizeEncoding(strIn)
 	strIn = strings.Replace(strIn, "\r", "", -1)
@@ -218,7 +221,7 @@ func (exp *BaseRACExplorer) formatResult(strIn string) map[string]string {
 		}
 	}
 
-	exp.logger.WithField("strIn", strIn).WithField("out", result).Trace("Парс результата")
+	exp.logger.With("strIn", strIn).With("out", result).Debug("Парс результата")
 	return result
 }
 
@@ -337,7 +340,7 @@ func Pause(metrics *Metrics) http.Handler {
 			http.Error(w, fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
 			return
 		}
-		logrusRotate.StandardLogger().WithField("URL", r.URL.RequestURI()).Trace("Пауза")
+		logger.DefaultLogger.With("URL", r.URL.RequestURI()).Debug("Пауза")
 
 		metricNames := r.URL.Query().Get("metricNames")
 		offsetMinStr := r.URL.Query().Get("offsetMin")
@@ -346,13 +349,13 @@ func Pause(metrics *Metrics) http.Handler {
 		if offsetMinStr != "" {
 			if v, err := strconv.ParseInt(offsetMinStr, 0, 0); err == nil {
 				offsetMin = int(v)
-				logrusRotate.StandardLogger().Infof("Сбор метрик включится автоматически через %d минут", offsetMin)
+				logger.DefaultLogger.Infof("Сбор метрик включится автоматически через %d минут", offsetMin)
 			} else {
-				logrusRotate.StandardLogger().WithError(err).WithField("offsetMin", offsetMinStr).Error("Ошибка конвертации offsetMin")
+				logger.DefaultLogger.With("offsetMin", offsetMinStr).Error(errors.Wrap(err, "Ошибка конвертации offsetMin"))
 			}
 		}
 
-		logrusRotate.StandardLogger().Infof("Приостановить сбор метрик %q", metricNames)
+		logger.DefaultLogger.Infof("Приостановить сбор метрик %q", metricNames)
 		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
 		for _, exp := range exps {
 			exp.Pause()
@@ -374,10 +377,10 @@ func Continue(metrics *Metrics) http.Handler {
 			http.Error(w, fmt.Sprintf("Метод %q не поддерживается", r.Method), http.StatusInternalServerError)
 			return
 		}
-		logrusRotate.StandardLogger().WithField("URL", r.URL.RequestURI()).Trace("Продолжить")
+		logger.DefaultLogger.With("URL", r.URL.RequestURI()).Debug("Продолжить")
 
 		metricNames := r.URL.Query().Get("metricNames")
-		logrusRotate.StandardLogger().Info("Продолжить сбор метрик ", metricNames)
+		logger.DefaultLogger.Info("Продолжить сбор метрик ", metricNames)
 
 		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
 		for _, exp := range exps {

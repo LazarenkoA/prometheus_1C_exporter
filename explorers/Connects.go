@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -25,7 +26,7 @@ func appendParam(in []string, value string) []string {
 }
 
 func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *ExplorerConnects {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -50,7 +51,7 @@ func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *Ex
 
 func (exp *ExplorerConnects) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	logrusRotate.StandardLogger().WithField("delay", delay).WithField("Name", exp.GetName()).Debug("Start")
+	logger.DefaultLogger.With("delay", delay).Debug("Start")
 
 	exp.ticker = time.NewTicker(time.Second * time.Duration(delay))
 	host, _ := os.Hostname()
@@ -58,14 +59,14 @@ func (exp *ExplorerConnects) StartExplore() {
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
 	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		logrusRotate.StandardLogger().WithError(err).WithField("Name", exp.GetName()).Warning("Не удалось получить список баз")
+		logger.DefaultLogger.Error(errors.Wrap(err, "Не удалось получить список баз"))
 	}
 
 FOR:
 	for {
 		exp.Lock()
 		func() {
-			logrusRotate.StandardLogger().WithField("Name", exp.GetName()).Trace("Старт итерации таймера")
+			logger.DefaultLogger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
 			connects, _ := exp.BaseExplorer.dataGetter()
@@ -112,7 +113,7 @@ func (exp *ExplorerConnects) getConnects() (connData []map[string]string, err er
 
 	cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
 	if result, err := exp.run(cmdCommand); err != nil {
-		exp.logger.WithError(err).Error()
+		exp.logger.Error(err)
 		return []map[string]string{}, err
 	} else {
 		exp.formatMultiResult(result, &connData)

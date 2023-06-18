@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -19,7 +20,7 @@ const timeFormatIn = "2006-01-02T15:04:05"
 const timeFormatOut = "2006-01-02 15:04:05"
 
 func (exp *ExplorerSessionsMemory) Construct(s model.Isettings, cerror chan error) *ExplorerSessionsMemory {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
@@ -43,12 +44,12 @@ func (exp *ExplorerSessionsMemory) Construct(s model.Isettings, cerror chan erro
 
 func (exp *ExplorerSessionsMemory) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
 	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.WithError(err).Warning("Не удалось получить список баз")
+		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
 	}
 
 	timerNotify := time.Second * time.Duration(delay)
@@ -60,7 +61,7 @@ FOR:
 		exp.Lock()
 		func() {
 
-			exp.logger.Trace("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
 			ses, _ := exp.BaseExplorer.dataGetter()
@@ -77,7 +78,7 @@ FOR:
 					defer func() {
 						if Ierr := recover(); Ierr != nil {
 							if err, ok := Ierr.(error); ok {
-								exp.logger.WithError(err).Error("произошла непредвиденная ошибка")
+								exp.logger.Error(errors.Wrap(err, "произошла непредвиденная ошибка"))
 							}
 						}
 					}()

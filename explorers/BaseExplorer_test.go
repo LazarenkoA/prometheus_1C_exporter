@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,8 +35,9 @@ func Test_findExplorer(t *testing.T) {
 }
 
 func Test_Pause(t *testing.T) {
+	logger.InitLogger("", 4)
 	cpu := &CPU{
-		BaseExplorer{logger: logrus.StandardLogger().WithField("name", "test")},
+		BaseExplorer{logger: logger.DefaultLogger.Named("test")},
 	}
 
 	metrics := &Metrics{
@@ -72,7 +73,7 @@ func Test_Pause(t *testing.T) {
 
 func Test_Continue(t *testing.T) {
 	cpu := &CPU{
-		BaseExplorer{logger: logrus.StandardLogger().WithField("name", "test")},
+		BaseExplorer{logger: logger.DefaultLogger.Named("test")},
 	}
 	cpu.isLocked.Store(1)
 

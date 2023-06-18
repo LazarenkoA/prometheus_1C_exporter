@@ -1,7 +1,6 @@
 package explorer
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
 	"reflect"
@@ -9,8 +8,10 @@ import (
 	"sync"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	"github.com/pkg/errors"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -32,7 +33,7 @@ func (exp *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
 }
 
 func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan error) *ExplorerCheckSheduleJob {
-	exp.logger = logrusRotate.StandardLogger().WithField("Name", exp.GetName())
+	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.gauge = prometheus.NewGaugeVec(
@@ -56,7 +57,7 @@ func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan err
 
 func (exp *ExplorerCheckSheduleJob) StartExplore() {
 	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
-	exp.logger.WithField("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)
@@ -64,20 +65,20 @@ func (exp *ExplorerCheckSheduleJob) StartExplore() {
 	// Получаем список баз в кластере
 	if err := exp.fillBaseList(); err != nil {
 		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.WithError(err).Warning("Не удалось получить список баз")
+		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
 	}
 
 FOR:
 	for {
 		exp.Lock()
-		exp.logger.Trace("Lock")
+		exp.logger.Debug("Lock")
 		func() {
 			defer func() {
 				exp.Unlock()
-				exp.logger.Trace("Unlock")
+				exp.logger.Debug("Unlock")
 			}()
 
-			exp.logger.Trace("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 
 			if listCheck, err := exp.dataGetter(); err == nil {
 				exp.gauge.Reset()
@@ -90,7 +91,7 @@ FOR:
 				}
 			} else {
 				exp.gauge.Reset()
-				exp.logger.WithError(err).Error("Произошла ошибка")
+				exp.logger.Error(err)
 			}
 		}()
 
@@ -103,8 +104,8 @@ FOR:
 }
 
 func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) {
-	exp.logger.Trace("Получение данных")
-	defer exp.logger.Trace("Данные получены")
+	exp.logger.Debug("Получение данных")
+	defer exp.logger.Debug("Данные получены")
 
 	data = make(map[string]bool)
 
@@ -127,7 +128,7 @@ func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) 
 					db.value = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
 					chanOut <- db
 				} else {
-					exp.logger.WithError(err).Error()
+					exp.logger.Error(err)
 				}
 			}
 		}()
@@ -140,7 +141,7 @@ func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) 
 
 	go func() {
 		for _, item := range exp.baseList {
-			exp.logger.Tracef("Запрашиваем информацию для базы %s", item["name"])
+			exp.logger.Debugf("Запрашиваем информацию для базы %s", item["name"])
 			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
 		}
 		close(chanIn)
@@ -174,9 +175,9 @@ func (exp *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
 	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
-	exp.logger.WithField("param", param).Debugf("Получаем информацию для базы %q", basename)
+	exp.logger.With("param", param).Debugf("Получаем информацию для базы %q", basename)
 	if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
-		exp.logger.WithError(err).Error()
+		exp.logger.Error(err)
 		return map[string]string{}, err
 	} else {
 		baseInfo := []map[string]string{}
@@ -222,7 +223,7 @@ func (exp *ExplorerCheckSheduleJob) fillBaseList() error {
 		param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
 		if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
-			exp.logger.WithError(err).Error("Ошибка получения списка баз")
+			exp.logger.Error(errors.Wrap(err, "Ошибка получения списка баз"))
 			return err
 		} else {
 			exp.formatMultiResult(result, &exp.baseList)

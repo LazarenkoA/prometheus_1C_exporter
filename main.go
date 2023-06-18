@@ -13,32 +13,29 @@ import (
 	"net/http/pprof"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
-	logrusRotate "github.com/LazarenkoA/LogrusRotate"
+	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
-
-	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 )
-
-type RotateConf struct {
-	settings *settings.Settings
-}
 
 func init() {
 	exp.CForce = make(chan struct{}, 1)
 	rand.Seed(time.Now().Unix())
 }
 
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
 func main() {
 	var settingsPath, port string
 	var help bool
-	rand.Seed(time.Now().Unix())
+
 	flag.StringVar(&settingsPath, "settings", "", "Путь к файлу настроек")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.BoolVar(&help, "help", false, "Помощь")
@@ -52,13 +49,12 @@ func main() {
 	// settingsPath = "settings.yaml" // debug
 	s, err := settings.LoadSettings(settingsPath)
 	if err != nil {
-		logrusRotate.StandardLogger().Error(err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	lw := new(logrusRotate.Rotate).Construct()
-	cancel := lw.Start(s.LogLevel, new(RotateConf).Construct(s))
-	logrusRotate.StandardLogger().SetFormatter(&logrus.JSONFormatter{})
+	logger.InitLogger(s.LogDir, s.LogLevel)
+
 	go s.GetDBCredentials(context.Background(), exp.CForce)
 
 	cerror := make(chan error)
@@ -69,7 +65,7 @@ func main() {
 			if metric.Contains(ex.GetName()) {
 				go ex.Start(ex)
 			} else {
-				logrusRotate.StandardLogger().Debug("Метрика ", ex.GetName(), " пропущена")
+				logger.DefaultLogger.Debugf("Метрика %s пропущена", ex.GetName())
 			}
 		}
 	}
@@ -82,19 +78,16 @@ func main() {
 			if settingsPath != "" {
 				news, err := settings.LoadSettings(settingsPath)
 				if err != nil {
-					logrusRotate.StandardLogger().Error(err)
+					fmt.Println(err)
 					os.Exit(1)
 				}
 				*s = *news
 
-				cancel()
-				lw = new(logrusRotate.Rotate).Construct()
-				cancel = lw.Start(s.LogLevel, new(RotateConf).Construct(s))
-
+				logger.InitLogger(s.LogDir, s.LogLevel)
 				metric.Construct(s)
 				start()
 
-				logrusRotate.StandardLogger().Info("Обновлены настройки")
+				logger.DefaultLogger.Info("Обновлены настройки")
 			}
 		}
 	}()
@@ -120,7 +113,7 @@ func main() {
 	metric.Append(new(exp.CPU).Construct(s, cerror))                          // CPU
 	metric.Append(new(exp.ExplorerDisk).Construct(s, cerror))                 // Диск
 
-	logrusRotate.StandardLogger().Info("Сбор метрик:", strings.Join(metric.Metrics, ","))
+	logger.DefaultLogger.Info("Сбор метрик: ", strings.Join(metric.Metrics, ","))
 	start()
 
 	go func() {
@@ -131,36 +124,8 @@ func main() {
 	}()
 
 	for err := range cerror {
-		logrusRotate.StandardLogger().WithError(err).Error()
 		fmt.Printf("Произошла ошибка:\n\t %v\n", err)
 	}
-
-}
-
-// /////////////// RotateConf /////////////////////////////
-func (w *RotateConf) Construct(s *settings.Settings) *RotateConf {
-	w.settings = s
-	return w
-}
-func (w *RotateConf) LogDir() string {
-	if w.settings.LogDir != "" {
-		return w.settings.LogDir
-	} else {
-		currentDir, _ := os.Getwd()
-		return filepath.Join(currentDir, "Logs")
-	}
-}
-func (w *RotateConf) FormatDir() string {
-	return "02.01.2006"
-}
-func (w *RotateConf) FormatFile() string {
-	return "15"
-}
-func (w *RotateConf) TTLLogs() int {
-	return w.settings.TTLLogs
-}
-func (w *RotateConf) TimeRotate() int {
-	return w.settings.TimeRotate
 }
 
 // go build -o "1c_exporter" -ldflags "-s -w" - билд чутка меньше размером
