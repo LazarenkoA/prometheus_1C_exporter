@@ -47,10 +47,7 @@ func (exp *ExplorerSessionsMemory) StartExplore() {
 	exp.logger.With("delay", delay).Debug("Start")
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
-	if err := exp.fillBaseList(); err != nil {
-		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
-	}
+	go exp.fillBaseList()
 
 	timerNotify := time.Second * time.Duration(delay)
 	exp.ticker = time.NewTicker(timerNotify)

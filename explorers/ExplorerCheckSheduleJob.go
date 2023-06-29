@@ -20,16 +20,7 @@ type ExplorerCheckSheduleJob struct {
 
 	baseList   []map[string]string
 	dataGetter func() (map[string]bool, error)
-	mx         *sync.RWMutex
-	one        sync.Once
-}
-
-func (exp *ExplorerCheckSheduleJob) mutex() *sync.RWMutex {
-	exp.one.Do(func() {
-		exp.mx = new(sync.RWMutex)
-	})
-
-	return exp.mx
+	mx         sync.RWMutex
 }
 
 func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan error) *ExplorerCheckSheduleJob {
@@ -63,10 +54,7 @@ func (exp *ExplorerCheckSheduleJob) StartExplore() {
 	exp.ticker = time.NewTicker(timerNotify)
 
 	// Получаем список баз в кластере
-	if err := exp.fillBaseList(); err != nil {
-		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
-	}
+	go exp.fillBaseList()
 
 FOR:
 	for {
@@ -191,8 +179,8 @@ func (exp *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 }
 
 func (exp *ExplorerCheckSheduleJob) findBaseName(ref string) string {
-	exp.mutex().RLock()
-	defer exp.mutex().RUnlock()
+	exp.mx.RLock()
+	defer exp.mx.RUnlock()
 
 	for _, b := range exp.baseList {
 		if b["infobase"] == ref {
@@ -202,47 +190,54 @@ func (exp *ExplorerCheckSheduleJob) findBaseName(ref string) string {
 	return ""
 }
 
-func (exp *ExplorerCheckSheduleJob) fillBaseList() error {
+func (exp *ExplorerCheckSheduleJob) fillBaseList() {
 	if len(exp.baseList) > 0 { // Список баз может быть уже заполнен, например при тетсировании
-		return nil
-	}
-
-	run := func() error {
-		exp.mutex().Lock()
-		defer exp.mutex().Unlock()
-
-		var param []string
-		if exp.settings.RAC_Host() != "" {
-			param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
-		}
-
-		param = append(param, "infobase")
-		param = append(param, "summary")
-		param = append(param, "list")
-		param = exp.appendLogPass(param)
-		param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
-
-		if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
-			exp.logger.Error(errors.Wrap(err, "Ошибка получения списка баз"))
-			return err
-		} else {
-			exp.formatMultiResult(result, &exp.baseList)
-		}
-
-		return nil
+		return
 	}
 
 	// редко, но все же список баз может быть изменен поэтому делаем обновление периодическим, что бы не приходилось перезапускать экспортер
-	go func() {
-		t := time.NewTicker(time.Hour)
-		defer t.Stop()
+	t := time.NewTicker(time.Hour)
+	defer t.Stop()
 
-		for range t.C {
-			run()
+	for {
+		if err := exp.getListInfobase(); err != nil {
+			exp.logger.Error(errors.Wrap(err, "ошибка получения списка баз"))
+			t.Reset(time.Minute)
+		} else {
+			t.Reset(time.Hour)
 		}
-	}()
 
-	return run()
+		select {
+		case <-t.C:
+		case <-exp.ctx.Done():
+			return
+		}
+	}
+
+}
+
+func (exp *ExplorerCheckSheduleJob) getListInfobase() error {
+	exp.mx.Lock()
+	defer exp.mx.Unlock()
+
+	var param []string
+	if exp.settings.RAC_Host() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	}
+
+	param = append(param, "infobase")
+	param = append(param, "summary")
+	param = append(param, "list")
+	param = exp.appendLogPass(param)
+	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
+
+	if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
+		return err
+	} else {
+		exp.formatMultiResult(result, &exp.baseList)
+	}
+
+	return nil
 }
 
 func (exp *ExplorerCheckSheduleJob) GetName() string {

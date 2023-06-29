@@ -35,7 +35,7 @@ var (
 type BaseExplorer struct {
 	sync.Mutex
 
-	mx          *sync.RWMutex
+	mx          sync.RWMutex
 	summary     *prometheus.SummaryVec
 	counter     *prometheus.CounterVec
 	gauge       *prometheus.GaugeVec
@@ -44,7 +44,7 @@ type BaseExplorer struct {
 	settings    model.Isettings
 	cerror      chan error
 	ctx         context.Context
-	ctxFunc     context.CancelFunc
+	cancel      context.CancelFunc
 	// mutex       *sync.Mutex
 	isLocked atomic.Int32
 	// mock object
@@ -57,7 +57,6 @@ type BaseRACExplorer struct {
 	BaseExplorer
 
 	clusterID string
-	one       sync.Once
 	logger    *zap.SugaredLogger
 }
 
@@ -137,7 +136,7 @@ func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 // Своеобразный middleware
 func (exp *BaseExplorer) Start(explorers model.IExplorers) {
 	exp.logger = logger.DefaultLogger.Named("base")
-	exp.ctx, exp.ctxFunc = context.WithCancel(context.Background())
+	exp.ctx, exp.cancel = context.WithCancel(context.Background())
 	// exp.mutex = &sync.Mutex{}
 
 	go func() {
@@ -160,8 +159,8 @@ func (exp *BaseExplorer) Start(explorers model.IExplorers) {
 }
 
 func (exp *BaseExplorer) Stop() {
-	if exp.ctxFunc != nil {
-		exp.ctxFunc()
+	if exp.cancel != nil {
+		exp.cancel()
 	}
 }
 
@@ -248,13 +247,6 @@ func normalizeEncoding(str string) string {
 	return str
 }
 
-func (exp *BaseRACExplorer) mutex() *sync.RWMutex {
-	exp.one.Do(func() {
-		exp.mx = new(sync.RWMutex)
-	})
-	return exp.mx
-}
-
 func (exp *BaseRACExplorer) GetClusterID() string {
 	exp.logger.Debug("Получаем идентификатор кластера")
 	defer exp.logger.Debug("Получен идентификатор кластера ", exp.clusterID)
@@ -262,8 +254,8 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 	// defer exp.mutex().RUnlock()
 
 	update := func() {
-		exp.mutex().Lock()
-		defer exp.mutex().Unlock()
+		exp.mx.Lock()
+		defer exp.mx.Unlock()
 
 		param := []string{}
 		if exp.settings.RAC_Host() != "" {

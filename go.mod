@@ -10,7 +10,6 @@ require (
 	github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/procfs v0.6.0
 	github.com/shirou/gopsutil v2.20.8+incompatible
-	github.com/sirupsen/logrus v1.6.0
 	github.com/softlandia/cpd v0.0.0-20200709134012-d8dd1a8ae52d
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.24.0
@@ -26,7 +25,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect

@@ -10,7 +10,6 @@ import (
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -52,10 +51,7 @@ func (exp *ExplorerSessions) StartExplore() {
 	var groupByDB map[string]int
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
-	if err := exp.fillBaseList(); err != nil {
-		// Если была ошибка это не так критично т.к. через час список повторно обновится. Ошибка может быть если RAS не доступен
-		exp.logger.Error(errors.Wrap(err, "Не удалось получить список баз"))
-	}
+	go exp.fillBaseList()
 
 FOR:
 	for {

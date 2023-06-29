@@ -22,10 +22,12 @@ var levelMap = map[int]zapcore.Level{
 
 var (
 	DefaultLogger *zap.SugaredLogger
+	NopLogger     *zap.SugaredLogger
 )
 
 func init() {
 	atom = zap.NewAtomicLevel()
+	NopLogger = newNopLogger()
 }
 
 func InitLogger(logDir string, ll int) {
@@ -52,4 +54,8 @@ func newLogger(logDir string) *zap.SugaredLogger {
 
 func SetLevel(level int) {
 	atom.SetLevel(levelMap[level])
+}
+
+func newNopLogger() *zap.SugaredLogger {
+	return zap.NewNop().Sugar()
 }

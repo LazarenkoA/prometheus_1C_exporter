@@ -22,8 +22,17 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="better">
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="hint">
+      <change afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Connects.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Connects.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Sessions.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Sessions.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/SessionsData.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/SessionsData.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logger/logger.go" beforeDir="false" afterPath="$PROJECT_DIR$/logger/logger.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prometheus_1C_exporter" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -69,34 +78,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
-    "RunOnceActivity.go.format.on.save.advertiser.fired": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "RunOnceActivity.go.watchers.conflict.with.on.save.actions.check.performed": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "go.import.settings.migrated": "true",
-    "last_opened_file_path": "C:/GoProject/prometheus_1C_exporter/settings",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;RunOnceActivity.go.format.on.save.advertiser.fired&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.watchers.conflict.with.on.save.actions.check.performed&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/GoProject/prometheus_1C_exporter&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
       <recent name="C:\GoProject\prometheus_1C_exporter" />
+      <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\GoProject\prometheus_1C_exporter\logger" />
       <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.settings_test.go">
+  <component name="RunManager" selected="Go Test.Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -109,7 +119,12 @@
     <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
-      <parameters value="--settings=settings.yaml" />
+      <parameters value="--settings=examples_settings.yaml" />
+      <EXTENSION ID="software.aws.toolkits.jetbrains.core.execution.GoAwsConnectionRunConfigurationExtension">
+        <option name="credential" />
+        <option name="region" />
+        <option name="useCurrentConnection" value="false" />
+      </EXTENSION>
       <kind value="PACKAGE" />
       <package value="github.com/LazarenkoA/prometheus_1C_exporter" />
       <directory value="$PROJECT_DIR$" />
@@ -125,7 +140,7 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="Test_Pause in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$/explorers" />
       <root_directory value="$PROJECT_DIR$" />
@@ -134,59 +149,69 @@
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTest_Explorer\E$" />
+      <pattern value="^\QTest_Pause\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/settings" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTest_GetDeactivateAndReset\E$" />
+      <pattern value="^\QTest_fillBaseList\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="Test_GetLogPass in github.com/LazarenkoA/prometheus_1C_exporter/settings" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/settings" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTest_GetLogPass\E$" />
+      <pattern value="^\QTest_fillBaseList\E$/^\Qerror\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="settings_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/settings" />
+      <working_directory value="$PROJECT_DIR$/explorers" />
       <root_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/settings/settings_test.go" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTest_fillBaseList\E$/^\Qpass\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Go Build.go build prometheus_1C_exporter/" />
       <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
-      <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" />
-      <item itemvalue="Go Test.Test_GetLogPass in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
-      <item itemvalue="Go Test.settings_test.go" />
-      <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
+      <item itemvalue="Go Test.Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <item itemvalue="Go Test.Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <item itemvalue="Go Test.Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <item itemvalue="Go Test.Test_Pause in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.settings_test.go" />
-        <item itemvalue="Go Test.Test_GetLogPass in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
-        <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" />
+        <item itemvalue="Go Test.Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+        <item itemvalue="Go Test.Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+        <item itemvalue="Go Test.Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
-        <item itemvalue="Go Test.Test_Explorer in github.com/LazarenkoA/prometheus_1C_exporter/explorers (1)" />
+        <item itemvalue="Go Test.Test_Pause in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
       </list>
     </recent_temporary>
   </component>
@@ -391,7 +416,11 @@
     <MESSAGE value="#21" />
     <MESSAGE value="typo" />
     <MESSAGE value="better" />
-    <option name="LAST_COMMIT_MESSAGE" value="better" />
+    <MESSAGE value="typo #27" />
+    <MESSAGE value="#28" />
+    <MESSAGE value="изменен логер на zap, это решит #29" />
+    <MESSAGE value="hint" />
+    <option name="LAST_COMMIT_MESSAGE" value="hint" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
@@ -404,8 +433,10 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_GetDeactivateAndReset_in_github_com_LazarenkoA_prometheus_1C_exporter_settings.out" NAME="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings Coverage Results" MODIFIED="1665607328797" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_GetDeactivateAndReset_in_github_com_LazarenkoA_prometheus_1C_exporter_settings.out" NAME="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings Coverage Results" MODIFIED="1687037761393" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_GetLogPass_in_github_com_LazarenkoA_prometheus_1C_exporter_settings.out" NAME="Test_GetLogPass in github.com/LazarenkoA/prometheus_1C_exporter/settings Coverage Results" MODIFIED="1677326210856" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_Pause_error_in_github_com_LazarenkoA_prometheus_1C_exporter_explorers.out" NAME="Test_Pause/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers Coverage Results" MODIFIED="1686079951113" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_GetDeactivateAndReset_in_github_com_LazarenkoA_prometheus_1C_exporter_settings__1_.out" NAME="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1) Coverage Results" MODIFIED="1677325985162" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/prometheus_1C_exporter$Test_fillBaseList_in_github_com_LazarenkoA_prometheus_1C_exporter_explorers.out" NAME="Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers Coverage Results" MODIFIED="1688064571973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
