@@ -63,4 +63,15 @@ func Test_findBaseName(t *testing.T) {
 
 	res = objectCSJ.findBaseName("test2")
 	assert.Equal(t, "", res)
+
+	objectCSJ.mx.Lock()
+	go func() {
+		time.Sleep(time.Millisecond * 500)
+		objectCSJ.mx.Unlock()
+	}()
+
+	s := time.Now()
+	objectCSJ.findBaseName("test2")
+
+	assert.GreaterOrEqual(t, time.Since(s).Microseconds(), int64(500))
 }
