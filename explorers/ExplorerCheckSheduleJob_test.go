@@ -8,6 +8,7 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_fillBaseList(t *testing.T) {
@@ -44,5 +45,22 @@ func Test_fillBaseList(t *testing.T) {
 		time.Sleep(time.Second)
 		objectCSJ.cancel()
 	})
+}
 
+func Test_findBaseName(t *testing.T) {
+	objectCSJ := new(ExplorerCheckSheduleJob)
+	objectCSJ.ctx, objectCSJ.cancel = context.WithCancel(context.Background())
+	objectCSJ.logger = logger.NopLogger.Named("test")
+	objectCSJ.baseList = []map[string]string{
+		{
+			"infobase": "test",
+			"name":     "nametest",
+		},
+	}
+
+	res := objectCSJ.findBaseName("test")
+	assert.Equal(t, "nametest", res)
+
+	res = objectCSJ.findBaseName("test2")
+	assert.Equal(t, "", res)
 }
