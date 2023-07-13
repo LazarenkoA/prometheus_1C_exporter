@@ -40,9 +40,7 @@ func run() (err error) {
 		txt, _ := ioutil.ReadAll(stderr)
 		fmt.Printf("Произошла ошибка: %v\n\tout: %s\n", err, string(txt))
 	}
-	if err := exec.Command("git", "push", "--tags").Run(); err != nil {
-		fmt.Println("Произошла ошибка: ", err)
-	}
+	exec.Command("git", "push", "--tags").Run()
 
 	return
 }
