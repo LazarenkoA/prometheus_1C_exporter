@@ -43,6 +43,14 @@ jobs:
           draft: false
           prerelease: false
 
+      # получаем коммиты для описания релиза
+      - name: Get commit messages
+        id: commit_messages
+        run: |
+          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
+          echo "::set-output name=commits::$COMMITS"
+
+
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         with:
@@ -77,3 +85,8 @@ jobs:
           asset_path: prometheus_1C_exporter-binaries/prometheus_1C_exporter-windows-amd64.exe
           asset_name: prometheus_1C_exporter-windows-amd64.exe
           asset_content_type: application/octet-stream
+          release_body: |
+            Release ${{ github.ref }} is available.
+
+            Commits:
+            ${{ steps.commit_messages.outputs.commits }}
