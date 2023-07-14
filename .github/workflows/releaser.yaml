@@ -45,21 +45,22 @@ jobs:
             prometheus_1C_exporter-linux-amd64
             prometheus_1C_exporter-windows-amd64.exe
 
+
       - name: Download binaries
         uses: actions/download-artifact@v2
         with:
           name: Binaries
           path: prometheus_1C_exporter-binaries
 
-  - name: Attach binaries to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: prometheus_1C_exporter-binaries/prometheus_1C_exporter-linux-amd64
-        asset_name: prometheus_1C_exporter-linux-amd64
-        asset_content_type: application/octet-stream
+      - name: Attach binaries to release
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: prometheus_1C_exporter-binaries/prometheus_1C_exporter-linux-amd64
+            asset_name: prometheus_1C_exporter-linux-amd64
+            asset_content_type: application/octet-stream
 
       - name: Attach binaries to release
         uses: actions/upload-release-asset@v1
