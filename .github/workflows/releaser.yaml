@@ -1,11 +1,10 @@
 name: Release
 
 on:
-  pull_request:
   push:
     tags:
       - '*'
-      -
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -17,9 +16,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.19  # Замените на вашу версию Go
+          go-version: 1.19
+
+      - name: Build for Linux
+        run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64
+
+      - name: Build for Windows
+        run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe
 
       - name: Create release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,3 +36,27 @@ jobs:
             Release ${{ github.ref }} is available.
           draft: false
           prerelease: false
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: Binaries
+          path: |
+            prometheus_1C_exporter-linux-amd64
+            prometheus_1C_exporter-windows-amd64.exe
+
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: Binaries
+          path: prometheus_1C_exporter-binaries
+
+      - name: Attach binaries to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: prometheus_1C_exporter-binaries/
+          asset_name: prometheus_1C_exporter-binaries
+          asset_content_type: application/zip
