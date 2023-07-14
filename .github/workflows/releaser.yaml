@@ -18,6 +18,12 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Тесты
+        run: |
+          go test -v ./... -gcflags=all=-l -race
+        env:
+          GO111MODULE: on
+
       - name: Build for Linux
         run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64
 
