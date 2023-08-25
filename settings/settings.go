@@ -20,31 +20,31 @@ import (
 )
 
 type Settings struct {
-	mx *sync.RWMutex `yaml:"-"`
-	// login, pass string        `yaml:"-"`
-	bases []Bases `yaml:"-"`
+	LogDir string `yaml:"LogDir"`
 
 	Explorers []*struct {
-		Name     string                 `yaml:"Name"`
 		Property map[string]interface{} `yaml:"Property"`
+		Name     string                 `yaml:"Name"`
 	} `yaml:"Explorers"`
-
 	DBCredentials *struct {
 		URL           string `yaml:"URL" json:"URL,omitempty"`
 		User          string `yaml:"User" json:"user,omitempty"`
 		Password      string `yaml:"Password" json:"password,omitempty"`
 		TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 	} `yaml:"DBCredentials"`
-
-	LogDir   string `yaml:"LogDir"`
-	LogLevel int    `yaml:"LogLevel" default:"4"` // Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
-	RAC      *struct {
+	RAC *struct {
 		Path  string `yaml:"Path"`
 		Port  string `yaml:"Port"`
 		Host  string `yaml:"Host"`
 		Login string `yaml:"Login"`
 		Pass  string `yaml:"Pass"`
 	} `yaml:"RAC"`
+
+	mx *sync.RWMutex `yaml:"-"`
+	// login, pass string        `yaml:"-"`
+	bases []Bases `yaml:"-"`
+
+	LogLevel int `yaml:"LogLevel" default:"4"` // Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
 }
 
 type Bases struct {
