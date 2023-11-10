@@ -25,10 +25,10 @@ jobs:
           GO111MODULE: on
 
       - name: Build for Linux
-        run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64
+        run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64 -ldflags "-X main.version=${{ github.ref }} -X main.gitCommit=${{ github.sha }}"
 
       - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe
+        run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ github.ref }} -X main.gitCommit=${{ github.sha }}"
 
       - name: Create release
         id: create_release

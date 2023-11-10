@@ -23,6 +23,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var (
+	version   string
+	gitCommit string
+)
+
 func init() {
 	exp.CForce = make(chan struct{}, 1)
 	rand.Seed(time.Now().Unix())
@@ -34,16 +39,21 @@ func init() {
 
 func main() {
 	var settingsPath, port string
-	var help bool
+	var help, v bool
 
 	flag.StringVar(&settingsPath, "settings", "", "Путь к файлу настроек")
 	flag.StringVar(&port, "port", "9091", "Порт для прослушивания")
 	flag.BoolVar(&help, "help", false, "Помощь")
+	flag.BoolVar(&v, "version", false, "Версия")
 	flag.Parse()
 
 	if help {
 		flag.Usage()
-		os.Exit(1)
+		return
+	}
+	if v {
+		fmt.Printf("Версия: %s\n", version)
+		return
 	}
 
 	// settingsPath = "settings.yaml" // debug
@@ -54,6 +64,8 @@ func main() {
 	}
 
 	logger.InitLogger(s.LogDir, s.LogLevel)
+
+	logger.DefaultLogger.Infof("Версия: %q, gitCommit: %q", version, gitCommit)
 
 	go s.GetDBCredentials(context.Background(), exp.CForce)
 
@@ -136,3 +148,5 @@ func main() {
 // https://www.jajaldoang.com/post/profiling-go-app-with-pprof/
 // go tool pprof -svg heap > out.svg (визуальный граф)
 // go tool pprof -http=:8082 .\heap (просмотр в браузере)
+//
+// go vet -vettool="C:\GOPATH\go\bin\fieldalignment.exe" ./...
