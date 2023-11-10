@@ -26,7 +26,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        run: echo :: set-output name=version::$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
+        run: echo ::set-output name=version::$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
 
       - name: Build for Linux
         run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64 -ldflags "-X main.version=${{ steps.get_version.outputs.version }} -X main.gitCommit=${{ github.sha }}"
