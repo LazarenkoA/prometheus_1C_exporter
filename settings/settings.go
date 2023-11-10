@@ -92,23 +92,38 @@ func (s *Settings) GetLogPass(ibname string) (login, pass string) {
 }
 
 func (s *Settings) RAC_Path() string {
-	return s.RAC.Path
+	if s.RAC != nil {
+		return s.RAC.Path
+	}
+	return ""
 }
 
 func (s *Settings) RAC_Port() string {
-	return s.RAC.Port
+	if s.RAC != nil {
+		return s.RAC.Port
+	}
+	return ""
 }
 
 func (s *Settings) RAC_Host() string {
-	return s.RAC.Host
+	if s.RAC != nil {
+		return s.RAC.Host
+	}
+	return ""
 }
 
 func (s *Settings) RAC_Login() string {
-	return s.RAC.Login
+	if s.RAC != nil {
+		return s.RAC.Login
+	}
+	return ""
 }
 
 func (s *Settings) RAC_Pass() string {
-	return s.RAC.Pass
+	if s.RAC != nil {
+		return s.RAC.Pass
+	}
+	return ""
 }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {

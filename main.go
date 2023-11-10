@@ -24,8 +24,8 @@ import (
 )
 
 var (
-	version   string
-	gitCommit string
+	version   = "undefined"
+	gitCommit = "undefined"
 )
 
 func init() {
