@@ -24,6 +24,11 @@ jobs:
         env:
           GO111MODULE: on
 
+      - name: WinRes
+        run: |
+          go install github.com/tc-hib/go-winres
+          go-winres make .\winres\winres.json
+
       - name: Get version
         id: get_version
         run: echo ::set-output name=version::$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
@@ -53,11 +58,6 @@ jobs:
         run: |
           COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
           echo "::set-output name=commits::$COMMITS"
-
-      - name: WinRes
-        run: |
-          go install github.com/tc-hib/go-winres
-          go-winres make .\winres\winres.json
 
       - name: Upload binaries
         uses: actions/upload-artifact@v2
