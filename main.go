@@ -5,22 +5,16 @@ package main
 // //go:generate git tag -af $PROM_VERSION -m "$PROM_VERSION"
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"math/rand"
-	"net/http"
-	"net/http/pprof"
 	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 	"time"
 
 	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/judwhite/go-svc"
 )
 
 var (
@@ -55,8 +49,11 @@ func main() {
 		fmt.Printf("Версия: %s\n", version)
 		return
 	}
+	if settingsPath == "" {
+		fmt.Println("не заполнен параметр \"settings\"")
+		os.Exit(1)
+	}
 
-	// settingsPath = "settings.yaml" // debug
 	s, err := settings.LoadSettings(settingsPath)
 	if err != nil {
 		fmt.Println(err)
@@ -64,79 +61,11 @@ func main() {
 	}
 
 	logger.InitLogger(s.LogDir, s.LogLevel)
-
 	logger.DefaultLogger.Infof("Версия: %q, gitCommit: %q", version, gitCommit)
 
-	go s.GetDBCredentials(context.Background(), exp.CForce)
-
-	cerror := make(chan error)
-	metric := new(exp.Metrics).Construct(s)
-	start := func() {
-		for _, ex := range metric.Explorers {
-			ex.Stop()
-			if metric.Contains(ex.GetName()) {
-				go ex.Start(ex)
-			} else {
-				logger.DefaultLogger.Debugf("Метрика %s пропущена", ex.GetName())
-			}
-		}
-	}
-
-	// Обработка сигала от ОС
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP) // при отпавки reload
-	go func() {
-		for range c {
-			if settingsPath != "" {
-				news, err := settings.LoadSettings(settingsPath)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				*s = *news
-
-				logger.InitLogger(s.LogDir, s.LogLevel)
-				metric.Construct(s)
-				start()
-
-				logger.DefaultLogger.Info("Обновлены настройки")
-			}
-		}
-	}()
-
-	siteMux := http.NewServeMux()
-	siteMux.Handle("/1C_Metrics", promhttp.Handler())
-	siteMux.Handle("/Continue", exp.Continue(metric))
-	siteMux.Handle("/Pause", exp.Pause(metric))
-
-	siteMux.HandleFunc("/debug/pprof/", pprof.Index)
-	siteMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	siteMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	siteMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	siteMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-
-	metric.Append(new(exp.ExplorerClientLic).Construct(s, cerror))            // Клиентские лицензии
-	metric.Append(new(exp.ExplorerAvailablePerformance).Construct(s, cerror)) // Доступная производительность
-	metric.Append(new(exp.ExplorerCheckSheduleJob).Construct(s, cerror))      // Проверка галки "блокировка регламентных заданий"
-	metric.Append(new(exp.ExplorerSessions).Construct(s, cerror))             // Сеансы
-	metric.Append(new(exp.ExplorerConnects).Construct(s, cerror))             // Соединения
-	metric.Append(new(exp.ExplorerSessionsMemory).Construct(s, cerror))       // текущая память сеанса
-	metric.Append(new(exp.ExplorerProc).Construct(s, cerror))                 // текущая память поцесса
-	metric.Append(new(exp.CPU).Construct(s, cerror))                          // CPU
-	metric.Append(new(exp.ExplorerDisk).Construct(s, cerror))                 // Диск
-
-	logger.DefaultLogger.Info("Сбор метрик: ", strings.Join(metric.Metrics, ","))
-	start()
-
-	go func() {
-		fmt.Println("port :", port)
-		if err := http.ListenAndServe(":"+port, siteMux); err != nil {
-			cerror <- err
-		}
-	}()
-
-	for err := range cerror {
-		fmt.Printf("Произошла ошибка:\n\t %v\n", err)
+	if err := svc.Run(&app{settings: s, port: port}); err != nil {
+		logger.DefaultLogger.Error(err)
+		os.Exit(1)
 	}
 }
 

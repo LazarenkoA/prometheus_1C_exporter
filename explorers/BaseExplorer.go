@@ -305,6 +305,7 @@ func (exp *Metrics) Contains(name string) bool {
 	if len(exp.Metrics) == 0 {
 		return true // Если не задали метрики через парамет, то используем все метрики
 	}
+
 	for _, item := range exp.Metrics {
 		if strings.Trim(item, " ") == strings.Trim(name, " ") {
 			return true

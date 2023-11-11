@@ -20,7 +20,8 @@ import (
 )
 
 type Settings struct {
-	LogDir string `yaml:"LogDir"`
+	LogDir       string `yaml:"LogDir"`
+	SettingsPath string
 
 	Explorers []*struct {
 		Property map[string]interface{} `yaml:"Property"`
@@ -73,6 +74,7 @@ func LoadSettings(filePath string) (*Settings, error) {
 		return nil, errors.Wrap(err, "set default error")
 	}
 
+	s.SettingsPath = filePath
 	return s, nil
 }
 

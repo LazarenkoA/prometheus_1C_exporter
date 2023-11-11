@@ -41,15 +41,21 @@ http://host:9091/Continue?metricNames=ProcData,SessionsMemory
 - Скачать актуальный [релиз](https://github.com/LazarenkoA/prometheus_1C_exporter/releases ) 
 - Собрать в ручном режиме. Ставим [Go](https://blog.golang.org/), `git clone https://github.com/LazarenkoA/prometheus_1C_exporter`, переходим в каталог, выполняем `go build -o "1C_exporter"` или `go build -o "1C_exporter.exe"`. 
 
-**Запуск** 
+#### Запуск
 
-Linux:
+**Linux:**
 
 `./1C_exporter -port=9095 --settings=/usr/local/bin/settings.yaml`
 
-Windows:
+для запуска в качестве службы можно посмотреть пример systemd в каталоге [service/linux](service/linux)
 
-`1C_exporter.exe -port=9095 --settings=C:\settings.yaml` можно воспользоваться приложением [**nssm**](https://www.nssm.cc/download) для запуска экспортера в виде службы. 
+**Windows:**
+
+`1C_exporter.exe -port=9095 --settings=C:\settings.yaml`
+
+приложение поддерживает работу в режиме службы, пример создания службы можно посмотреть в каталоге [service/windows](service/windows)
+
+
 
 Если порт не указать по дефолту будет порт 9091
 
@@ -63,28 +69,12 @@ Windows:
     static_configs:
     - targets: ['host1:9091', 'host2:9091', 'host3:9091', 'host4:9091']
 ```
-```golang
-end:
-```
+
 Все, [настраиваем](#configure) дажборды, умиляемся. 
 
-------------
 
 
-### Contributors
-Если захотите развить explorer, что бы собирались другие метрики, нужно:
-Создать файл [name metrics].go в котором будет описан класс метрики, класс должен имплементировать интерфейс Iexplorer, после чего добавляем экземпляр класса к метрикам:
-```golang
-metric := new(Metrics)
-metric.append(new(ExplorerClientLic).Construct(time.Second * 10))
-// metric.append(новый explorer объект) 
-}
-```
-```golang
-goto end
-```
-
-**Примеры дажбордов**
+### Примеры дажбордов
 
 ![](doc/img/browser_d8CBonI15Y.png "")
 
