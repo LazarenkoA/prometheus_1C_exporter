@@ -47,6 +47,7 @@ jobs:
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
           echo "$PREVIOUS_TAG"
           echo "$COMMITS"
+          echo "$(git for-each-ref refs/tags --sort=-taggerdate --format='%(refname:short)' --count=2)"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
