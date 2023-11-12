@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - 'v*.*.*'
 
 jobs:
   release:
@@ -46,7 +46,7 @@ jobs:
           PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 -n 1))
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
           echo "$PREVIOUS_TAG"
-          echo "$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=2 -n 1))"
+          echo "$(git describe --tags --abbrev=0 HEAD^)"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
