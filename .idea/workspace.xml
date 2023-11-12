@@ -22,8 +22,8 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="авто релизы">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/releaser.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/releaser.yaml" afterDir="false" />
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="изменил иконки">
+      <change afterPath="$PROJECT_DIR$/prometheus.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -51,8 +51,8 @@
     <setting file="file://$PROJECT_DIR$/explorers/BaseExplorer.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/explorers/ExplorerCheckSheduleJob.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/explorers/Sessions.go" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/install/release.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/main.go" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/release/release.go" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -90,14 +90,17 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\GoProject\prometheus_1C_exporter" />
+      <recent name="C:\GoProject\prometheus_1C_exporter\service\windows" />
       <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\GoProject\prometheus_1C_exporter\examples linux unit\windows" />
+      <recent name="C:\GoProject\prometheus_1C_exporter\examples linux unit\linux" />
       <recent name="C:\GoProject\prometheus_1C_exporter\logger" />
       <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install">
+  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -110,7 +113,7 @@
     <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
-      <parameters value="--settings=examples_settings.yaml" />
+      <parameters value="--settings=&quot;.\examples_settings.yaml&quot;" />
       <EXTENSION ID="software.aws.toolkits.jetbrains.core.execution.GoAwsConnectionRunConfigurationExtension">
         <option name="credential" />
         <option name="region" />
@@ -131,6 +134,24 @@
       <filePath value="$PROJECT_DIR$/install/release.go" />
       <method v="2" />
     </configuration>
+    <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter/release" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/release" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/release/release.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/settings/logs/main.go" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build prometheus_1C_exporter/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -140,66 +161,33 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/explorers" />
+      <working_directory value="$PROJECT_DIR$/settings" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTest_fillBaseList\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/explorers" />
-      <root_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <pattern value="^\QTest_fillBaseList\E$/^\Qerror\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$/explorers" />
-      <root_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <pattern value="^\QTest_fillBaseList\E$/^\Qpass\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="DIRECTORY" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
+      <pattern value="^\QTest_GetDeactivateAndReset\E$" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Go Build.go build prometheus_1C_exporter/" />
-      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
+      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/release" />
       <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
-      <item itemvalue="Go Test.Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-      <item itemvalue="Go Test.Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-      <item itemvalue="Go Test.Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
+      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
+      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
+      <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
-        <item itemvalue="Go Test.Test_fillBaseList in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-        <item itemvalue="Go Test.Test_fillBaseList/error in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
-        <item itemvalue="Go Test.Test_fillBaseList/pass in github.com/LazarenkoA/prometheus_1C_exporter/explorers" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
+        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/release" />
+        <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
+        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
+        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
       </list>
     </recent_temporary>
   </component>
@@ -385,13 +373,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="добавлены метрики для диска" />
-    <MESSAGE value="убрал перевод коретки из результата" />
-    <MESSAGE value="добавил нормализацию кодировки (актуально для windows)" />
-    <MESSAGE value="edit readme" />
-    <MESSAGE value="кодировка" />
-    <MESSAGE value="убрал отладочный код" />
-    <MESSAGE value="опечатка" />
     <MESSAGE value="README.md" />
     <MESSAGE value="завершение процесса при завершении таймаута" />
     <MESSAGE value="test" />
@@ -409,7 +390,15 @@
     <MESSAGE value="изменен логер на zap, это решит #29" />
     <MESSAGE value="hint" />
     <MESSAGE value="авто релизы" />
-    <option name="LAST_COMMIT_MESSAGE" value="авто релизы" />
+    <MESSAGE value="struct pudding" />
+    <MESSAGE value="при сборке добавлена версия релиза и последний коммит" />
+    <MESSAGE value="поправил версию при сборке" />
+    <MESSAGE value="если в конфиге не определены настройки RAC паники не будет #36" />
+    <MESSAGE value="расскоментировал настройки RAC" />
+    <MESSAGE value="реализована возможность нативного запуска экспортера в качестве службы windows #34" />
+    <MESSAGE value="добавлена сборка WinRes" />
+    <MESSAGE value="изменил иконки" />
+    <option name="LAST_COMMIT_MESSAGE" value="изменил иконки" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
