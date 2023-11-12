@@ -43,9 +43,9 @@ jobs:
       - name: Get commit messages
         id: commit_messages
         run: |
-          PREVIOUS_TAG=$(git for-each-ref refs/tags --sort=-taggerdate --format='%(refname:short)' --count=2 | tail -n 1)
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 -n 1))
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
-          echo "$(git for-each-ref refs/tags --sort=-taggerdate --format='%(refname:short)' --count=3)"
+          echo "$PREVIOUS_TAG"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
