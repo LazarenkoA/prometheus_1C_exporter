@@ -42,16 +42,11 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ env.version }} -X main.gitCommit=${{ github.sha }}"
 
       # получаем коммиты для описания релиза
-#      - name: Get previous tag
-#        id: previoustag
-#        uses: WyriHaximus/github-action-get-previous-tag@v1
-
       - name: Get commit messages
         id: commit_messages
         run: |
           PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=2 -n 1))
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
-          echo "$COMMITS"
           echo "$PREVIOUS_TAG"
           echo "::set-output name=commits::$COMMITS"
 
