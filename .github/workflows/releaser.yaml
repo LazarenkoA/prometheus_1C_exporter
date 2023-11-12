@@ -44,7 +44,7 @@ jobs:
         id: commit_messages
         run: |
           COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
-          echo "::set-output name=commits::$COMMITS"
+          echo "::set-output name=commits::${{ github.event.release.tag_name }}"
 
       - name: Create release
         id: create_release
