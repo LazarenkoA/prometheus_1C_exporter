@@ -46,7 +46,6 @@ jobs:
 
       - name: Get commit messages
         id: commit_messages
-        uses: younited/get-previous-tag-action@v1.0.0
         run: |
           COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ steps.previous_tag.outputs.previous-tag }}..HEAD)
           echo "$COMMITS"
