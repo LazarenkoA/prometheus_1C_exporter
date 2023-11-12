@@ -10,6 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get commit messages
+        id: commit_messages
+        run: |
+          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
+          echo "$COMMITS"
+          echo "${{ steps.previous_tag.outputs.previous-tag }}"
+          echo "::set-output name=commits::$COMMITS"
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -40,17 +48,9 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ env.version }} -X main.gitCommit=${{ github.sha }}"
 
       # получаем коммиты для описания релиза
-      - name: Get commit messages
-        id: previous_tag
-        uses: younited/get-previous-tag-action@v1.0.0
-
-      - name: Get commit messages
-        id: commit_messages
-        run: |
-          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ steps.previous_tag.outputs.previous-tag }}..HEAD)
-          echo "$COMMITS"
-          echo "${{ steps.previous_tag.outputs.previous-tag }}"
-          echo "::set-output name=commits::$COMMITS"
+#      - name: Previous tag
+#        id: previous_tag
+#        uses: younited/get-previous-tag-action@v1.0.0
 
       - name: Create release
         id: create_release
