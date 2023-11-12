@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -23,14 +25,6 @@ jobs:
           go test -v ./... -gcflags=all=-l -race
         env:
           GO111MODULE: on
-
-      - name: Get commit messages
-        id: commit_messages
-        run: |
-          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
-          echo "$COMMITS"
-          echo "${{ steps.previous_tag.outputs.previous-tag }}"
-          echo "::set-output name=commits::$COMMITS"
 
       - name: WinRes
         run: |
@@ -48,9 +42,16 @@ jobs:
         run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ env.version }} -X main.gitCommit=${{ github.sha }}"
 
       # получаем коммиты для описания релиза
-#      - name: Previous tag
-#        id: previous_tag
-#        uses: younited/get-previous-tag-action@v1.0.0
+      - name: Get previous tag
+          id: previoustag
+          uses: WyriHaximus/github-action-get-previous-tag@v1
+
+      - name: Get commit messages
+        id: commit_messages
+        run: |
+          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ steps.previoustag.outputs.tag }}..HEAD)
+          echo "$COMMITS"
+          echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
         id: create_release
