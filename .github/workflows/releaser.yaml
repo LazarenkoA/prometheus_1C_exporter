@@ -41,12 +41,15 @@ jobs:
 
       # получаем коммиты для описания релиза
       - name: Get commit messages
+        id: previous_tag
+        uses: younited/get-previous-tag-action@v1.0.0
+
+      - name: Get commit messages
         id: commit_messages
+        uses: younited/get-previous-tag-action@v1.0.0
         run: |
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 -n 1))
-          COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
-          echo "$PREVIOUS_TAG"
-          echo "$(git describe --tags --abbrev=0 HEAD^)"
+          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ steps.previous_tag.outputs.previous-tag }}..HEAD)
+          echo "$COMMITS"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
