@@ -43,7 +43,7 @@ jobs:
       - name: Get commit messages
         id: commit_messages
         run: |
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags)
+          PREVIOUS_TAG=$(git for-each-ref refs/tags --sort=-taggerdate --format='%(refname:short)' --count=2 | tail -n 1)
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
           echo "$PREVIOUS_TAG"
           echo "$COMMITS"
