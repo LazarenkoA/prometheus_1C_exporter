@@ -10,14 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get commit messages
-        id: commit_messages
-        run: |
-          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
-          echo "$COMMITS"
-          echo "${{ steps.previous_tag.outputs.previous-tag }}"
-          echo "::set-output name=commits::$COMMITS"
-
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -31,6 +23,14 @@ jobs:
           go test -v ./... -gcflags=all=-l -race
         env:
           GO111MODULE: on
+
+      - name: Get commit messages
+        id: commit_messages
+        run: |
+          COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.event.release.tag_name }}..HEAD)
+          echo "$COMMITS"
+          echo "${{ steps.previous_tag.outputs.previous-tag }}"
+          echo "::set-output name=commits::$COMMITS"
 
       - name: WinRes
         run: |
