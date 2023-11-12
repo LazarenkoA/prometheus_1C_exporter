@@ -18,6 +18,12 @@ jobs:
         with:
           go-version: 1.19
 
+      - name: Тесты
+        run: |
+          go test -v ./... -gcflags=all=-l -race
+        env:
+          GO111MODULE: on
+
       - name: WinRes
         run: |
           go install github.com/tc-hib/go-winres
@@ -39,6 +45,8 @@ jobs:
         run: |
           PREVIOUS_TAG=$(git describe --abbrev=0 --tags)
           COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
+          echo "$PREVIOUS_TAG"
+          echo "$COMMITS"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
