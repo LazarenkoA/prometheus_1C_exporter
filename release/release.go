@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -37,7 +37,7 @@ func run() (err error) {
 	cmd := exec.Command("git", "tag", "-af", newversion, fmt.Sprintf("-m %s", newversion))
 	stderr, _ := cmd.StderrPipe()
 	if err := cmd.Run(); err != nil {
-		txt, _ := ioutil.ReadAll(stderr)
+		txt, _ := io.ReadAll(stderr)
 		fmt.Printf("Произошла ошибка: %v\n\tout: %s\n", err, string(txt))
 	}
 	exec.Command("git", "push", "--tags").Run()
