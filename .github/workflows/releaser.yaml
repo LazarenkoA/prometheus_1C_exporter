@@ -31,13 +31,13 @@ jobs:
 
       - name: Get version
         id: get_version
-        run: echo ::set-output name=version::$(echo "${{ github.ref }}" | sed 's/refs\/tags\///')
+        run: echo "version=${{ github.ref }}" | sed 's/refs\/tags\///' >> $GITHUB_ENV
 
       - name: Build for Linux
-        run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64 -ldflags "-X main.version=${{ steps.get_version.outputs.version }} -X main.gitCommit=${{ github.sha }}"
+        run: GOOS=linux GOARCH=amd64 go build -o prometheus_1C_exporter-linux-amd64 -ldflags "-X main.version=${{ env.version }} -X main.gitCommit=${{ github.sha }}"
 
       - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ steps.get_version.outputs.version }} -X main.gitCommit=${{ github.sha }}"
+        run: GOOS=windows GOARCH=amd64 go build -o prometheus_1C_exporter-windows-amd64.exe -ldflags "-X main.version=${{ env.version }} -X main.gitCommit=${{ github.sha }}"
 
       # получаем коммиты для описания релиза
       - name: Get commit messages
