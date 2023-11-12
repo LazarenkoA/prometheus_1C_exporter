@@ -51,6 +51,7 @@ jobs:
         run: |
           COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ steps.previoustag.outputs.tag }}..HEAD)
           echo "$COMMITS"
+          echo "${{ github.event.release.tag_name }}"
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create release
