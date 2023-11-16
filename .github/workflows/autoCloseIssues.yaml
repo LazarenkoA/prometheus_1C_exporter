@@ -1,0 +1,23 @@
+name: Close inactive issues
+
+on:
+  schedule:
+    - cron: "0 09 * * *"
+
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v5
+        with:
+          days-before-issue-stale: 30
+          days-before-issue-close: 5
+          stale-issue-label: "stale"
+          stale-issue-message: "Эта проблема устарела, поскольку она была открыта в течение 30 дней без какой-либо активности."
+          close-issue-message: "Эта проблема была закрыта, поскольку она была неактивна в течение 5 дней с тех пор, как была помечена как устаревшая."
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
