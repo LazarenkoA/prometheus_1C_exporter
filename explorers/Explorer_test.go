@@ -9,12 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
-	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 )
 
 func Test_Explorer(t *testing.T) {
@@ -39,6 +41,8 @@ func initests(t *testing.T) []struct {
 } {
 	c := gomock.NewController(t)
 	defer c.Finish()
+
+	logger.InitLogger("", 0)
 
 	s := mock_model.NewMockIsettings(c)
 	s.EXPECT().GetExplorers().Return(map[string]map[string]interface{}{

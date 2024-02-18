@@ -102,6 +102,7 @@ func (a *app) reloadWatcher() {
 func (a *app) initHTTP() {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
+	siteMux.Handle("/metrics", promhttp.Handler())
 	siteMux.Handle("/Continue", exp.Continue(a.metric))
 	siteMux.Handle("/Pause", exp.Pause(a.metric))
 

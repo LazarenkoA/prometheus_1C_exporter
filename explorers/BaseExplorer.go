@@ -14,14 +14,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
-	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
-	"go.uber.org/zap"
-
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/softlandia/cpd"
+	"go.uber.org/zap"
 	"golang.org/x/text/encoding/charmap"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )
 
 var (

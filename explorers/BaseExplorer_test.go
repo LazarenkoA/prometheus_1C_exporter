@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )
 
 func Test_findExplorer(t *testing.T) {
@@ -72,6 +73,8 @@ func Test_Pause(t *testing.T) {
 }
 
 func Test_Continue(t *testing.T) {
+	logger.InitLogger("", 0)
+
 	cpu := &CPU{
 		BaseExplorer{logger: logger.DefaultLogger.Named("test")},
 	}

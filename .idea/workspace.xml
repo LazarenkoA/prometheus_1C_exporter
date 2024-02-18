@@ -22,9 +22,17 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="изменил иконки">
-      <change afterPath="$PROJECT_DIR$/prometheus.yml" afterDir="false" />
+    <list default="true" id="ae75f5e9-c77e-4347-a100-6670c9ecfed7" name="Default Changelist" comment="Close inactive issues">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.go" beforeDir="false" afterPath="$PROJECT_DIR$/app.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/BaseExplorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/BaseExplorer_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/Explorer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/Explorer_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/pars_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/pars_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,7 +108,7 @@
       <recent name="C:\GoProject\prometheus_1C_exporter\settings" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter">
+  <component name="RunManager" selected="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -143,15 +151,6 @@
       <filePath value="$PROJECT_DIR$/release/release.go" />
       <method v="2" />
     </configuration>
-    <configuration name="go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="prometheus_1C_exporter" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/settings/logs/main.go" />
-      <method v="2" />
-    </configuration>
     <configuration name="go build prometheus_1C_exporter/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="prometheus_1C_exporter" />
       <working_directory value="$PROJECT_DIR$" />
@@ -159,6 +158,18 @@
       <kind value="DIRECTORY" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$/settings" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/LazarenkoA/prometheus_1C_exporter/settings" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTest_GetDeactivateAndReset\E$" />
       <method v="2" />
     </configuration>
     <configuration name="Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -173,21 +184,30 @@
       <pattern value="^\QTest_GetDeactivateAndReset\E$" />
       <method v="2" />
     </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="prometheus_1C_exporter" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Go Build.go build prometheus_1C_exporter/" />
+      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
       <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/release" />
       <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
-      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
-      <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
+      <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" />
       <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings (1)" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/release" />
         <item itemvalue="Go Test.Test_GetDeactivateAndReset in github.com/LazarenkoA/prometheus_1C_exporter/settings" />
         <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/install" />
-        <item itemvalue="Go Build.go build github.com/LazarenkoA/prometheus_1C_exporter/settings/logs" />
       </list>
     </recent_temporary>
   </component>
@@ -404,6 +424,15 @@
     <settings-migrated>true</settings-migrated>
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/explorers/Explorer_test.go</url>
+          <line>46</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="GoApplicationRunConfiguration">
         <watch expression="ex.GetName()" language="go" />

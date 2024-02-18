@@ -4,15 +4,19 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )
 
 func Test_RAC(t *testing.T) {
+	logger.InitLogger("", 0)
+
 	for id, test := range rac_initests() {
 		t.Logf("Выполняем тест %d", id+1)
 		test(t)
 	}
+
 }
 
 func rac_initests() []func(*testing.T) {
@@ -23,7 +27,7 @@ func rac_initests() []func(*testing.T) {
 
 	return []func(*testing.T){
 		func(t *testing.T) {
-			licData := []map[string]string{}
+			var licData []map[string]string
 			object.formatMultiResult(stringData(), &licData)
 			if len(licData) != 3 {
 				t.Error("В массиве должно быть 3 элемента, по факту ", len(licData))
@@ -94,3 +98,15 @@ func stringData() string {
 
 	`
 }
+
+// func Fuzz_formatMultiResult(f *testing.F) {
+// 	object := new(BaseRACExplorer)
+// 	object.logger = logger.DefaultLogger.With("Name", "test")
+
+// 	f.Add(stringData())
+// 	f.Fuzz(func(t *testing.T, data string) {
+// 		var licData []map[string]string
+// 		object.formatMultiResult(data, &licData)
+// 		f.Log(data)
+// 	})
+// }

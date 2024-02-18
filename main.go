@@ -11,10 +11,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/judwhite/go-svc"
+
 	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/judwhite/go-svc"
 )
 
 var (
@@ -24,10 +25,6 @@ var (
 
 func init() {
 	exp.CForce = make(chan struct{}, 1)
-	rand.Seed(time.Now().Unix())
-}
-
-func init() {
 	rand.Seed(time.Now().Unix())
 }
 
@@ -78,4 +75,6 @@ func main() {
 // go tool pprof -svg heap > out.svg (визуальный граф)
 // go tool pprof -http=:8082 .\heap (просмотр в браузере)
 //
-// go vet -vettool="C:\GOPATH\go\bin\fieldalignment.exe" ./...
+//  go vet -vettool="C:\GOPATH\go\bin\fieldalignment.exe" ./...
+//
+// go test -fuzz=Fuzz_formatMultiResult .\explorers\ -fuzztime=30s
