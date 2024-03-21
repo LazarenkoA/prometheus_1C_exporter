@@ -6,7 +6,7 @@ if not exist prometheus_1C_exporter.exe (
     goto :exit
 )
 
-sc create prometheus_1C_exporter binpath= "%CD%\prometheus_1C_exporter.exe --settings=settings.yaml" start= auto DisplayName= "1C Prometheus exporter"
+sc create prometheus_1C_exporter binpath= "%CD%\prometheus_1C_exporter.exe --settings=%CD%\settings.yaml" start= auto DisplayName= "1C Prometheus exporter"
 net start prometheus_1C_exporter
 sc query prometheus_1C_exporter
 
