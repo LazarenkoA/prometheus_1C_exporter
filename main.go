@@ -7,11 +7,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
-	"os"
-	"time"
-
 	"github.com/judwhite/go-svc"
+	"os"
 
 	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
@@ -25,7 +22,6 @@ var (
 
 func init() {
 	exp.CForce = make(chan struct{}, 1)
-	rand.Seed(time.Now().Unix())
 }
 
 func main() {

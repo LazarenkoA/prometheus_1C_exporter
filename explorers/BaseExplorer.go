@@ -142,7 +142,7 @@ func (exp *BaseExplorer) Start(explorers model.IExplorers) {
 		<-exp.ctx.Done() // Stop
 		exp.logger.Debug("Остановка сбора метрик")
 
-		exp.Continue() // что б снять лок
+		exp.Continue(exp.GetName()) // что б снять лок
 		if exp.ticker != nil {
 			exp.ticker.Stop()
 		}
@@ -163,10 +163,8 @@ func (exp *BaseExplorer) Stop() {
 	}
 }
 
-func (exp *BaseExplorer) Pause() {
-	l := exp.logger.With("name", exp.GetName())
-	l.Debug("Pause begin")
-	defer exp.logger.Debug("Pause end")
+func (exp *BaseExplorer) Pause(expName string) {
+	l := exp.logger.With("name", expName)
 
 	if exp.summary != nil {
 		exp.summary.Reset()
@@ -177,18 +175,20 @@ func (exp *BaseExplorer) Pause() {
 
 	if exp.isLocked.CompareAndSwap(0, 1) { // нужно что бы 2 раза не наложить lock
 		exp.Lock()
-		l.Debug("Pause. Блокировка установлена")
+		l.Info("Pause. Блокировка установлена")
 	} else {
 		l.With("isLocked", exp.isLocked.Load()).Debug("Pause. Уже заблокировано")
 	}
 }
 
-func (exp *BaseExplorer) Continue() {
+func (exp *BaseExplorer) Continue(expName string) {
+	l := exp.logger.With("name", expName)
+
 	if exp.isLocked.CompareAndSwap(1, 0) {
 		exp.Unlock()
-		exp.logger.Debug("Continue. Блокировка снята")
+		l.Debug("Continue. Блокировка снята")
 	} else {
-		exp.logger.With("isLocked", exp.isLocked.Load()).Debug("Continue. Блокировка не была установлена")
+		l.With("isLocked", exp.isLocked.Load()).Debug("Continue. Блокировка не была установлена")
 	}
 }
 
@@ -316,9 +316,9 @@ func (exp *Metrics) Contains(name string) bool {
 
 func (exp *Metrics) findExplorer(names ...string) (result []model.Iexplorer) {
 	for _, name := range names {
-		for _, item := range exp.Explorers {
-			if strings.EqualFold(item.GetName(), strings.Trim(name, " ")) || name == "all" {
-				result = append(result, item)
+		for i, _ := range exp.Explorers {
+			if strings.EqualFold(exp.Explorers[i].GetName(), strings.Trim(name, " ")) || name == "all" {
+				result = append(result, exp.Explorers[i])
 			}
 		}
 	}
@@ -341,7 +341,7 @@ func Pause(metrics *Metrics) http.Handler {
 		if offsetMinStr != "" {
 			if v, err := strconv.ParseInt(offsetMinStr, 0, 0); err == nil {
 				offsetMin = int(v)
-				logger.DefaultLogger.Infof("Сбор метрик включится автоматически через %d минут", offsetMin)
+				logger.DefaultLogger.Infof("Сбор метрик включится автоматически через %d минут, в %v", offsetMin, time.Now().Add(time.Minute*time.Duration(offsetMin)))
 			} else {
 				logger.DefaultLogger.With("offsetMin", offsetMinStr).Error(errors.Wrap(err, "Ошибка конвертации offsetMin"))
 			}
@@ -349,15 +349,15 @@ func Pause(metrics *Metrics) http.Handler {
 
 		logger.DefaultLogger.Infof("Приостановить сбор метрик %q", metricNames)
 		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
-		for _, exp := range exps {
-			exp.Pause()
+		for i, _ := range exps {
+			exps[i].Pause(exps[i].GetName())
 
 			// автовключение паузы
 			if offsetMin > 0 {
-				go func() {
+				go func(i int) {
 					<-time.After(time.Minute * time.Duration(offsetMin))
-					exp.Continue()
-				}()
+					exps[i].Continue(exps[i].GetName())
+				}(i)
 			}
 		}
 	})
@@ -376,7 +376,7 @@ func Continue(metrics *Metrics) http.Handler {
 
 		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
 		for _, exp := range exps {
-			exp.Continue()
+			exp.Continue(exp.GetName())
 		}
 	})
 }

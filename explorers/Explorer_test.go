@@ -2,7 +2,7 @@ package explorer
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -111,7 +111,7 @@ func initests(t *testing.T) []struct {
 		defer resp.Body.Close()
 		StatusCode = resp.StatusCode
 
-		if body, err := ioutil.ReadAll(resp.Body); err != nil {
+		if body, err := io.ReadAll(resp.Body); err != nil {
 			return StatusCode, "", err
 		} else {
 			return StatusCode, string(body), nil

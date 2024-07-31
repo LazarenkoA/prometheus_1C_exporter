@@ -206,15 +206,15 @@ func (m *MockIexplorer) EXPECT() *MockIexplorerMockRecorder {
 }
 
 // Continue mocks base method.
-func (m *MockIexplorer) Continue() {
+func (m *MockIexplorer) Continue(expName string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Continue")
+	m.ctrl.Call(m, "Continue", expName)
 }
 
 // Continue indicates an expected call of Continue.
-func (mr *MockIexplorerMockRecorder) Continue() *gomock.Call {
+func (mr *MockIexplorerMockRecorder) Continue(expName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Continue", reflect.TypeOf((*MockIexplorer)(nil).Continue))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Continue", reflect.TypeOf((*MockIexplorer)(nil).Continue), expName)
 }
 
 // GetName mocks base method.
@@ -232,15 +232,15 @@ func (mr *MockIexplorerMockRecorder) GetName() *gomock.Call {
 }
 
 // Pause mocks base method.
-func (m *MockIexplorer) Pause() {
+func (m *MockIexplorer) Pause(expName string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Pause")
+	m.ctrl.Call(m, "Pause", expName)
 }
 
 // Pause indicates an expected call of Pause.
-func (mr *MockIexplorerMockRecorder) Pause() *gomock.Call {
+func (mr *MockIexplorerMockRecorder) Pause(expName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockIexplorer)(nil).Pause))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockIexplorer)(nil).Pause), expName)
 }
 
 // Start mocks base method.

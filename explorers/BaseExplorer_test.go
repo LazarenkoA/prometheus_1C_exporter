@@ -44,8 +44,8 @@ func Test_Pause(t *testing.T) {
 	metrics := &Metrics{
 		Explorers: []model.Iexplorer{
 			cpu,
-			&ExplorerAvailablePerformance{},
-			&ExplorerConnects{},
+			&ExplorerAvailablePerformance{BaseRACExplorer: BaseRACExplorer{BaseExplorer: BaseExplorer{logger: logger.DefaultLogger.Named("test")}}},
+			&ExplorerConnects{ExplorerCheckSheduleJob: ExplorerCheckSheduleJob{BaseRACExplorer: BaseRACExplorer{BaseExplorer: BaseExplorer{logger: logger.DefaultLogger.Named("test")}}}},
 		},
 	}
 
@@ -59,6 +59,19 @@ func Test_Pause(t *testing.T) {
 	})
 	t.Run("pass", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/Pause?metricNames=cpu&offsetMin=1", nil)
+		responseRecorder := httptest.NewRecorder()
+
+		p := gomonkey.ApplyFunc(time.After, func(d time.Duration) <-chan time.Time {
+			return time.After(time.Millisecond * 200)
+		})
+		defer p.Reset()
+
+		Pause(metrics).ServeHTTP(responseRecorder, request)
+		assert.Equal(t, http.StatusOK, responseRecorder.Code)
+		assert.Equal(t, int32(1), cpu.isLocked.Load()) // установилась пауза
+	})
+	t.Run("pass all", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/Pause?metricNames=all&offsetMin=1", nil)
 		responseRecorder := httptest.NewRecorder()
 
 		p := gomonkey.ApplyFunc(time.After, func(d time.Duration) <-chan time.Time {

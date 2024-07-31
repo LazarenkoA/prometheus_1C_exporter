@@ -19,8 +19,8 @@ type IExplorers interface {
 type Iexplorer interface {
 	Start(IExplorers)
 	Stop()
-	Pause()
-	Continue()
+	Pause(expName string)
+	Continue(expName string)
 	StartExplore()
 	GetName() string
 }
