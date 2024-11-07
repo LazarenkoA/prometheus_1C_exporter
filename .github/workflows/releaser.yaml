@@ -28,7 +28,7 @@ jobs:
 
       - name: WinRes
         run: |
-          go install github.com/tc-hib/go-winres
+          go install github.com/tc-hib/go-winres@latest
           go-winres make .\winres\winres.json
 
       - name: Get version
