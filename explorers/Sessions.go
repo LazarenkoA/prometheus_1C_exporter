@@ -91,13 +91,12 @@ FOR:
 func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err error) {
 	sesData = []map[string]string{}
 
-	param := []string{}
+	var param []string
 	if exp.settings.RAC_Host() != "" {
 		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
-	param = append(param, "session")
-	param = append(param, "list")
+	param = append(param, "session", "list")
 	param = exp.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
