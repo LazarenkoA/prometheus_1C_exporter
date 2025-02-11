@@ -104,7 +104,7 @@ FOR:
 					if val, err := strconv.Atoi(item["duration-current"]); err == nil && val > 0 {
 						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrent", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
 					}
-					if val, err := strconv.Atoi(item["duration current-dbms"]); err == nil && val > 0 {
+					if val, err := strconv.Atoi(item["duration-current-dbms"]); err == nil && val > 0 {
 						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "durationcurrentdbms", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
 					}
 					if val, err := strconv.Atoi(item["duration-all"]); err == nil && val > 0 {
