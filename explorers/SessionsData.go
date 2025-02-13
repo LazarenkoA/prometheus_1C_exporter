@@ -124,7 +124,7 @@ FOR:
 					}
 
 					if val, err := strconv.Atoi(item["dbms-bytes-all"]); err == nil && val > 0 {
-						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "dbmsbytesall ", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
+						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "dbmsbytesall", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
 					}
 
 					if val, err := strconv.Atoi(item["calls-all"]); err == nil && val > 0 {
