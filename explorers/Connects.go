@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"reflect"
 	"strings"
 	"time"
 
@@ -49,7 +48,7 @@ func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *Ex
 }
 
 func (exp *ExplorerConnects) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	logger.DefaultLogger.With("delay", delay).Debug("Start")
 
 	exp.ticker = time.NewTicker(time.Second * time.Duration(delay))

@@ -39,7 +39,7 @@ func (exp *ExplorerProc) Construct(s model.Isettings, cerror chan error) *Explor
 }
 
 func (exp *ExplorerProc) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)

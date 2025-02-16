@@ -253,10 +253,7 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 	// defer exp.mutex().RUnlock()
 
 	update := func() {
-		exp.mx.Lock()
-		defer exp.mx.Unlock()
-
-		param := []string{}
+		var param []string
 		if exp.settings.RAC_Host() != "" {
 			param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 		}
@@ -279,10 +276,14 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 		}
 	}
 
+	exp.mx.Lock()
+
 	if exp.clusterID == "" {
 		// обновляем
 		update()
 	}
+
+	exp.mx.Unlock()
 
 	return exp.clusterID
 }
@@ -379,4 +380,14 @@ func Continue(metrics *Metrics) http.Handler {
 			exp.Continue(exp.GetName())
 		}
 	})
+}
+
+func GetVal[T any](ival interface{}) T {
+	var result T
+
+	if v, ok := ival.(T); ok {
+		return v
+	}
+
+	return result
 }

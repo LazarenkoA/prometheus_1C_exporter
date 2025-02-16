@@ -1,8 +1,8 @@
 package explorer
 
 import (
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -37,13 +37,18 @@ func (exp *ExplorerSessionsMemory) Construct(s model.Isettings, cerror chan erro
 	}
 
 	exp.settings = s
+
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
+
 	exp.cerror = cerror
+	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*time.Duration(delay))
+
 	prometheus.MustRegister(exp.summary)
 	return exp
 }
 
 func (exp *ExplorerSessionsMemory) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
@@ -124,7 +129,7 @@ FOR:
 					}
 
 					if val, err := strconv.Atoi(item["dbms-bytes-all"]); err == nil && val > 0 {
-						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "dbmsbytesall ", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
+						exp.summary.WithLabelValues(host, basename, item["user-name"], item["session-id"], "dbmsbytesall", item["current-service-name"], appid, startedAt.Format(timeFormatOut)).Observe(float64(val))
 					}
 
 					if val, err := strconv.Atoi(item["calls-all"]); err == nil && val > 0 {

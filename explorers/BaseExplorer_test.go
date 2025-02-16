@@ -120,3 +120,15 @@ func Test_Continue(t *testing.T) {
 		assert.Equal(t, int32(0), cpu.isLocked.Load()) // снялась пауза
 	})
 }
+
+func Test_GetVal(t *testing.T) {
+	var tmp interface{}
+
+	tmp = 5
+	v := GetVal[int](tmp)
+	assert.Equal(t, 5, v)
+
+	tmp = "dsdsd"
+	v2 := GetVal[string](tmp)
+	assert.Equal(t, "dsdsd", v2)
+}

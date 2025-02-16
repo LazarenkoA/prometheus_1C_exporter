@@ -2,7 +2,6 @@ package explorer
 
 import (
 	"os"
-	"reflect"
 	// "os"
 	"time"
 
@@ -39,7 +38,7 @@ func (exp *ExplorerDisk) Construct(s model.Isettings, cerror chan error) *Explor
 }
 
 func (exp *ExplorerDisk) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)

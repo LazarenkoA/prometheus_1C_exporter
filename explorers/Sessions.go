@@ -2,10 +2,11 @@ package explorer
 
 import (
 	"fmt"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"os"
 	"os/exec"
-	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -15,6 +16,9 @@ import (
 
 type ExplorerSessions struct {
 	ExplorerCheckSheduleJob
+
+	mx    sync.RWMutex
+	cache *expirable.LRU[string, []map[string]string]
 }
 
 func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
@@ -36,13 +40,17 @@ func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *Ex
 	}
 
 	exp.settings = s
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
+
 	exp.cerror = cerror
+	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*time.Duration(delay))
+
 	prometheus.MustRegister(exp.summary)
 	return exp
 }
 
 func (exp *ExplorerSessions) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
@@ -89,6 +97,14 @@ FOR:
 }
 
 func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err error) {
+
+	exp.mx.Lock()
+	defer exp.mx.Unlock()
+
+	if v, ok := exp.cache.Get("result"); ok {
+		return v, nil
+	}
+
 	sesData = []map[string]string{}
 
 	var param []string
@@ -109,6 +125,7 @@ func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err err
 		exp.formatMultiResult(result, &sesData)
 	}
 
+	exp.cache.Add("result", sesData)
 	return sesData, nil
 }
 

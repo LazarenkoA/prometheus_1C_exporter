@@ -3,6 +3,7 @@ package settings
 import (
 	"bytes"
 	"context"
+	explorer "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"io"
 	"net/http"
 	"os"
@@ -123,10 +124,10 @@ func Test_GetProperty(t *testing.T) {
 	s, err := LoadSettings(path)
 	assert.NoError(t, err)
 	if !t.Failed() {
-		delay := reflect.ValueOf(s.GetProperty("ClientLic", "timerNotify_", 10)).Int()
+		delay := explorer.GetVal[int](s.GetProperty("ClientLic", "timerNotify_", 10))
 		assert.Equal(t, 10, int(delay))
 
-		delay = reflect.ValueOf(s.GetProperty("ClientLic", "timerNotify", 10)).Int()
+		delay = explorer.GetVal[int](s.GetProperty("ClientLic", "timerNotify", 10))
 		assert.Equal(t, 60, int(delay))
 
 		assert.Equal(t, 9, len(s.Explorers))

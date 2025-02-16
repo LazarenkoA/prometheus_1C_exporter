@@ -1,10 +1,9 @@
 package explorer
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"testing"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )

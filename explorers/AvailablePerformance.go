@@ -3,7 +3,6 @@ package explorer
 import (
 	"fmt"
 	"os/exec"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +45,7 @@ func (exp *ExplorerAvailablePerformance) Construct(s model.Isettings, cerror cha
 }
 
 func (exp *ExplorerAvailablePerformance) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)

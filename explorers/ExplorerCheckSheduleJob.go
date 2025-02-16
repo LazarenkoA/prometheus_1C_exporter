@@ -3,7 +3,6 @@ package explorer
 import (
 	"fmt"
 	"os/exec"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -47,7 +46,7 @@ func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan err
 }
 
 func (exp *ExplorerCheckSheduleJob) StartExplore() {
-	delay := reflect.ValueOf(exp.settings.GetProperty(exp.GetName(), "timerNotify", 10)).Int()
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
 	exp.logger.With("delay", delay).Debug("Start")
 
 	timerNotify := time.Second * time.Duration(delay)
