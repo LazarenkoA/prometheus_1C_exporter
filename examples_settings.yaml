@@ -18,6 +18,9 @@ Explorers:
   - Name: AvailablePerformance
     Property:
       timerNotify: 10
+  - Name: CPU_Processes
+    Property:
+      timerNotify: 10
   - Name: CPU
     Property:
       timerNotify: 10

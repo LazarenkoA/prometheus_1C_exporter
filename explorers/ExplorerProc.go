@@ -63,7 +63,7 @@ FOR:
 			for _, p := range proc.GetAllProc() {
 				if p.ResidentMemory() > 0 && exp.ContainsProc(p.Name()) {
 					exp.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "memory").Observe(float64(p.ResidentMemory()))
-					exp.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(float64(p.CPUTime()))
+					exp.summary.WithLabelValues(host, p.Name(), strconv.Itoa(p.PID()), "cpu").Observe(p.CPUTime())
 				}
 			}
 		}()
