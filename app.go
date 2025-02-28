@@ -37,9 +37,8 @@ func (a *app) Init(env svc.Environment) (err error) {
 	a.metric.Append(new(exp.ExplorerSessions).Construct(a.settings, a.errors))             // Сеансы
 	a.metric.Append(new(exp.ExplorerConnects).Construct(a.settings, a.errors))             // Соединения
 	a.metric.Append(new(exp.ExplorerSessionsMemory).Construct(a.settings, a.errors))       // текущая память сеанса
-	a.metric.Append(new(exp.ExplorerProc).Construct(a.settings, a.errors))                 // текущая память поцесса
 	a.metric.Append(new(exp.CPU).Construct(a.settings, a.errors))                          // CPU
-	a.metric.Append(new(exp.CPUProcesses).Construct(a.settings, a.errors))                 // CPU в разрезе процессов
+	a.metric.Append(new(exp.Processes).Construct(a.settings, a.errors))                    // данные CPU/память в разрезе процессов
 	a.metric.Append(new(exp.ExplorerDisk).Construct(a.settings, a.errors))                 // Диск
 
 	a.initHTTP()

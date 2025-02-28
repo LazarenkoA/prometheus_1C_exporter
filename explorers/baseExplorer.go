@@ -247,12 +247,10 @@ func normalizeEncoding(str string) string {
 }
 
 func (exp *BaseRACExplorer) GetClusterID() string {
-	exp.logger.Debug("Получаем идентификатор кластера")
-	defer exp.logger.Debug("Получен идентификатор кластера ", exp.clusterID)
-	// exp.mutex().RLock()
-	// defer exp.mutex().RUnlock()
-
 	update := func() {
+		exp.logger.Debug("Получаем идентификатор кластера")
+		defer exp.logger.Debug("Получен идентификатор кластера ", exp.clusterID)
+
 		var param []string
 		if exp.settings.RAC_Host() != "" {
 			param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))

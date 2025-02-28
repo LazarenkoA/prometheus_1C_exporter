@@ -2,9 +2,11 @@ package explorer
 
 import (
 	"fmt"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -12,25 +14,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type ExplorerConnects struct {
+type ExplorerSessions struct {
 	ExplorerCheckSheduleJob
+
+	mx    sync.RWMutex
+	cache *expirable.LRU[string, []map[string]string]
 }
 
-func appendParam(in []string, value string) []string {
-	if value != "" {
-		in = append(in, value)
-	}
-	return in
-}
-
-func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *ExplorerConnects {
+func (exp *ExplorerSessions) Construct(s model.Isettings, cerror chan error) *ExplorerSessions {
 	exp.logger = logger.DefaultLogger.Named(exp.GetName())
 	exp.logger.Debug("Создание объекта")
 
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       exp.GetName(),
-			Help:       "Соединения 1С",
+			Help:       "Сессии 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "base"},
@@ -38,21 +36,27 @@ func (exp *ExplorerConnects) Construct(s model.Isettings, cerror chan error) *Ex
 
 	// dataGetter - типа мок. Инициализируется из тестов
 	if exp.BaseExplorer.dataGetter == nil {
-		exp.BaseExplorer.dataGetter = exp.getConnects
+		exp.BaseExplorer.dataGetter = exp.getSessions
 	}
 
 	exp.settings = s
+	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
+
 	exp.cerror = cerror
+	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*time.Duration(delay))
+
 	prometheus.MustRegister(exp.summary)
 	return exp
 }
 
-func (exp *ExplorerConnects) StartExplore() {
+func (exp *ExplorerSessions) StartExplore() {
 	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
-	logger.DefaultLogger.With("delay", delay).Debug("Start")
+	exp.logger.With("delay", delay).Debug("Start")
 
-	exp.ticker = time.NewTicker(time.Second * time.Duration(delay))
+	timerNotify := time.Second * time.Duration(delay)
+	exp.ticker = time.NewTicker(timerNotify)
 	host, _ := os.Hostname()
+	var groupByDB map[string]int
 
 	exp.ExplorerCheckSheduleJob.settings = exp.settings
 	go exp.fillBaseList()
@@ -61,17 +65,17 @@ FOR:
 	for {
 		exp.Lock()
 		func() {
-			logger.DefaultLogger.Debug("Старт итерации таймера")
+			exp.logger.Debug("Старт итерации таймера")
 			defer exp.Unlock()
 
-			connects, _ := exp.BaseExplorer.dataGetter()
-			if len(connects) == 0 {
+			ses, _ := exp.BaseExplorer.dataGetter()
+			if len(ses) == 0 {
 				exp.summary.Reset()
 				return
 			}
 
-			groupByDB := map[string]int{}
-			for _, item := range connects {
+			groupByDB = map[string]int{}
+			for _, item := range ses {
 				groupByDB[exp.findBaseName(item["infobase"])]++
 			}
 
@@ -81,7 +85,7 @@ FOR:
 				exp.summary.WithLabelValues(host, k).Observe(float64(v))
 			}
 			// общее кол-во по хосту
-			// exp.summary.WithLabelValues(host, "").Observe(float64(len(connects)))
+			// exp.summary.WithLabelValues(host, "").Observe(float64(len(ses)))
 		}()
 
 		select {
@@ -92,16 +96,24 @@ FOR:
 	}
 }
 
-func (exp *ExplorerConnects) getConnects() (connData []map[string]string, err error) {
-	connData = []map[string]string{}
+func (exp *ExplorerSessions) getSessions() (sesData []map[string]string, err error) {
 
-	param := []string{}
+	exp.mx.Lock()
+	defer exp.mx.Unlock()
+
+	if v, ok := exp.cache.Get("result"); ok {
+		exp.logger.Debug("данные получены из кеша")
+		return v, nil
+	}
+
+	sesData = []map[string]string{}
+
+	var param []string
 	if exp.settings.RAC_Host() != "" {
 		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
-	param = append(param, "connection")
-	param = append(param, "list")
+	param = append(param, "session", "list")
 	param = exp.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
@@ -111,12 +123,13 @@ func (exp *ExplorerConnects) getConnects() (connData []map[string]string, err er
 		exp.logger.Error(err)
 		return []map[string]string{}, err
 	} else {
-		exp.formatMultiResult(result, &connData)
+		exp.formatMultiResult(result, &sesData)
 	}
 
-	return connData, nil
+	exp.cache.Add("result", sesData)
+	return sesData, nil
 }
 
-func (exp *ExplorerConnects) GetName() string {
-	return "Connect"
+func (exp *ExplorerSessions) GetName() string {
+	return "Session"
 }

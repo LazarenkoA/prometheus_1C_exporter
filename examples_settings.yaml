@@ -18,7 +18,7 @@ Explorers:
   - Name: AvailablePerformance
     Property:
       timerNotify: 10
-  - Name: CPU_Processes
+  - Name: Processes
     Property:
       timerNotify: 10
   - Name: CPU
@@ -39,13 +39,7 @@ Explorers:
   - Name: SessionsData
     Property:
       timerNotify: 10
-  - Name: ProcData
-    Property:
-      processes:
-        - rphost
-        - ragent
-        - rmngr
-      timerNotify: 10
+
 
 # http сервис который возвращает массив json с кредами к БД
 # нужно для метрики SheduleJob

@@ -171,8 +171,7 @@ func (exp *ExplorerAvailablePerformance) readData() (string, error) {
 		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}
 
-	param = append(param, "process")
-	param = append(param, "list")
+	param = append(param, "process", "list")
 	param = exp.appendLogPass(param)
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
