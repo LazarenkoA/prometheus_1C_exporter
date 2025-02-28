@@ -57,11 +57,19 @@ FOR:
 
 			cpu.summary.Reset()
 			for _, p := range processes {
+				var memInfo process.MemoryInfoStat
+
 				cpuPercent, _ := p.CPUPercent()
 				memPercent, _ := p.MemoryPercent()
+				if mInfo, err := p.MemoryInfo(); err == nil {
+					memInfo = *mInfo
+				}
+
 				if procName, err := p.Name(); err == nil {
 					cpu.summary.WithLabelValues(host, strconv.Itoa(int(p.Pid)), procName, "cpu").Observe(cpuPercent)
-					cpu.summary.WithLabelValues(host, strconv.Itoa(int(p.Pid)), procName, "memory").Observe(float64(memPercent))
+					cpu.summary.WithLabelValues(host, strconv.Itoa(int(p.Pid)), procName, "memoryPercent").Observe(float64(memPercent))
+					cpu.summary.WithLabelValues(host, strconv.Itoa(int(p.Pid)), procName, "memoryRSS").Observe(float64(memInfo.RSS))
+					cpu.summary.WithLabelValues(host, strconv.Itoa(int(p.Pid)), procName, "memoryVMS").Observe(float64(memInfo.VMS))
 				}
 			}
 		}()
