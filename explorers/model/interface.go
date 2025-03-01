@@ -1,26 +1,24 @@
 package model
 
-//go:generate mockgen -source=./interface.go -destination=../mock/BaseExplorerMock.go
-type Isettings interface {
-	GetLogPass(string) (log string, pass string)
-	RAC_Path() string
-	RAC_Port() string
-	RAC_Host() string
-	RAC_Login() string
-	RAC_Pass() string
-	GetExplorers() map[string]map[string]interface{}
-	GetProperty(string, string, interface{}) interface{}
-}
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
 
-type IExplorers interface {
-	StartExplore()
-}
+//go:generate mockgen -source=./interface.go -destination=../mock/BaseExporterMock.go
+type IExporter interface {
+	prometheus.Collector
 
-type Iexplorer interface {
-	Start(IExplorers)
-	Stop()
 	Pause(expName string)
 	Continue(expName string)
-	StartExplore()
 	GetName() string
+	Stop()
+	GetType() MetricType
 }
+
+type MetricType byte
+
+const (
+	Undefined MetricType = iota
+	TypeRAC
+	TypeOS
+)

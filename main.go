@@ -1,6 +1,6 @@
 package main
 
-//go:generate go run install/release.go
+////go:generate go run install/release.go
 // //go:generate git commit -am "bump $PROM_VERSION"
 // //go:generate git tag -af $PROM_VERSION -m "$PROM_VERSION"
 
@@ -10,7 +10,6 @@ import (
 	"github.com/judwhite/go-svc"
 	"os"
 
-	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 )
@@ -19,10 +18,6 @@ var (
 	version   = "undefined"
 	gitCommit = "undefined"
 )
-
-func init() {
-	exp.CForce = make(chan struct{}, 1)
-}
 
 func main() {
 	var settingsPath, port string

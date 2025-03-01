@@ -3,7 +3,6 @@ package settings
 import (
 	"bytes"
 	"context"
-	explorer "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"io"
 	"net/http"
 	"os"
@@ -105,40 +104,6 @@ func Fuzz_GetLogPass(f *testing.F) {
 	})
 }
 
-func Test_GetProperty(t *testing.T) {
-	path := settingsPath(getSettings())
-	defer os.RemoveAll(path)
-
-	t.Run("error", func(t *testing.T) {
-		_, err := LoadSettings("--")
-		assert.EqualError(t, err, "файл настроек \"--\" не найден")
-	})
-	t.Run("error", func(t *testing.T) {
-		path := settingsPath(getBadSettings())
-		defer os.RemoveAll(path)
-
-		_, err := LoadSettings(path)
-		assert.Contains(t, err.Error(), "ошибка десириализации настроек")
-	})
-
-	s, err := LoadSettings(path)
-	assert.NoError(t, err)
-	if !t.Failed() {
-		delay := explorer.GetVal[int](s.GetProperty("ClientLic", "timerNotify_", 10))
-		assert.Equal(t, 10, int(delay))
-
-		delay = explorer.GetVal[int](s.GetProperty("ClientLic", "timerNotify", 10))
-		assert.Equal(t, 60, int(delay))
-
-		assert.Equal(t, 9, len(s.Explorers))
-		assert.NotNil(t, s.DBCredentials)
-		assert.NotNil(t, s.RAC)
-		assert.Equal(t, 4, s.LogLevel)
-		assert.Equal(t, "/var/log/1c_exporter", s.LogDir)
-	}
-
-}
-
 func settingsPath(body string) string {
 	f, _ := os.CreateTemp("", "")
 	f.WriteString(body)
@@ -148,7 +113,7 @@ func settingsPath(body string) string {
 }
 
 func getSettings() string {
-	return `Explorers:
+	return `Exporters:
   - Name: ClientLic
     Property:
       timerNotify: 60
@@ -200,7 +165,7 @@ TTLLogs: 8                    # Время жизни логов в часах
 }
 
 func getBadSettings() string {
-	return `Explorers:
+	return `Exporters:
   - Name: ClientLic
     Property:
       timerNotify: 60

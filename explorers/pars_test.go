@@ -1,4 +1,4 @@
-package explorer
+package exporter
 
 import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -21,7 +21,7 @@ func Test_RAC(t *testing.T) {
 func rac_initests() []func(*testing.T) {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/1C_Metrics", promhttp.Handler())
-	object := new(BaseRACExplorer)
+	object := new(BaseRACExporter)
 	object.logger = logger.DefaultLogger.With("Name", "test")
 
 	return []func(*testing.T){
@@ -99,7 +99,7 @@ func stringData() string {
 }
 
 // func Fuzz_formatMultiResult(f *testing.F) {
-// 	object := new(BaseRACExplorer)
+// 	object := new(BaseRACExporter)
 // 	object.logger = logger.DefaultLogger.With("Name", "test")
 
 // 	f.Add(stringData())

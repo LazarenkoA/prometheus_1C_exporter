@@ -23,10 +23,10 @@ type Settings struct {
 	LogDir       string `yaml:"LogDir"`
 	SettingsPath string
 
-	Explorers []*struct {
+	Exporters []*struct {
 		Property map[string]interface{} `yaml:"Property"`
 		Name     string                 `yaml:"Name"`
-	} `yaml:"Explorers"`
+	} `yaml:"Exporters"`
 	DBCredentials *struct {
 		URL           string `yaml:"URL" json:"URL,omitempty"`
 		User          string `yaml:"User" json:"user,omitempty"`
@@ -75,6 +75,7 @@ func LoadSettings(filePath string) (*Settings, error) {
 	}
 
 	s.SettingsPath = filePath
+
 	return s, nil
 }
 
@@ -170,16 +171,16 @@ f:
 }
 
 func (s *Settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
-	if v, ok := s.GetExplorers()[explorerName][propertyName]; ok {
+	if v, ok := s.GetExporters()[explorerName][propertyName]; ok {
 		return v
 	} else {
 		return defaultValue
 	}
 }
 
-func (s *Settings) GetExplorers() map[string]map[string]interface{} {
-	result := make(map[string]map[string]interface{}, 0)
-	for _, item := range s.Explorers {
+func (s *Settings) GetExporters() map[string]map[string]interface{} {
+	result := map[string]map[string]interface{}{}
+	for _, item := range s.Exporters {
 		result[item.Name] = item.Property
 	}
 

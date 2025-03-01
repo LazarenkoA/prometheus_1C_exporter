@@ -1,30 +1,34 @@
-package explorer
+package exporter
 
 import (
 	"fmt"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/samber/lo"
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type ExplorerCheckSheduleJob struct {
-	BaseRACExplorer
-
-	baseList   []map[string]string
-	dataGetter func() (map[string]bool, error)
-	mx         sync.RWMutex
+type ExporterCheckSheduleJob struct {
+	BaseRACExporter
 }
 
-func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan error) *ExplorerCheckSheduleJob {
-	exp.logger = logger.DefaultLogger.Named(exp.GetName())
-	exp.logger.Debug("Создание объекта")
+var (
+	baseList        []map[string]string
+	mx              sync.RWMutex
+	fillBaseListRun atomic.Bool
+)
+
+func (exp *ExporterCheckSheduleJob) Construct(s *settings.Settings) *ExporterCheckSheduleJob {
+	exp.BaseExporter = newBase(exp.GetName())
+	exp.logger.Info("Создание объекта")
 
 	exp.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -34,65 +38,30 @@ func (exp *ExplorerCheckSheduleJob) Construct(s model.Isettings, cerror chan err
 		[]string{"base"},
 	)
 
-	// dataGetter - типа мок. Инициализируется из тестов
-	if exp.dataGetter == nil {
-		exp.dataGetter = exp.getData
-	}
-
 	exp.settings = s
-	exp.cerror = cerror
-	prometheus.MustRegister(exp.gauge)
-	return exp
-}
-
-func (exp *ExplorerCheckSheduleJob) StartExplore() {
-	delay := GetVal[int](exp.settings.GetProperty(exp.GetName(), "timerNotify", 10))
-	exp.logger.With("delay", delay).Debug("Start")
-
-	timerNotify := time.Second * time.Duration(delay)
-	exp.ticker = time.NewTicker(timerNotify)
 
 	// Получаем список баз в кластере
 	go exp.fillBaseList()
 
-FOR:
-	for {
-		exp.Lock()
-		exp.logger.Debug("Lock")
-		func() {
-			defer func() {
-				exp.Unlock()
-				exp.logger.Debug("Unlock")
-			}()
+	return exp
+}
 
-			exp.logger.Debug("Старт итерации таймера")
+func (exp *ExporterCheckSheduleJob) getValue() {
+	exp.logger.Info("получение данных экспортера")
 
-			if listCheck, err := exp.dataGetter(); err == nil {
-				exp.gauge.Reset()
-				for key, value := range listCheck {
-					if value {
-						exp.gauge.WithLabelValues(key).Set(1)
-					} else {
-						exp.gauge.WithLabelValues(key).Set(0)
-					}
-				}
-			} else {
-				exp.gauge.Reset()
-				exp.logger.Error(err)
-			}
-		}()
-
-		select {
-		case <-exp.ctx.Done():
-			break FOR
-		case <-exp.ticker.C:
+	if listCheck, err := exp.getData(); err == nil {
+		//exp.gauge.Reset()
+		for key, value := range listCheck {
+			exp.gauge.WithLabelValues(key).Set(lo.If(value, 1.).Else(0.))
 		}
+	} else {
+		exp.gauge.Reset()
+		exp.logger.Error(err)
 	}
 }
 
-func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) {
+func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) {
 	exp.logger.Debug("Получение данных")
-	defer exp.logger.Debug("Данные получены")
 
 	data = make(map[string]bool)
 
@@ -102,6 +71,7 @@ func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) 
 		guid, name string
 		value      bool
 	}
+
 	chanIn := make(chan *dbinfo, 5)
 	chanOut := make(chan *dbinfo)
 	wg := new(sync.WaitGroup)
@@ -127,7 +97,10 @@ func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) 
 	}()
 
 	go func() {
-		for _, item := range exp.baseList {
+		mx.RLock()
+		defer mx.RUnlock()
+
+		for _, item := range baseList {
 			exp.logger.Debugf("Запрашиваем информацию для базы %s", item["name"])
 			chanIn <- &dbinfo{name: item["name"], guid: item["infobase"]}
 		}
@@ -141,7 +114,7 @@ func (exp *ExplorerCheckSheduleJob) getData() (data map[string]bool, err error) 
 	return data, nil
 }
 
-func (exp *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
+func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
 	login, pass := exp.settings.GetLogPass(basename)
 	if login == "" {
 		CForce <- struct{}{} // принудительно запрашиваем данные из REST
@@ -163,11 +136,11 @@ func (exp *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
 	exp.logger.With("param", param).Debugf("Получаем информацию для базы %q", basename)
-	if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
+	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {
 		exp.logger.Error(err)
 		return map[string]string{}, err
 	} else {
-		baseInfo := []map[string]string{}
+		var baseInfo []map[string]string
 		exp.formatMultiResult(result, &baseInfo)
 		if len(baseInfo) > 0 {
 			return baseInfo[0], nil
@@ -177,20 +150,22 @@ func (exp *ExplorerCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 	}
 }
 
-func (exp *ExplorerCheckSheduleJob) findBaseName(ref string) string {
-	exp.mx.RLock()
-	defer exp.mx.RUnlock()
+func (exp *ExporterCheckSheduleJob) findBaseName(ref string) string {
+	mx.RLock()
+	defer mx.RUnlock()
 
-	for _, b := range exp.baseList {
+	for _, b := range baseList {
 		if b["infobase"] == ref {
 			return b["name"]
 		}
 	}
+
 	return ""
 }
 
-func (exp *ExplorerCheckSheduleJob) fillBaseList() {
-	if len(exp.baseList) > 0 { // Список баз может быть уже заполнен, например при тетсировании
+func (exp *ExporterCheckSheduleJob) fillBaseList() {
+	// fillBaseList вызывается из нескольких мест, но нам достаточно одной горутины, остальные пусть завершаются
+	if !fillBaseListRun.CompareAndSwap(false, true) {
 		return
 	}
 
@@ -199,9 +174,10 @@ func (exp *ExplorerCheckSheduleJob) fillBaseList() {
 	defer t.Stop()
 
 	for {
+		exp.logger.Info("получаем список баз")
 		if err := exp.getListInfobase(); err != nil {
 			exp.logger.Error(errors.Wrap(err, "ошибка получения списка баз"))
-			t.Reset(time.Minute)
+			t.Reset(time.Minute) // если была ошибка пробуем через минуту, если ошибка пропала вернем часовой интервал
 		} else {
 			t.Reset(time.Hour)
 		}
@@ -215,9 +191,9 @@ func (exp *ExplorerCheckSheduleJob) fillBaseList() {
 
 }
 
-func (exp *ExplorerCheckSheduleJob) getListInfobase() error {
-	exp.mx.Lock()
-	defer exp.mx.Unlock()
+func (exp *ExporterCheckSheduleJob) getListInfobase() error {
+	mx.Lock()
+	defer mx.Unlock()
 
 	var param []string
 	if exp.settings.RAC_Host() != "" {
@@ -230,15 +206,30 @@ func (exp *ExplorerCheckSheduleJob) getListInfobase() error {
 	param = exp.appendLogPass(param)
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	if result, err := exp.run(exec.Command(exp.settings.RAC_Path(), param...)); err != nil {
+	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {
 		return err
 	} else {
-		exp.formatMultiResult(result, &exp.baseList)
+		exp.mx.Lock()
+		exp.formatMultiResult(result, &baseList)
+		exp.mx.Unlock()
 	}
 
 	return nil
 }
 
-func (exp *ExplorerCheckSheduleJob) GetName() string {
-	return "SheduleJob"
+func (exp *ExporterCheckSheduleJob) Collect(ch chan<- prometheus.Metric) {
+	if exp.isLocked.Load() {
+		return
+	}
+
+	exp.getValue()
+	exp.gauge.Collect(ch)
+}
+
+func (exp *ExporterCheckSheduleJob) GetName() string {
+	return "shedule_job"
+}
+
+func (exp *ExporterCheckSheduleJob) GetType() model.MetricType {
+	return model.TypeRAC
 }

@@ -1,10 +1,12 @@
-package explorer
+package exporter
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"net/http"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -28,75 +30,58 @@ var (
 	CForce chan struct{}
 )
 
-// ////////////////////// Типы ////////////////////////////
+func init() {
+	CForce = make(chan struct{}, 1)
+}
+
+//go:generate mockgen -source=$GOFILE -package=mock_models -destination=./mock/mockRunner.go
+type IRunner interface {
+	Run(cmd *exec.Cmd) (string, error)
+}
+
+type cmdRunner struct {
+}
 
 // базовый класс для всех метрик
-type BaseExplorer struct {
-	sync.Mutex
-
-	mx          sync.RWMutex
-	summary     *prometheus.SummaryVec
-	counter     *prometheus.CounterVec
-	gauge       *prometheus.GaugeVec
-	ticker      *time.Ticker
-	timerNotify time.Duration
-	settings    model.Isettings
-	cerror      chan error
-	ctx         context.Context
-	cancel      context.CancelFunc
-	// mutex       *sync.Mutex
-	isLocked atomic.Int32
-	// mock object
-	dataGetter func() ([]map[string]string, error)
-	logger     *zap.SugaredLogger
+type BaseExporter struct {
+	mx       sync.RWMutex
+	summary  IPrometheusMetric //*prometheus.SummaryVec
+	gauge    *prometheus.GaugeVec
+	settings *settings.Settings
+	ctx      context.Context
+	cancel   context.CancelFunc
+	isLocked atomic.Bool
+	logger   *zap.SugaredLogger
+	host     string
+	runner   IRunner
 }
 
 // базовый класс для всех метрик собираемых через RAC
-type BaseRACExplorer struct {
-	BaseExplorer
+type BaseRACExporter struct {
+	BaseExporter
 
 	clusterID string
-	logger    *zap.SugaredLogger
 }
 
 type Metrics struct {
-	Explorers []model.Iexplorer
+	Exporters []model.IExporter
 	Metrics   []string // метрики
 }
 
-// ////////////////////// Методы /////////////////////////////
+func newBase(name string) BaseExporter {
+	host, _ := os.Hostname()
+	ctx, cancel := context.WithCancel(context.Background())
 
-// func (exp *BaseExplorer) Lock(descendant Iexplorer) { // тип middleware
-//	//if exp.mutex == nil {
-//	//	return
-//	//}
-//
-//	logger.DefaultLogger.With("Name", descendant.GetName()).Debug("Lock")
-//	exp.mutex.Lock()
-// }
-
-// func (exp *BaseExplorer) Unlock(descendant Iexplorer)  {
-//	//if exp.mutex == nil {
-//	//	return
-//	//}
-//
-//	logger.DefaultLogger.With("Name", descendant.GetName()).Debug("Unlock")
-//	exp.mutex.Unlock()
-// }
-
-func (exp *BaseExplorer) StartExplore() {
-
+	return BaseExporter{
+		host:   host,
+		logger: logger.DefaultLogger.Named(name),
+		ctx:    ctx,
+		cancel: cancel,
+		runner: new(cmdRunner),
+	}
 }
 
-func (exp *BaseExplorer) GetName() string {
-	return "Base"
-}
-
-func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
-	exp.logger.With("Исполняемый файл", cmd.Path).
-		With("Параметры", cmd.Args).
-		Debug("Выполнение команды")
-
+func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 	timeout := time.Second * 15
 	cmd.Stdout = new(bytes.Buffer)
 	cmd.Stderr = new(bytes.Buffer)
@@ -116,7 +101,7 @@ func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	case <-time.After(timeout): // timeout
 		// завершмем процесс
 		cmd.Process.Kill()
-		return "", fmt.Errorf("Выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
+		return "", fmt.Errorf("выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
 	case err := <-errch:
 		if err != nil {
 			stderr := cmd.Stderr.(*bytes.Buffer).String()
@@ -132,83 +117,74 @@ func (exp *BaseExplorer) run(cmd *exec.Cmd) (string, error) {
 	}
 }
 
-// Своеобразный middleware
-func (exp *BaseExplorer) Start(explorers model.IExplorers) {
-	exp.logger = logger.DefaultLogger.Named("base")
-	exp.ctx, exp.cancel = context.WithCancel(context.Background())
-	// exp.mutex = &sync.Mutex{}
+func (exp *BaseExporter) run(cmd *exec.Cmd) (string, error) {
+	exp.logger.With("исполняемый файл", cmd.Path).
+		With("параметры", cmd.Args).
+		Debug("выполнение команды")
 
-	go func() {
-		<-exp.ctx.Done() // Stop
-		exp.logger.Debug("Остановка сбора метрик")
+	return exp.runner.Run(cmd)
+}
 
-		exp.Continue(exp.GetName()) // что б снять лок
-		if exp.ticker != nil {
-			exp.ticker.Stop()
-		}
+func (exp *BaseExporter) Stop() {
+	exp.cancel()
+}
+
+func (exp *BaseExporter) Pause(expName string) {
+	l := exp.logger.With("name", expName)
+
+	if exp.isLocked.CompareAndSwap(false, true) {
+		l.Info("Pause. Блокировка установлена")
+
 		if exp.summary != nil {
 			exp.summary.Reset()
 		}
 		if exp.gauge != nil {
 			exp.gauge.Reset()
 		}
-	}()
-
-	explorers.StartExplore()
-}
-
-func (exp *BaseExplorer) Stop() {
-	if exp.cancel != nil {
-		exp.cancel()
-	}
-}
-
-func (exp *BaseExplorer) Pause(expName string) {
-	l := exp.logger.With("name", expName)
-
-	if exp.summary != nil {
-		exp.summary.Reset()
-	}
-	if exp.gauge != nil {
-		exp.gauge.Reset()
-	}
-
-	if exp.isLocked.CompareAndSwap(0, 1) { // нужно что бы 2 раза не наложить lock
-		exp.Lock()
-		l.Info("Pause. Блокировка установлена")
 	} else {
-		l.With("isLocked", exp.isLocked.Load()).Debug("Pause. Уже заблокировано")
+		l.Debug("Pause. Уже заблокировано")
 	}
 }
 
-func (exp *BaseExplorer) Continue(expName string) {
+func (exp *BaseExporter) Continue(expName string) {
 	l := exp.logger.With("name", expName)
 
-	if exp.isLocked.CompareAndSwap(1, 0) {
-		exp.Unlock()
+	if exp.isLocked.CompareAndSwap(true, false) {
 		l.Debug("Continue. Блокировка снята")
 	} else {
-		l.With("isLocked", exp.isLocked.Load()).Debug("Continue. Блокировка не была установлена")
+		l.Debug("Continue. Блокировка не была установлена")
 	}
 }
 
-func (exp *BaseRACExplorer) formatMultiResult(strIn string, licData *[]map[string]string) {
+func (exp *BaseExporter) Describe(ch chan<- *prometheus.Desc) {
+	if exp.summary != nil {
+		exp.summary.Describe(ch)
+	}
+	if exp.gauge != nil {
+		exp.gauge.Describe(ch)
+	}
+}
+
+func (exp *BaseRACExporter) formatMultiResult(strIn string, outData *[]map[string]string) {
 	exp.logger.Debug("Парс многострочного результата")
 
 	strIn = normalizeEncoding(strIn)
 	strIn = strings.Replace(strIn, "\r", "", -1)
-	*licData = []map[string]string{} // очистка
+	*outData = []map[string]string{} // очистка
+
 	reg := regexp.MustCompile(`(?m)^$`)
 	for _, part := range reg.Split(strIn, -1) {
 		data := exp.formatResult(part)
+
 		if len(data) == 0 {
 			continue
 		}
-		*licData = append(*licData, data)
+
+		*outData = append(*outData, data)
 	}
 }
 
-func (exp *BaseRACExplorer) formatResult(strIn string) map[string]string {
+func (exp *BaseRACExporter) formatResult(strIn string) map[string]string {
 	strIn = normalizeEncoding(strIn)
 	result := make(map[string]string)
 	for _, line := range strings.Split(strIn, "\n") {
@@ -223,7 +199,7 @@ func (exp *BaseRACExplorer) formatResult(strIn string) map[string]string {
 	return result
 }
 
-func (exp *BaseRACExplorer) appendLogPass(param []string) []string {
+func (exp *BaseRACExporter) appendLogPass(param []string) []string {
 	if login := exp.settings.RAC_Login(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
 		if pwd := exp.settings.RAC_Pass(); pwd != "" {
@@ -246,10 +222,9 @@ func normalizeEncoding(str string) string {
 	return str
 }
 
-func (exp *BaseRACExplorer) GetClusterID() string {
+func (exp *BaseRACExporter) GetClusterID() string {
 	update := func() {
-		exp.logger.Debug("Получаем идентификатор кластера")
-		defer exp.logger.Debug("Получен идентификатор кластера ", exp.clusterID)
+		defer exp.logger.Debug("получен идентификатор кластера ", exp.clusterID)
 
 		var param []string
 		if exp.settings.RAC_Host() != "" {
@@ -259,16 +234,16 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 		param = append(param, "cluster")
 		param = append(param, "list")
 
-		cmdCommand := exec.Command(exp.settings.RAC_Path(), param...)
+		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
-		if result, err := exp.run(cmdCommand); err != nil {
-			exp.cerror <- fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error()) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
+		if result, err := exp.runner.Run(cmdCommand); err != nil {
+			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
 		} else {
 			cluster = exp.formatResult(result)
 		}
 
 		if id, ok := cluster["cluster"]; !ok {
-			exp.cerror <- errors.New("Не удалось получить идентификатор кластера")
+			exp.logger.Error(errors.New("Не удалось получить идентификатор кластера"))
 		} else {
 			exp.clusterID = id
 		}
@@ -277,8 +252,7 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 	exp.mx.Lock()
 
 	if exp.clusterID == "" {
-		// обновляем
-		update()
+		update() // обновляем
 	}
 
 	exp.mx.Unlock()
@@ -286,13 +260,13 @@ func (exp *BaseRACExplorer) GetClusterID() string {
 	return exp.clusterID
 }
 
-func (exp *Metrics) Append(ex ...model.Iexplorer) {
-	exp.Explorers = append(exp.Explorers, ex...)
+func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
+	exp.Exporters = append(exp.Exporters, ex...)
 }
 
-func (exp *Metrics) Construct(set model.Isettings) *Metrics {
+func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 	exp.Metrics = []string{}
-	for k, _ := range set.GetExplorers() {
+	for k, _ := range set.GetExporters() {
 		exp.Metrics = append(exp.Metrics, k)
 	}
 
@@ -313,11 +287,11 @@ func (exp *Metrics) Contains(name string) bool {
 	return false
 }
 
-func (exp *Metrics) findExplorer(names ...string) (result []model.Iexplorer) {
+func (exp *Metrics) findExporter(names ...string) (result []model.IExporter) {
 	for _, name := range names {
-		for i, _ := range exp.Explorers {
-			if strings.EqualFold(exp.Explorers[i].GetName(), strings.Trim(name, " ")) || name == "all" {
-				result = append(result, exp.Explorers[i])
+		for i, _ := range exp.Exporters {
+			if strings.EqualFold(exp.Exporters[i].GetName(), strings.Trim(name, " ")) || name == "all" {
+				result = append(result, exp.Exporters[i])
 			}
 		}
 	}
@@ -347,7 +321,7 @@ func Pause(metrics *Metrics) http.Handler {
 		}
 
 		logger.DefaultLogger.Infof("Приостановить сбор метрик %q", metricNames)
-		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
+		exps := metrics.findExporter(strings.Split(metricNames, ",")...)
 		for i, _ := range exps {
 			exps[i].Pause(exps[i].GetName())
 
@@ -373,7 +347,7 @@ func Continue(metrics *Metrics) http.Handler {
 		metricNames := r.URL.Query().Get("metricNames")
 		logger.DefaultLogger.Info("Продолжить сбор метрик ", metricNames)
 
-		exps := metrics.findExplorer(strings.Split(metricNames, ",")...)
+		exps := metrics.findExporter(strings.Split(metricNames, ",")...)
 		for _, exp := range exps {
 			exp.Continue(exp.GetName())
 		}
@@ -388,4 +362,11 @@ func GetVal[T any](ival interface{}) T {
 	}
 
 	return result
+}
+
+func appendParam(in []string, value string) []string {
+	if value != "" {
+		in = append(in, value)
+	}
+	return in
 }

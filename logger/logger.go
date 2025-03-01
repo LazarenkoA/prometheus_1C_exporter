@@ -1,7 +1,10 @@
 package logger
 
 import (
+	"io"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -28,6 +31,7 @@ var (
 func init() {
 	atom = zap.NewAtomicLevel()
 	NopLogger = newNopLogger()
+	DefaultLogger = newLogger(filepath.Join("", "logs"))
 }
 
 func InitLogger(logDir string, ll int) {
@@ -36,16 +40,22 @@ func InitLogger(logDir string, ll int) {
 }
 
 func newLogger(logDir string) *zap.SugaredLogger {
-	w := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   filepath.Join(logDir, "log.txt"),
-		MaxSize:    10, // megabytes
-		MaxBackups: 10,
-		MaxAge:     5, // days
-	})
+	var logWriter io.Writer
+
+	if isTesting() {
+		logWriter = os.Stdout
+	} else {
+		logWriter = &lumberjack.Logger{
+			Filename:   filepath.Join(logDir, "log.txt"),
+			MaxSize:    10, // megabytes
+			MaxBackups: 10,
+			MaxAge:     5, // days
+		}
+	}
 
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
-		w,
+		zapcore.AddSync(logWriter),
 		atom,
 	)
 
@@ -58,4 +68,14 @@ func SetLevel(level int) {
 
 func newNopLogger() *zap.SugaredLogger {
 	return zap.NewNop().Sugar()
+}
+
+func isTesting() bool {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, "-test") {
+			return true
+		}
+	}
+
+	return false
 }

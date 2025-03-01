@@ -1,4 +1,4 @@
-package explorer
+package exporter
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 func Test_fillBaseList(t *testing.T) {
-	objectCSJ := new(ExplorerCheckSheduleJob)
+	objectCSJ := new(ExporterCheckSheduleJob)
 	objectCSJ.ctx, objectCSJ.cancel = context.WithCancel(context.Background())
 	objectCSJ.logger = logger.NopLogger.Named("test")
 
@@ -21,7 +21,7 @@ func Test_fillBaseList(t *testing.T) {
 		p := gomonkey.ApplyFunc(time.NewTicker, func(d time.Duration) *time.Ticker { return delay })
 		defer p.Reset()
 
-		p.ApplyPrivateMethod(objectCSJ, "getListInfobase", func(_ *ExplorerCheckSheduleJob) error {
+		p.ApplyPrivateMethod(objectCSJ, "getListInfobase", func(_ *ExporterCheckSheduleJob) error {
 			return errors.New("error")
 		})
 
@@ -36,7 +36,7 @@ func Test_fillBaseList(t *testing.T) {
 		p := gomonkey.ApplyFunc(time.NewTicker, func(d time.Duration) *time.Ticker { return delay })
 		defer p.Reset()
 
-		p.ApplyPrivateMethod(objectCSJ, "getListInfobase", func(_ *ExplorerCheckSheduleJob) error {
+		p.ApplyPrivateMethod(objectCSJ, "getListInfobase", func(_ *ExporterCheckSheduleJob) error {
 			return nil
 		})
 
@@ -48,10 +48,10 @@ func Test_fillBaseList(t *testing.T) {
 }
 
 func Test_findBaseName(t *testing.T) {
-	objectCSJ := new(ExplorerCheckSheduleJob)
+	objectCSJ := new(ExporterCheckSheduleJob)
 	objectCSJ.ctx, objectCSJ.cancel = context.WithCancel(context.Background())
 	objectCSJ.logger = logger.NopLogger.Named("test")
-	objectCSJ.baseList = []map[string]string{
+	baseList = []map[string]string{
 		{
 			"infobase": "test",
 			"name":     "nametest",
@@ -64,10 +64,10 @@ func Test_findBaseName(t *testing.T) {
 	res = objectCSJ.findBaseName("test2")
 	assert.Equal(t, "", res)
 
-	objectCSJ.mx.Lock()
+	mx.Lock()
 	go func() {
 		time.Sleep(time.Millisecond * 500)
-		objectCSJ.mx.Unlock()
+		mx.Unlock()
 	}()
 
 	s := time.Now()

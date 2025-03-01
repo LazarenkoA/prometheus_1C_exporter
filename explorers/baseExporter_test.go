@@ -1,4 +1,4 @@
-package explorer
+package exporter
 
 import (
 	"net/http"
@@ -13,39 +13,39 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )
 
-func Test_findExplorer(t *testing.T) {
+func Test_findExporter(t *testing.T) {
 	metrics := &Metrics{
-		Explorers: []model.Iexplorer{
+		Exporters: []model.IExporter{
 			&CPU{},
-			&ExplorerAvailablePerformance{},
-			&ExplorerConnects{},
+			&ExporterAvailablePerformance{},
+			&ExporterConnects{},
 		},
 	}
 
-	result := metrics.findExplorer("CPU")
+	result := metrics.findExporter("cpu")
 	assert.Equal(t, 1, len(result))
 
-	result = metrics.findExplorer("AvailablePerformance")
+	result = metrics.findExporter("available_performance")
 	assert.Equal(t, 1, len(result))
 
-	result = metrics.findExplorer("test")
+	result = metrics.findExporter("test")
 	assert.Equal(t, 0, len(result))
 
-	result = metrics.findExplorer("all")
+	result = metrics.findExporter("all")
 	assert.Equal(t, 3, len(result))
 }
 
 func Test_Pause(t *testing.T) {
 	logger.InitLogger("", 4)
 	cpu := &CPU{
-		BaseExplorer{logger: logger.DefaultLogger.Named("test")},
+		BaseExporter: BaseExporter{logger: logger.DefaultLogger.Named("test")},
 	}
 
 	metrics := &Metrics{
-		Explorers: []model.Iexplorer{
+		Exporters: []model.IExporter{
 			cpu,
-			&ExplorerAvailablePerformance{BaseRACExplorer: BaseRACExplorer{BaseExplorer: BaseExplorer{logger: logger.DefaultLogger.Named("test")}}},
-			&ExplorerConnects{ExplorerCheckSheduleJob: ExplorerCheckSheduleJob{BaseRACExplorer: BaseRACExplorer{BaseExplorer: BaseExplorer{logger: logger.DefaultLogger.Named("test")}}}},
+			&ExporterAvailablePerformance{BaseRACExporter: BaseRACExporter{BaseExporter: BaseExporter{logger: logger.DefaultLogger.Named("test")}}},
+			&ExporterConnects{ExporterCheckSheduleJob: ExporterCheckSheduleJob{BaseRACExporter: BaseRACExporter{BaseExporter: BaseExporter{logger: logger.DefaultLogger.Named("test")}}}},
 		},
 	}
 
@@ -55,7 +55,7 @@ func Test_Pause(t *testing.T) {
 
 		Pause(metrics).ServeHTTP(responseRecorder, request)
 		assert.Equal(t, http.StatusInternalServerError, responseRecorder.Code)
-		assert.Equal(t, int32(0), cpu.isLocked.Load())
+		assert.False(t, cpu.isLocked.Load())
 	})
 	t.Run("pass", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/Pause?metricNames=cpu&offsetMin=1", nil)
@@ -68,7 +68,7 @@ func Test_Pause(t *testing.T) {
 
 		Pause(metrics).ServeHTTP(responseRecorder, request)
 		assert.Equal(t, http.StatusOK, responseRecorder.Code)
-		assert.Equal(t, int32(1), cpu.isLocked.Load()) // установилась пауза
+		assert.True(t, cpu.isLocked.Load()) // установилась пауза
 	})
 	t.Run("pass all", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/Pause?metricNames=all&offsetMin=1", nil)
@@ -81,7 +81,7 @@ func Test_Pause(t *testing.T) {
 
 		Pause(metrics).ServeHTTP(responseRecorder, request)
 		assert.Equal(t, http.StatusOK, responseRecorder.Code)
-		assert.Equal(t, int32(1), cpu.isLocked.Load()) // установилась пауза
+		assert.True(t, cpu.isLocked.Load()) // установилась пауза
 	})
 }
 
@@ -89,15 +89,15 @@ func Test_Continue(t *testing.T) {
 	logger.InitLogger("", 0)
 
 	cpu := &CPU{
-		BaseExplorer{logger: logger.DefaultLogger.Named("test")},
+		BaseExporter: BaseExporter{logger: logger.DefaultLogger.Named("test")},
 	}
-	cpu.isLocked.Store(1)
+	cpu.isLocked.Store(true)
 
 	metrics := &Metrics{
-		Explorers: []model.Iexplorer{
+		Exporters: []model.IExporter{
 			cpu,
-			&ExplorerAvailablePerformance{},
-			&ExplorerConnects{},
+			&ExporterAvailablePerformance{},
+			&ExporterConnects{},
 		},
 	}
 
@@ -107,17 +107,15 @@ func Test_Continue(t *testing.T) {
 
 		Continue(metrics).ServeHTTP(responseRecorder, request)
 		assert.Equal(t, http.StatusInternalServerError, responseRecorder.Code)
-		assert.Equal(t, int32(1), cpu.isLocked.Load())
+		assert.True(t, cpu.isLocked.Load())
 	})
 	t.Run("pass", func(t *testing.T) {
-		cpu.Lock()
-
 		request := httptest.NewRequest(http.MethodGet, "/Continue?metricNames=cpu", nil)
 		responseRecorder := httptest.NewRecorder()
 
 		Continue(metrics).ServeHTTP(responseRecorder, request)
 		assert.Equal(t, http.StatusOK, responseRecorder.Code)
-		assert.Equal(t, int32(0), cpu.isLocked.Load()) // снялась пауза
+		assert.False(t, cpu.isLocked.Load()) // снялась пауза
 	})
 }
 

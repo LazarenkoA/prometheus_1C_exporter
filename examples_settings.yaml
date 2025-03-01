@@ -1,4 +1,4 @@
-# Доступные зачеия Explorers:
+# Доступные зачеия Exporters:
 # ClientLic - Клиентские лицензии
 # AvailablePerformance - Доступная производительность (через RAC)
 # SheduleJob - Проверка галки "блокировка регламентных заданий"
@@ -10,35 +10,16 @@
 # disk - метрики дикска, пока только linux и WeightedIO
 # Property - доп. свойства, у каждой метрики свои могут быть.
 # у ProcData доп. свойство processes определяет список процессов которые нужно мониторить
-# у всех метрик доп. свойство timerNotify время опроса в секундах (через какой интервал будут запрашиваться метрики). Если не задан по дефолту 10 сек.
-Explorers:
-  - Name: ClientLic
-    Property:
-      timerNotify: 60
-  - Name: AvailablePerformance
-    Property:
-      timerNotify: 10
-  - Name: Processes
-    Property:
-      timerNotify: 10
-  - Name: CPU
-    Property:
-      timerNotify: 10
+Exporters:
+  - Name: client_lic
+  - Name: available_performance
+  - Name: processes
+  - Name: cpu
   - Name: disk
-    Property:
-      timerNotify: 10
-  - Name: SheduleJob
-    Property:
-      timerNotify: 10
-  - Name: Session
-    Property:
-      timerNotify: 60
-  - Name: Connect
-    Property:
-      timerNotify: 60
-  - Name: SessionsData
-    Property:
-      timerNotify: 10
+  - Name: shedule_job
+  - Name: session
+  - Name: connect
+  - Name: sessions_data
 
 
 # http сервис который возвращает массив json с кредами к БД
@@ -51,7 +32,7 @@ Explorers:
 #    "UserPass": ""
 #  }
 #]
-DBCredentials: # Не обязательный параметр
+DBCredentials: # обязательный параметр для метрики shedule_job
   URL: http://ca-fr-web-1/fresh/int/sm/hs/PTG_SysExchange/GetDatabase
   User: ""
   Password: ""

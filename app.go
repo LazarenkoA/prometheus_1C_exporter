@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -20,27 +22,34 @@ import (
 )
 
 type app struct {
-	settings *settings.Settings
-	metric   *exp.Metrics
-	errors   chan error
-	httpSrv  *http.Server
-	port     string
+	settings    *settings.Settings
+	metric      *exp.Metrics
+	httpSrv     *http.Server
+	port        string
+	ctx         context.Context
+	cancel      context.CancelFunc
+	osRegistry  *prometheus.Registry
+	racRegistry *prometheus.Registry
 }
 
-func (a *app) Init(env svc.Environment) (err error) {
-	a.errors = make(chan error)
+func (a *app) Init(_ svc.Environment) (err error) {
+	a.metric = new(exp.Metrics).FillMetrics(a.settings)
+	a.ctx, a.cancel = context.WithCancel(context.Background())
 
-	a.metric = new(exp.Metrics).Construct(a.settings)
-	a.metric.Append(new(exp.ExplorerClientLic).Construct(a.settings, a.errors))            // Клиентские лицензии
-	a.metric.Append(new(exp.ExplorerAvailablePerformance).Construct(a.settings, a.errors)) // Доступная производительность
-	a.metric.Append(new(exp.ExplorerCheckSheduleJob).Construct(a.settings, a.errors))      // Проверка галки "блокировка регламентных заданий"
-	a.metric.Append(new(exp.ExplorerSessions).Construct(a.settings, a.errors))             // Сеансы
-	a.metric.Append(new(exp.ExplorerConnects).Construct(a.settings, a.errors))             // Соединения
-	a.metric.Append(new(exp.ExplorerSessionsMemory).Construct(a.settings, a.errors))       // текущая память сеанса
-	a.metric.Append(new(exp.CPU).Construct(a.settings, a.errors))                          // CPU
-	a.metric.Append(new(exp.Processes).Construct(a.settings, a.errors))                    // данные CPU/память в разрезе процессов
-	a.metric.Append(new(exp.ExplorerDisk).Construct(a.settings, a.errors))                 // Диск
+	a.osRegistry = prometheus.NewRegistry()
+	a.racRegistry = prometheus.NewRegistry()
 
+	lic := new(exp.ExporterClientLic).Construct(a.settings)             // Клиентские лицензии
+	perf := new(exp.ExporterAvailablePerformance).Construct(a.settings) // Доступная производительность
+	sJob := new(exp.ExporterCheckSheduleJob).Construct(a.settings)      // Проверка галки "блокировка регламентных заданий"
+	ses := new(exp.ExporterSessions).Construct(a.settings)              // Сеансы
+	conn := new(exp.ExporterConnects).Construct(a.settings)             // Соединения
+	currentMem := new(exp.ExporterSessionsMemory).Construct(a.settings) // текущая память сеанса
+	cpu := new(exp.CPU).Construct(a.settings)                           // CPU
+	proc := new(exp.Processes).Construct(a.settings)                    // данные CPU/память в разрезе процессов
+	disk := new(exp.ExporterDisk).Construct(a.settings)                 // Диск
+
+	a.metric.AppendExporter(proc, cpu, disk, currentMem, lic, perf, sJob, ses, conn)
 	a.initHTTP()
 
 	return nil
@@ -50,20 +59,17 @@ func (a *app) Start() error {
 	logger.DefaultLogger.Info("Запущен сбор метрик: ", strings.Join(a.metric.Metrics, ","))
 	fmt.Println("port :", a.port)
 
-	go a.settings.GetDBCredentials(context.Background(), exp.CForce)
-	go a.reloadWatcher()
-	go func() {
-		if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			a.errors <- err
-		}
-	}()
-	go func() {
-		for err := range a.errors {
-			logger.DefaultLogger.Errorf("Произошла ошибка:\n\t %v\n", err)
-		}
-	}()
+	if a.metric.Contains("shedule_job") && (a.settings.DBCredentials == nil || a.settings.DBCredentials.URL == "") {
+		return errors.New("для метрики \"shedule_job\" обязательно должен быть заполнен параметр DBCredentials")
+	}
 
-	a.metricsRun()
+	go a.settings.GetDBCredentials(a.ctx, exp.CForce)
+	go a.reloadWatcher()
+
+	a.register()
+	if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
 
 	return nil
 }
@@ -71,38 +77,40 @@ func (a *app) Start() error {
 func (a *app) Stop() error {
 	logger.DefaultLogger.Info("Остановка приложения")
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	defer a.cancel()
+
+	ctx, _ := context.WithTimeout(a.ctx, time.Second*10)
 	return a.httpSrv.Shutdown(ctx)
 }
 
 func (a *app) reloadWatcher() {
-
 	// Обработка сигала от ОС
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP) // при отпавки reload
+	signal.Notify(c, syscall.SIGHUP) // SIGHUP получаем при отпавки reload
 
-	go func() {
-		for range c {
-			news, err := settings.LoadSettings(a.settings.SettingsPath)
-			if err != nil {
-				logger.DefaultLogger.Error(err)
-				os.Exit(1)
-			}
-			*a.settings = *news
+	<-c
 
-			logger.InitLogger(a.settings.LogDir, a.settings.LogLevel)
-			a.metric.Construct(a.settings)
-			a.metricsRun()
+	// перечитываем настройки
+	news, err := settings.LoadSettings(a.settings.SettingsPath)
+	if err != nil {
+		logger.DefaultLogger.Error(err)
+		os.Exit(1)
+	}
+	*a.settings = *news
 
-			logger.DefaultLogger.Info("Обновлены настройки")
-		}
-	}()
+	logger.InitLogger(a.settings.LogDir, a.settings.LogLevel)
+
+	a.metric.FillMetrics(a.settings)
+	a.register()
+
+	logger.DefaultLogger.Info("Обновлены настройки")
 }
 
 func (a *app) initHTTP() {
 	siteMux := http.NewServeMux()
-	siteMux.Handle("/1C_Metrics", promhttp.Handler())
 	siteMux.Handle("/metrics", promhttp.Handler())
+	siteMux.Handle("/metrics_os", promhttp.HandlerFor(a.osRegistry, promhttp.HandlerOpts{}))
+	siteMux.Handle("/metrics_rac", promhttp.HandlerFor(a.racRegistry, promhttp.HandlerOpts{}))
 	siteMux.Handle("/Continue", exp.Continue(a.metric))
 	siteMux.Handle("/Pause", exp.Pause(a.metric))
 
@@ -118,14 +126,28 @@ func (a *app) initHTTP() {
 	}
 }
 
-func (a *app) metricsRun() {
-	for _, ex := range a.metric.Explorers {
-		ex.Stop()
+func (a *app) unregisterAll() {
+	for _, ex := range a.metric.Exporters {
+		prometheus.Unregister(ex)
+	}
+}
 
+func (a *app) register() {
+	for _, ex := range a.metric.Exporters {
 		if a.metric.Contains(ex.GetName()) {
-			go ex.Start(ex)
+			prometheus.MustRegister(ex)
+
+			switch ex.GetType() {
+			case model.TypeOS:
+				a.osRegistry.Register(ex)
+			case model.TypeRAC:
+				a.racRegistry.Register(ex)
+			}
+
 		} else {
-			logger.DefaultLogger.Debugf("Метрика %s пропущена", ex.GetName())
+			ex.Stop()
+			prometheus.Unregister(ex)
+			logger.DefaultLogger.Debugf("Метрика %q пропущена", ex.GetName())
 		}
 	}
 }
