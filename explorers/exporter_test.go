@@ -3,6 +3,7 @@ package exporter
 import (
 	mock_models "github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -10,6 +11,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -52,9 +54,16 @@ func Test_Exporter(t *testing.T) {
 			<-out
 		})
 		t.Run("pass", func(t *testing.T) {
-			observer.EXPECT().Observe(gomock.Any()).Times(4)
+			p := gomonkey.ApplyMethod(reflect.TypeOf(new(process.Process)), "Name", func(_ *process.Process) (string, error) {
+				return "test", nil
+			})
+			defer p.Reset()
 
-			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(observer).Times(4)
+			observer.EXPECT().Observe(gomock.Any()).Times(4)
+			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), "test", "cpu").Return(observer)
+			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), "test", "memoryPercent").Return(observer)
+			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), "test", "memoryRSS").Return(observer)
+			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), "test", "memoryVMS").Return(observer)
 			summaryMock.EXPECT().Reset()
 
 			hInfo.EXPECT().Processes().Return([]*process.Process{{}}, nil)
