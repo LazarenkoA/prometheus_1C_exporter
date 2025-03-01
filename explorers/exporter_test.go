@@ -54,10 +54,7 @@ func Test_Exporter(t *testing.T) {
 		t.Run("pass", func(t *testing.T) {
 			observer.EXPECT().Observe(gomock.Any()).Times(4)
 
-			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), "cpu").Return(observer)
-			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), "memoryPercent").Return(observer)
-			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), "memoryRSS").Return(observer)
-			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), "memoryVMS").Return(observer)
+			summaryMock.EXPECT().WithLabelValues(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(observer).Times(4)
 			summaryMock.EXPECT().Reset()
 
 			hInfo.EXPECT().Processes().Return([]*process.Process{{}}, nil)
