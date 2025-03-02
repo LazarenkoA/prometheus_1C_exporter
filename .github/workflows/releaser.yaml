@@ -63,7 +63,7 @@ jobs:
             
             Commits:
             ${{ steps.commit_messages.outputs.commits }}
-          draft: false
+          draft: true  # Установите значение true для черновика
           prerelease: false
 
       - name: Upload binaries
