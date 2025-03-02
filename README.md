@@ -152,6 +152,11 @@ avg_over_time(available_performance{quantile="0.99"}[10m])
 session{quantile="0.99"}
 ```
 
+CPU time (консоль 1С)
+```
+rate(sessions_data{quantile="0.99", datatype="cputimetotal"}[5m])
+```
+
 ## ⚠️ Локализация ошибок
 При возникновении проблем проверьте:
 - Доступность RAC-утилиты
