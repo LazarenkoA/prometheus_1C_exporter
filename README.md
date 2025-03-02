@@ -129,27 +129,27 @@ sum by (licSRV) (client_lic{quantile="0.99", licSRV=~"(?i).+sys.+"})
 
 Средняя загрузка CPU:
 ```
-avg_over_time(CPU{quantile="0.99"} [1m])
+avg_over_time(cpu{quantile="0.99"} [1m])
 ```
 
 Загрузка CPU в разрезе процессов:
 ```
-topk(10, sum(avg_over_time(Processes{quantile="0.99", metrics="cpu"}[1m])) by (procName) )
+topk(10, sum(avg_over_time(processes{quantile="0.99", metrics="cpu"}[1m])) by (procName) )
 ```
 
 Загрузка ОЗУ в разрезе процессов:
 ```
-topk(10, sum(avg_over_time(Processes{quantile="0.99", metrics="memoryRSS"}[1m])) by (procName) )
+topk(10, sum(avg_over_time(processes{quantile="0.99", metrics="memoryRSS"}[1m])) by (procName) )
 ```
 
 Доступная производительность 1С:
 ```
-avg_over_time(AvailablePerformance{quantile="0.99"}[10m])
+avg_over_time(available_performance{quantile="0.99"}[10m])
 ```
 
 Количество сеансов в 1С:
 ```
-Session{quantile="0.99"}
+session{quantile="0.99"}
 ```
 
 ## ⚠️ Локализация ошибок
