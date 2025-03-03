@@ -1,16 +1,21 @@
 package exporter
 
 import (
+	"context"
 	mock_models "github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/samber/lo"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/process"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
+	"os/exec"
 	"reflect"
 	"testing"
 	"time"
@@ -187,6 +192,73 @@ func Test_Exporter(t *testing.T) {
 			<-out
 		})
 	})
+	t.Run("sessions_data", func(t *testing.T) {
+		observer := mock_models.NewMockObserver(c)
+		summaryMock := mock_models.NewMockIPrometheusMetric(c)
+		summaryMock.EXPECT().Collect(gomock.Any()).Do(func(ch chan<- prometheus.Metric) {
+			close(ch)
+		}).MaxTimes(2)
+		summaryMock.EXPECT().Reset().MaxTimes(2)
+
+		exp := new(ExporterSessionsMemory).Construct(settings)
+		exp.summary = summaryMock
+		exp.clusterID = "123"
+		exp.buff = map[string]*sessionsData{
+			"1": {
+				basename:            "test",
+				user:                "test",
+				memorytotal:         10,
+				memorycurrent:       6,
+				readcurrent:         5,
+				readtotal:           1,
+				writecurrent:        4,
+				writetotal:          22,
+				durationcurrent:     45,
+				durationcurrentdbms: 473,
+				durationall:         43,
+				durationalldbms:     3,
+				cputimecurrent:      2,
+				cputimetotal:        0,
+				dbmsbytesall:        334,
+				callsall:            3432,
+				sessionid:           "1",
+			},
+		}
+
+		t.Run("pass", func(t *testing.T) {
+			observer.EXPECT().Observe(gomock.Any()).Do(func(v float64) {
+				contains := lo.ContainsBy[*sessionsData](maps.Values(exp.buff), func(item *sessionsData) bool {
+					return item.memorytotal == int64(v) || item.memorycurrent == int64(v) ||
+						item.readcurrent == int64(v) || item.readtotal == int64(v) ||
+						item.writecurrent == int64(v) || item.writetotal == int64(v) ||
+						item.durationcurrent == int64(v) || item.durationcurrentdbms == int64(v) ||
+						item.durationall == int64(v) || item.durationalldbms == int64(v) ||
+						item.cputimecurrent == int64(v) || item.cputimetotal == int64(v) ||
+						item.dbmsbytesall == int64(v) || item.callsall == int64(v)
+				})
+				assert.True(t, contains)
+			}).Times(14)
+
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "memorytotal", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "memorycurrent", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "readcurrent", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "readtotal", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "writecurrent", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "writetotal", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "durationcurrent", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "durationcurrentdbms", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "durationall", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "durationalldbms", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "cputimecurrent", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "cputimetotal", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "dbmsbytesall", gomock.Any()).Return(observer)
+			summaryMock.EXPECT().WithLabelValues(exp.host, gomock.Any(), gomock.Any(), gomock.Any(), "callsall", gomock.Any()).Return(observer)
+
+			out := make(chan prometheus.Metric)
+			exp.Collect(out)
+			<-out
+		})
+	})
 }
 
 func Test_Unmarshal(t *testing.T) {
@@ -263,6 +335,157 @@ avg-lock-call-time   : 0.008
 avg-server-call-time : 0.053
 avg-threads          : 0.063
 reserve              : no`
+}
+
+func Test_collectingMetrics(t *testing.T) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+
+	settings := &settings.Settings{
+		LogDir:        "",
+		SettingsPath:  "",
+		Exporters:     nil,
+		DBCredentials: nil,
+		RAC:           nil,
+		LogLevel:      0,
+	}
+
+	run := mock_models.NewMockIRunner(c)
+	summaryMock := mock_models.NewMockIPrometheusMetric(c)
+	summaryMock.EXPECT().Collect(gomock.Any()).Do(func(ch chan<- prometheus.Metric) {
+		close(ch)
+	}).MaxTimes(2)
+	summaryMock.EXPECT().Reset().MaxTimes(2)
+
+	go func() {
+		fillBaseListRun.Lock() // что бы не запустился fillBaseList и все не испортил
+	}()
+
+	exp := new(ExporterSessionsMemory).Construct(settings)
+	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Millisecond)
+	exp.summary = summaryMock
+	exp.clusterID = "123"
+	exp.runner = run
+	exp.ctx, exp.cancel = context.WithCancel(context.Background())
+
+	run.EXPECT().Run(gomock.Any()).Return(testDatasession1(), nil)
+	run.EXPECT().Run(gomock.Any()).Return(testDatasession2(), nil)
+	run.EXPECT().Run(gomock.Any()).DoAndReturn(func(_ *exec.Cmd) (string, error) {
+		exp.cancel()
+		return "", errors.New("error")
+	})
+
+	exp.collectingMetrics(time.Millisecond * 100)
+	exp.mx.RLock()
+	assert.Equal(t, int64(10), exp.buff["590"].memorycurrent)
+	assert.Equal(t, int64(10), exp.buff["590"].durationcurrentdbms)
+	assert.Equal(t, int64(112815764), exp.buff["590"].readtotal)
+
+	exp.mx.RUnlock()
+}
+
+func testDatasession1() string {
+	return `session                          : f028ea3e-5402-4f15-8194-34cb70bca0c4
+session-id                       : 590
+infobase                         : 899bbbb8-7ffb-4e91-9b3b-8638793108ec
+connection                       : 00000000-0000-0000-0000-000000000000
+process                          : 00000000-0000-0000-0000-000000000000
+user-name                        : 9002013361_167
+host                             :
+app-id                           : 1CV8C
+locale                           : ru_RU
+started-at                       : 2025-03-03T14:17:30
+last-active-at                   : 2025-03-03T16:24:26
+hibernate                        : no
+passive-session-hibernate-time   : 1200
+hibernate-session-terminate-time : 86400
+blocked-by-dbms                  : 0
+blocked-by-ls                    : 0
+bytes-all                        : 3206468
+bytes-last-5min                  : 17111
+calls-all                        : 1221
+calls-last-5min                  : 5
+dbms-bytes-all                   : 272061205
+dbms-bytes-last-5min             : 10455683
+db-proc-info                     :
+db-proc-took                     : 0
+db-proc-took-at                  :
+duration-all                     : 100430
+duration-all-dbms                : 24372
+duration-current                 : 0
+duration-current-dbms            : 0
+duration-last-5min               : 2349
+duration-last-5min-dbms          : 247
+memory-current                   : 0
+memory-last-5min                 : 2297385
+memory-total                     : 268360299
+read-current                     : 0
+read-last-5min                   : 204
+read-total                       : 112815764
+write-current                    : 0
+write-last-5min                  : 8789779
+write-total                      : 175335554
+duration-current-service         : 0
+duration-last-5min-service       : 32
+duration-all-service             : 1926
+current-service-name             :
+cpu-time-current                 : 0
+cpu-time-last-5min               : 31
+cpu-time-total                   : 59852
+data-separation                  : ''
+client-ip                        : 193.56.75.213, 193.56.75.213`
+}
+
+func testDatasession2() string {
+	return `session                          : f028ea3e-5402-4f15-8194-34cb70bca0c4
+session-id                       : 590
+infobase                         : 899bbbb8-7ffb-4e91-9b3b-8638793108ec
+connection                       : 00000000-0000-0000-0000-000000000000
+process                          : 00000000-0000-0000-0000-000000000000
+user-name                        : 9002013361_167
+host                             :
+app-id                           : 1CV8C
+locale                           : ru_RU
+started-at                       : 2025-03-03T14:17:30
+last-active-at                   : 2025-03-03T16:24:26
+hibernate                        : no
+passive-session-hibernate-time   : 1200
+hibernate-session-terminate-time : 86400
+blocked-by-dbms                  : 0
+blocked-by-ls                    : 0
+bytes-all                        : 3206468
+bytes-last-5min                  : 17111
+calls-all                        : 1221
+calls-last-5min                  : 5
+dbms-bytes-all                   : 272061205
+dbms-bytes-last-5min             : 10455683
+db-proc-info                     :
+db-proc-took                     : 0
+db-proc-took-at                  :
+duration-all                     : 100430
+duration-all-dbms                : 24372
+duration-current                 : 0
+duration current-dbms            : 10
+duration-last-5min               : 2349
+duration-last-5min-dbms          : 247
+memory-current                   : 10
+memory-last-5min                 : 2297385
+memory-total                     : 268360299
+read-current                     : 0
+read-last-5min                   : 204
+read-total                       : 112815764
+write-current                    : 0
+write-last-5min                  : 8789779
+write-total                      : 175335554
+duration-current-service         : 0
+duration-last-5min-service       : 32
+duration-all-service             : 1926
+current-service-name             :
+cpu-time-current                 : 0
+cpu-time-last-5min               : 31
+cpu-time-total                   : 59852
+data-separation                  : ''
+client-ip                        : 193.56.75.213, 193.56.75.213`
 }
 
 // go test -coverprofile="cover.out"
