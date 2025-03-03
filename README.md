@@ -23,6 +23,8 @@
 
 ![Пример дашборда](doc/img/browser_d8CBonI15Y.png "Обзор метрик")
 ![Производительность серверов](doc/img/browser_FCaSoFVBDe.png "Доступная производительность")
+![browser_V4ryXuTJoQ.png](doc/img/browser_V4ryXuTJoQ.png)
+![browser_Vw8kZr5zb8.png](doc/img/browser_Vw8kZr5zb8.png)
 
 ## 📦 Установка
 
