@@ -201,6 +201,7 @@ func Test_Exporter(t *testing.T) {
 		summaryMock.EXPECT().Reset().MaxTimes(2)
 
 		exp := new(ExporterSessionsMemory).Construct(settings)
+		exp.mx.Lock()
 		exp.summary = summaryMock
 		exp.clusterID = "123"
 		exp.buff = map[string]*sessionsData{
@@ -224,6 +225,7 @@ func Test_Exporter(t *testing.T) {
 				sessionid:           "1",
 			},
 		}
+		exp.mx.Unlock()
 
 		t.Run("pass", func(t *testing.T) {
 			observer.EXPECT().Observe(gomock.Any()).Do(func(v float64) {
