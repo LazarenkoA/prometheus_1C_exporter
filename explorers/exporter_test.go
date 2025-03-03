@@ -364,12 +364,11 @@ func Test_collectingMetrics(t *testing.T) {
 	exp := new(ExporterSessionsMemory).Construct(settings)
 	exp.mx.Lock()
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Millisecond)
-	exp.mx.Unlock()
-
 	exp.summary = summaryMock
 	exp.clusterID = "123"
 	exp.runner = run
 	exp.ctx, exp.cancel = context.WithCancel(context.Background())
+	exp.mx.Unlock()
 
 	run.EXPECT().Run(gomock.Any()).Return(testDatasession1(), nil)
 	run.EXPECT().Run(gomock.Any()).Return(testDatasession2(), nil)
