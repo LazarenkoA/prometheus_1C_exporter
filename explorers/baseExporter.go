@@ -126,6 +126,7 @@ func (exp *BaseExporter) run(cmd *exec.Cmd) (string, error) {
 }
 
 func (exp *BaseExporter) Stop() {
+	exp.logger.Info("метрика остановлена")
 	exp.cancel()
 }
 

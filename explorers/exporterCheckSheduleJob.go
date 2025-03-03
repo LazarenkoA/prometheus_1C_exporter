@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -23,7 +22,7 @@ type ExporterCheckSheduleJob struct {
 var (
 	baseList        []map[string]string
 	mx              sync.RWMutex
-	fillBaseListRun atomic.Bool
+	fillBaseListRun sync.Mutex
 )
 
 func (exp *ExporterCheckSheduleJob) Construct(s *settings.Settings) *ExporterCheckSheduleJob {
@@ -164,10 +163,10 @@ func (exp *ExporterCheckSheduleJob) findBaseName(ref string) string {
 }
 
 func (exp *ExporterCheckSheduleJob) fillBaseList() {
-	// fillBaseList вызывается из нескольких мест, но нам достаточно одной горутины, остальные пусть завершаются
-	if !fillBaseListRun.CompareAndSwap(false, true) {
-		return
-	}
+	// fillBaseList вызывается из нескольких мест, но нам достаточно одной горутины, остальные пусть встают в очередь
+	// если завершится текущий экспортер стартанет следующий
+	fillBaseListRun.Lock()
+	defer fillBaseListRun.Unlock()
 
 	// редко, но все же список баз может быть изменен поэтому делаем обновление периодическим, что бы не приходилось перезапускать экспортер
 	t := time.NewTicker(time.Hour)
@@ -185,6 +184,7 @@ func (exp *ExporterCheckSheduleJob) fillBaseList() {
 		select {
 		case <-t.C:
 		case <-exp.ctx.Done():
+			exp.logger.Debug("context is done")
 			return
 		}
 	}
