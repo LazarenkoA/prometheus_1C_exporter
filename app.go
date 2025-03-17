@@ -67,9 +67,11 @@ func (a *app) Start() error {
 	go a.reloadWatcher()
 
 	a.register()
-	if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
-	}
+	go func() {
+		if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.DefaultLogger.Error(err)
+		}
+	}()
 
 	return nil
 }
