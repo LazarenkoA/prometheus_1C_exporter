@@ -111,15 +111,15 @@ RAC-метрики    | Лицензии, соединения, сеансы   |
 
 Метрика            | Описание                                  | Тип данных
 -------------------|-------------------------------------------|-------------
-`available_performance`   |   Доступная производительность хоста       | HistogramVec
-`sessions_data`    |   Показатели сессий из кластера 1С     | HistogramVec
-`session`  |    Сессии 1С        | HistogramVec
-`connect`       |    Соединения 1С         | HistogramVec
-`client_lic`     |  Киентские лицензии 1С            | HistogramVec
+`available_performance`   |   Доступная производительность хоста       | SummaryVec
+`sessions_data`    |   Показатели сессий из кластера 1С     | SummaryVec
+`session`  |    Сессии 1С        | SummaryVec
+`connect`       |    Соединения 1С         | SummaryVec
+`client_lic`     |  Киентские лицензии 1С            | SummaryVec
 `shedule_job`     |  Состояние галки "блокировка регламентных заданий", если галка установлена значение будет 1 иначе 0 или метрика будет отсутствовать            | Gauge
-`cpu`     |  Метрики CPU общий процент загрузки процессора"             | HistogramVec
-`processes`     |Метрики CPU/памяти в разрезе процессов              | HistogramVec
-`disk`     |   Показатели дисков            | HistogramVec
+`cpu`     |  Метрики CPU общий процент загрузки процессора"             | SummaryVec
+`processes`     |Метрики CPU/памяти в разрезе процессов              | SummaryVec
+`disk`     |   Показатели дисков            | SummaryVec
 
 
 
