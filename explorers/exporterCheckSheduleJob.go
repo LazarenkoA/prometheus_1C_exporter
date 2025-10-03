@@ -2,13 +2,14 @@ package exporter
 
 import (
 	"fmt"
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/samber/lo"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/samber/lo"
 
 	"github.com/pkg/errors"
 
@@ -32,7 +33,7 @@ func (exp *ExporterCheckSheduleJob) Construct(s *settings.Settings) *ExporterChe
 	exp.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: exp.GetName(),
-			Help: "Состояние галки \"блокировка регламентных заданий\", если галка установлена значение будет 1 иначе 0 или метрика будет отсутствовать",
+			Help: "Состояние галки \"блокировка регламентных заданий\": если галка установлена - значение будет 1; иначе 0; или метрика будет отсутствовать",
 		},
 		[]string{"base"},
 	)
@@ -164,11 +165,11 @@ func (exp *ExporterCheckSheduleJob) findBaseName(ref string) string {
 
 func (exp *ExporterCheckSheduleJob) fillBaseList() {
 	// fillBaseList вызывается из нескольких мест, но нам достаточно одной горутины, остальные пусть встают в очередь
-	// если завершится текущий экспортер стартанет следующий
+	// если завершится текущий экспортер, то стартанет следующий
 	fillBaseListRun.Lock()
 	defer fillBaseListRun.Unlock()
 
-	// редко, но все же список баз может быть изменен поэтому делаем обновление периодическим, что бы не приходилось перезапускать экспортер
+	// редко, но все же список баз может быть изменен, поэтому делаем обновление периодическим, чтобы не приходилось перезапускать экспортер
 	t := time.NewTicker(time.Hour)
 	defer t.Stop()
 
@@ -176,7 +177,7 @@ func (exp *ExporterCheckSheduleJob) fillBaseList() {
 		exp.logger.Info("получаем список баз")
 		if err := exp.getListInfobase(); err != nil {
 			exp.logger.Error(errors.Wrap(err, "ошибка получения списка баз"))
-			t.Reset(time.Minute) // если была ошибка пробуем через минуту, если ошибка пропала вернем часовой интервал
+			t.Reset(time.Minute) // если была ошибка пробуем через минуту, если ошибка пропала, то вернем часовой интервал
 		} else {
 			t.Reset(time.Hour)
 		}

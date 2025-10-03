@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"net/http"
 	"os"
 	"os/exec"
@@ -14,6 +13,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -92,14 +93,14 @@ func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 		return "", fmt.Errorf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
 	}
 
-	// запускаем в горутине т.к. наблюдалось что при выполнении RAC может происходить зависон, нам нужен таймаут
+	// запускаем в горутине т.к. наблюдалось что при выполнении RAC может происходить завсание, поэтому нам нужен таймаут
 	go func() {
 		errch <- cmd.Wait()
 	}()
 
 	select {
 	case <-time.After(timeout): // timeout
-		// завершмем процесс
+		// завершаем процесс
 		cmd.Process.Kill()
 		return "", fmt.Errorf("выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
 	case err := <-errch:
@@ -238,7 +239,7 @@ func (exp *BaseRACExporter) GetClusterID() string {
 		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
 		if result, err := exp.runner.Run(cmdCommand); err != nil {
-			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытки получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен нет смысла проболжать работу пиложения
+			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
 		} else {
 			cluster = exp.formatResult(result)
 		}
@@ -276,7 +277,7 @@ func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 
 func (exp *Metrics) Contains(name string) bool {
 	if len(exp.Metrics) == 0 {
-		return true // Если не задали метрики через парамет, то используем все метрики
+		return true // Если не задали метрики через параметр, то используем все метрики
 	}
 
 	for _, item := range exp.Metrics {

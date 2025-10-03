@@ -2,11 +2,12 @@ package exporter
 
 import (
 	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/prometheus/client_golang/prometheus"
-	"os/exec"
-	"strings"
 )
 
 type ExporterClientLic struct {
@@ -20,7 +21,7 @@ func (exp *ExporterClientLic) Construct(s *settings.Settings) *ExporterClientLic
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       exp.GetName(),
-			Help:       "Киентские лицензии 1С",
+			Help:       "Клиентские лицензии 1С",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{"host", "licSRV"},
@@ -36,7 +37,7 @@ func (exp *ExporterClientLic) getValue() {
 	var group map[string]int
 
 	lic, _ := exp.getLic()
-	exp.logger.Debugf("количество лиц. %v", len(lic))
+	exp.logger.Debugf("количество лицензий %v", len(lic))
 
 	if len(lic) > 0 {
 		group = map[string]int{}
@@ -65,7 +66,7 @@ func (exp *ExporterClientLic) getLic() (licData []map[string]string, err error) 
 	licData = []map[string]string{}
 	var param []string
 
-	// если заполнен хост то порт может быть не заполнен, если не заполнен хост, а заполнен порт, так не будет работать, по этому условие с портом внутри
+	// если заполнен хост, то порт может быть не заполнен, если не заполнен хост, а заполнен порт, то так не будет работать, поэтому условие с портом внутри
 	if exp.settings.RAC_Host() != "" {
 		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
 	}

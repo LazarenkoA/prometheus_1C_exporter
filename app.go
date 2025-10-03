@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -13,6 +11,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/prometheus/client_golang/prometheus"
 
 	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
@@ -44,9 +45,9 @@ func (a *app) Init(_ svc.Environment) (err error) {
 	sJob := new(exp.ExporterCheckSheduleJob).Construct(a.settings)      // Проверка галки "блокировка регламентных заданий"
 	ses := new(exp.ExporterSessions).Construct(a.settings)              // Сеансы
 	conn := new(exp.ExporterConnects).Construct(a.settings)             // Соединения
-	currentMem := new(exp.ExporterSessionsMemory).Construct(a.settings) // текущая память сеанса
+	currentMem := new(exp.ExporterSessionsMemory).Construct(a.settings) // Текущая память сеанса
 	cpu := new(exp.CPU).Construct(a.settings)                           // CPU
-	proc := new(exp.Processes).Construct(a.settings)                    // данные CPU/память в разрезе процессов
+	proc := new(exp.Processes).Construct(a.settings)                    // Данные CPU/память в разрезе процессов
 	disk := new(exp.ExporterDisk).Construct(a.settings)                 // Диск
 
 	a.metric.AppendExporter(proc, cpu, disk, currentMem, lic, perf, sJob, ses, conn)

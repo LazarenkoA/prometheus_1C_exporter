@@ -2,12 +2,13 @@ package exporter
 
 import (
 	"fmt"
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/prometheus/client_golang/prometheus"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExporterAvailablePerformance struct {
@@ -66,7 +67,7 @@ func (exp *ExporterAvailablePerformance) getData() (result []map[string]interfac
 			tmp["available"] = perfomance
 		}
 
-		// среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из: значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
+		// среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
 		if avgcalltime, err := strconv.ParseFloat(item["avg-call-time"], 64); err == nil {
 			tmp["avgcalltime"] = avgcalltime
 		}
