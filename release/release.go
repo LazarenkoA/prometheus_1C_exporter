@@ -24,7 +24,7 @@ func run() (err error) {
 	lastversion := strings.Trim(string(b_lastversion), "\r\n")
 	splitted := strings.Split(lastversion, ".")
 	if len(splitted) < 3 {
-		fmt.Println("последняя версия не коррректного формата")
+		fmt.Println("последняя версия некорректного формата")
 		return
 	}
 	v, err := strconv.Atoi(splitted[len(splitted)-1])

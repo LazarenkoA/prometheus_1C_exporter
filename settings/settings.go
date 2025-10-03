@@ -65,7 +65,7 @@ func LoadSettings(filePath string) (*Settings, error) {
 
 	s := new(Settings)
 	if err := yaml.Unmarshal(file, s); err != nil {
-		return nil, fmt.Errorf("ошибка десириализации настроек: %v", err)
+		return nil, fmt.Errorf("ошибка десериализации настроек: %v", err)
 	}
 
 	s.mx = new(sync.RWMutex)
