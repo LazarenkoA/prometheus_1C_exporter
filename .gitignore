@@ -8,6 +8,7 @@
 .idea
 logs
 .vscode
+grafana_data
 
 # Test binary, built with `go test -c`
 *.test
