@@ -20,12 +20,19 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type SessionsCollectModes byte
+type TypeModeSessions string
 
 const (
-	SessionsHistogram SessionsCollectModes = iota
-	SessionsGauge
-	SessionsHistogramAndGauge
+	ModeSessionsHistogram         TypeModeSessions = "SessionsHistogram"
+	ModeSessionsGauge             TypeModeSessions = "SessionsGauge"
+	ModeSessionsHistogramAndGauge TypeModeSessions = "SessionsHistogramAndGauge"
+)
+
+type TypeHostLabelFrom string
+
+const (
+	HostLabelFromLocalMachine TypeHostLabelFrom = "HostLabelFromLocalMachine"
+	HostLabelFromRAS          TypeHostLabelFrom = "HostLabelFromRAS"
 )
 
 type Settings struct {
@@ -53,8 +60,13 @@ type Settings struct {
 	} `yaml:"RAC"`
 
 	CollectModes *struct {
-		Sessions SessionsCollectModes `yaml:"Sessions" default:"0"`
+		Sessions TypeModeSessions `yaml:"Sessions"`
 	} `yaml:"CollectModes"`
+
+	LabelModes *struct {
+		MetricNamePrefix string `yaml:"MetricNamePrefix"`
+		UseHostFromRAS   bool   `yaml:"UseHostFromRAS"`
+	} `yaml:"LabelModes"`
 
 	mx *sync.RWMutex `yaml:"-"`
 	// login, pass string        `yaml:"-"`
@@ -144,11 +156,26 @@ func (s *Settings) RAC_Pass() string {
 	return ""
 }
 
-func (s *Settings) GetSessionsCollectMode() SessionsCollectModes {
+func (s *Settings) GetSessionsCollectMode() TypeModeSessions {
 	if s.CollectModes != nil {
 		return s.CollectModes.Sessions
 	}
-	return SessionsHistogram
+	return ModeSessionsHistogram
+}
+
+func (s *Settings) GetMetricNamePrefix() string {
+	if s.LabelModes != nil {
+		return s.LabelModes.MetricNamePrefix
+	}
+	return ""
+}
+
+// Достаточно непонятный метод, но пока так. Чтобы не увеличивать связность между объектами.
+func (s *Settings) GetHostLabelValue(defaultHostName string) string {
+	if s.LabelModes != nil && s.LabelModes.UseHostFromRAS {
+		return s.RAC_Host() + ":" + s.RAC_Port()
+	}
+	return defaultHostName
 }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {

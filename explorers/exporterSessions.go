@@ -28,33 +28,35 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
-	if s.GetSessionsCollectMode() != settings.SessionsGauge {
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
+	labelHost := s.GetHostLabelValue(exp.host)
+
+	if s.GetSessionsCollectMode() != settings.ModeSessionsGauge {
 		exp.summary = prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
-				Name:       exp.GetName(),
-				Help:       "Сессии 1С",
-				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+				Name:        labelName,
+				Help:        "Сессии 1С",
+				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+				ConstLabels: prometheus.Labels{"host": labelHost},
 			},
-			[]string{"host", "base"},
+			[]string{"base"},
 		)
 	}
 
-	if s.GetSessionsCollectMode() != settings.SessionsHistogram {
+	if s.GetSessionsCollectMode() != settings.ModeSessionsHistogram {
 		exp.gauge = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name: exp.GetName() + "_gauge",
-				Help: "Сессии 1С (Gauge)",
+				Name:        labelName + "_gauge",
+				Help:        "Сессии 1С (Gauge)",
+				ConstLabels: prometheus.Labels{"host": labelHost},
 			},
-			[]string{"host", "base", "app-id"},
+			[]string{"base", "app-id"},
 		)
 	}
 
 	exp.settings = s
 	exp.ExporterCheckSheduleJob.settings = s
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*5)
-	// Хост нужно взять из настроек RAC/RAC. Ведь экспортер, теор, может быть запущен вообще на другом сервере/ПК.
-	// И на хосте может быть несколько серверов приложений. Поэтому необходимо передать и порт.
-	exp.host = s.RAC_Host() + ":" + s.RAC.Port
 
 	go exp.fillBaseList()
 	return exp
@@ -62,8 +64,8 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 
 func (exp *ExporterSessions) getValue() {
 
-	var groupedData map[string]labelValuesMap
-	var labelValues labelValuesMap
+	var groupByAppID map[string]labelValuesMap
+	var appIdValues labelValuesMap
 	var groupByDB labelValuesMap
 	var infobaseName string
 
@@ -75,39 +77,37 @@ func (exp *ExporterSessions) getValue() {
 		return
 	}
 
-	groupedData = make(map[string]labelValuesMap)
-
-	for _, item := range ses {
-		infobaseName = exp.findBaseName(item["infobase"])
-		labelValues = groupedData[infobaseName]
-		if labelValues == nil {
-			groupedData[infobaseName] = make(labelValuesMap)
-		}
-		groupedData[infobaseName][item["app-id"]]++
-	}
-
 	if exp.summary != nil {
 
-		groupByDB = labelValuesMap{}
-		for infobaseName, labelValues := range groupedData {
-			for _, v := range labelValues {
-				groupByDB[infobaseName] += v
-			}
+		groupByDB = map[string]int{}
+		for _, item := range ses {
+			groupByDB[exp.findBaseName(item["infobase"])]++
 		}
 
 		exp.summary.Reset()
 
 		// с разбивкой по БД
 		for infobaseName, v := range groupByDB {
-			exp.summary.WithLabelValues(exp.host, infobaseName).Observe(float64(v))
+			exp.summary.WithLabelValues(infobaseName).Observe(float64(v))
 		}
 	}
 
 	if exp.gauge != nil {
+
+		groupByAppID = make(map[string]labelValuesMap)
+		for _, item := range ses {
+			infobaseName = exp.findBaseName(item["infobase"])
+			appIdValues = groupByAppID[infobaseName]
+			if appIdValues == nil {
+				groupByAppID[infobaseName] = make(labelValuesMap)
+			}
+			groupByAppID[infobaseName][item["app-id"]]++
+		}
+
 		exp.gauge.Reset()
-		for infobaseName, labelValues := range groupedData {
+		for infobaseName, labelValues := range groupByAppID {
 			for appid, v := range labelValues {
-				exp.gauge.WithLabelValues(exp.host, infobaseName, appid).Set(float64(v))
+				exp.gauge.WithLabelValues(infobaseName, appid).Set(float64(v))
 			}
 		}
 	}
@@ -118,14 +118,9 @@ func (exp *ExporterSessions) getSessions() (sesData []map[string]string, err err
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
 
-	// Из кеша будем брать, если используются гистограммы (в основном, это для сохранения поведения).
-	// Но! Если по настройкам требуется Gauge, то будем собирать "вживую".
-	// И, честно говоря, непонятно, работает ли вообще кеш.
-	if exp.gauge == nil {
-		if v, ok := exp.cache.Get("result"); ok {
-			exp.logger.Debug("данные получены из кеша")
-			return v, nil
-		}
+	if v, ok := exp.cache.Get("result"); ok {
+		exp.logger.Debug("данные получены из кеша")
+		return v, nil
 	}
 
 	var param []string
