@@ -20,12 +20,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type TypeModeSessions string
+type TypeMetricKind string
 
 const (
-	ModeSessionsHistogram         TypeModeSessions = "SessionsHistogram"
-	ModeSessionsGauge             TypeModeSessions = "SessionsGauge"
-	ModeSessionsHistogramAndGauge TypeModeSessions = "SessionsHistogramAndGauge"
+	KindSummary         TypeMetricKind = "Summary"
+	KindGauge           TypeMetricKind = "Gauge"
+	KindNativeHistogram TypeMetricKind = "NativeHistogram"
 )
 
 type TypeHostLabelFrom string
@@ -59,9 +59,10 @@ type Settings struct {
 		Pass  string `yaml:"Pass"`
 	} `yaml:"RAC"`
 
-	CollectModes *struct {
-		Sessions TypeModeSessions `yaml:"Sessions"`
-	} `yaml:"CollectModes"`
+	MetricKinds *struct {
+		Session      []TypeMetricKind `yaml:"Session"`
+		SessionsData []TypeMetricKind `yaml:"SessionsData"`
+	} `yaml:"MetricKinds"`
 
 	LabelModes *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
@@ -102,7 +103,21 @@ func LoadSettings(filePath string) (*Settings, error) {
 
 	s.SettingsPath = filePath
 
+	s.validateMetricKinds()
+
 	return s, nil
+}
+
+func (s *Settings) validateMetricKinds() {
+
+	if s.MetricKinds.Session == nil {
+		s.MetricKinds.Session = append(s.MetricKinds.Session, KindSummary)
+	}
+
+	if s.MetricKinds.SessionsData == nil {
+		s.MetricKinds.SessionsData = append(s.MetricKinds.SessionsData, KindSummary)
+	}
+
 }
 
 func (s *Settings) GetLogPass(ibname string) (login, pass string) {
@@ -153,13 +168,6 @@ func (s *Settings) RAC_Pass() string {
 		return s.RAC.Pass
 	}
 	return ""
-}
-
-func (s *Settings) GetSessionsCollectMode() TypeModeSessions {
-	if s.CollectModes != nil {
-		return s.CollectModes.Sessions
-	}
-	return ModeSessionsHistogram
 }
 
 func (s *Settings) GetMetricNamePrefix() string {

@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -30,7 +31,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
 
-	if s.GetSessionsCollectMode() != settings.ModeSessionsGauge {
+	if slices.Contains(s.MetricKinds.Session, settings.KindSummary) {
 		exp.summary = prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
 				Name:        labelName,
@@ -42,7 +43,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 		)
 	}
 
-	if s.GetSessionsCollectMode() != settings.ModeSessionsHistogram {
+	if slices.Contains(s.MetricKinds.Session, settings.KindGauge) {
 		exp.gauge = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        labelName + "_gauge",
