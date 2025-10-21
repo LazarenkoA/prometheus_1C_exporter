@@ -1,10 +1,11 @@
 package exporter
 
 import (
+	"time"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/pkg/errors"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -24,9 +25,10 @@ func (exp *CPU) Construct(s *settings.Settings) *CPU {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       exp.GetName(),
+			Name:       labelName,
 			Help:       "Метрики CPU общий процент загрузки процессора",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},

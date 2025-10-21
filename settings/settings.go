@@ -65,7 +65,6 @@ type Settings struct {
 
 	LabelModes *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
-		UseHostFromRAS   bool   `yaml:"UseHostFromRAS"`
 	} `yaml:"LabelModes"`
 
 	mx *sync.RWMutex `yaml:"-"`
@@ -170,12 +169,15 @@ func (s *Settings) GetMetricNamePrefix() string {
 	return ""
 }
 
-// Достаточно непонятный метод, но пока так. Чтобы не увеличивать связность между объектами.
-func (s *Settings) GetHostLabelValue(defaultHostName string) string {
-	if s.LabelModes != nil && s.LabelModes.UseHostFromRAS {
-		return s.RAC_Host() + ":" + s.RAC_Port()
+func (s *Settings) GetRASHostPort() string {
+
+	rasHostPort := s.RAC_Host() + ":"
+	rasPort := s.RAC_Port()
+	if rasPort == "" {
+		rasPort = "1545"
 	}
-	return defaultHostName
+	rasHostPort += rasPort
+	return rasHostPort
 }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {

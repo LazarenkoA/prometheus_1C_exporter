@@ -23,9 +23,10 @@ func (exp *ExporterDisk) Construct(s *settings.Settings) *ExporterDisk {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       exp.GetName(),
+			Name:       labelName,
 			Help:       "Показатели дисков",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},

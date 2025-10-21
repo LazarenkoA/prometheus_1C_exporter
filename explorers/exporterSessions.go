@@ -29,7 +29,6 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 	exp.logger.Info("Создание объекта")
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
-	labelHost := s.GetHostLabelValue(exp.host)
 
 	if s.GetSessionsCollectMode() != settings.ModeSessionsGauge {
 		exp.summary = prometheus.NewSummaryVec(
@@ -37,7 +36,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 				Name:        labelName,
 				Help:        "Сессии 1С",
 				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-				ConstLabels: prometheus.Labels{"host": labelHost},
+				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
 			},
 			[]string{"base"},
 		)
@@ -48,7 +47,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 			prometheus.GaugeOpts{
 				Name:        labelName + "_gauge",
 				Help:        "Сессии 1С (Gauge)",
-				ConstLabels: prometheus.Labels{"host": labelHost},
+				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
 			},
 			[]string{"base", "app-id"},
 		)
