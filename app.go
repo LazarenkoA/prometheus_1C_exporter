@@ -152,4 +152,7 @@ func (a *app) register() {
 			logger.DefaultLogger.Debugf("Метрика %q пропущена", ex.GetName())
 		}
 	}
+	if a.settings.GetDisableGoCollector() {
+		prometheus.Unregister(prometheus.NewGoCollector())
+	}
 }
