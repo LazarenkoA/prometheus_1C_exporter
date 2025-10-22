@@ -118,10 +118,6 @@ func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) 
 
 func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
 	login, pass := exp.settings.GetLogPass(basename)
-	if login == "" {
-		CForce <- struct{}{} // принудительно запрашиваем данные из REST
-		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
-	}
 
 	var param []string
 	if exp.settings.RAC_Host() != "" {
@@ -134,8 +130,12 @@ func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
-	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
-	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
+	if login != "" {
+		param = append(param, fmt.Sprintf("--infobase-user=%v", login))
+	}
+	if pass != "" {
+		param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
+	}
 
 	exp.logger.With("param", param).Debugf("Получаем информацию для базы %q", basename)
 	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {

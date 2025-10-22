@@ -60,11 +60,10 @@ func (a *app) Start() error {
 	logger.DefaultLogger.Info("Запущен сбор метрик: ", strings.Join(a.metric.Metrics, ","))
 	fmt.Println("port :", a.port)
 
-	if a.metric.Contains("shedule_job") && (a.settings.DBCredentials == nil || a.settings.DBCredentials.URL == "") {
-		return errors.New("для метрики \"shedule_job\" обязательно должен быть заполнен параметр DBCredentials")
+	if a.metric.Contains("shedule_job") && a.settings.DBCredentials != nil && a.settings.DBCredentials.URL != "" {
+		go a.settings.GetDBCredentials(a.ctx, exp.CForce)
 	}
 
-	go a.settings.GetDBCredentials(a.ctx, exp.CForce)
 	go a.reloadWatcher()
 
 	a.register()
