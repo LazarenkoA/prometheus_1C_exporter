@@ -1,12 +1,13 @@
 package exporter
 
 import (
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -42,11 +43,13 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       exp.GetName(),
-			Help:       "Показатели сессий из кластера 1С",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			Name:        labelName,
+			Help:        "Показатели сессий из кластера 1С",
+			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
 		},
 		[]string{"host", "base", "user", "id", "datatype", "appid"},
 	)

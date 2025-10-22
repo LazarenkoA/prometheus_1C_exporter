@@ -2,11 +2,12 @@ package exporter
 
 import (
 	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"os/exec"
-	"strings"
 )
 
 type ExporterConnects struct {
@@ -17,11 +18,13 @@ func (exp *ExporterConnects) Construct(s *settings.Settings) *ExporterConnects {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
 	exp.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       exp.GetName(),
-			Help:       "Соединения 1С",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			Name:        labelName,
+			Help:        "Соединения 1С",
+			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
 		},
 		[]string{"host", "base"},
 	)

@@ -2,14 +2,16 @@ package exporter
 
 import (
 	"fmt"
+	"os/exec"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/pkg/errors"
-	"os/exec"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -21,18 +23,36 @@ type ExporterSessions struct {
 	cache *expirable.LRU[string, []map[string]string]
 }
 
+type labelValuesMap map[string]int
+
 func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
-	exp.summary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       exp.GetName(),
-			Help:       "Сессии 1С",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{"host", "base"},
-	)
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
+
+	if slices.Contains(s.MetricKinds.Session, settings.KindSummary) {
+		exp.summary = prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Name:        labelName,
+				Help:        "Сессии 1С",
+				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
+			},
+			[]string{"base"},
+		)
+	}
+
+	if slices.Contains(s.MetricKinds.Session, settings.KindGauge) {
+		exp.gauge = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name:        labelName + "_gauge",
+				Help:        "Сессии 1С (Gauge)",
+				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
+			},
+			[]string{"base", "app-id"},
+		)
+	}
 
 	exp.settings = s
 	exp.ExporterCheckSheduleJob.settings = s
@@ -45,24 +65,44 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 func (exp *ExporterSessions) getValue() {
 	exp.logger.Info("получение данных экспортера")
 
-	var groupByDB map[string]int
-
 	ses, err := exp.getSessions()
 	if err != nil {
 		exp.logger.Error(errors.Wrap(err, "getSessions error"))
 		return
 	}
 
-	groupByDB = map[string]int{}
-	for _, item := range ses {
-		groupByDB[exp.findBaseName(item["infobase"])]++
+	if exp.summary != nil {
+		groupByDB := map[string]int{}
+		for _, item := range ses {
+			groupByDB[exp.findBaseName(item["infobase"])]++
+		}
+
+		exp.summary.Reset()
+
+		// с разбивкой по БД
+		for infobaseName, v := range groupByDB {
+			exp.summary.WithLabelValues(infobaseName).Observe(float64(v))
+		}
 	}
 
-	exp.summary.Reset()
+	if exp.gauge != nil {
 
-	// с разбивкой по БД
-	for k, v := range groupByDB {
-		exp.summary.WithLabelValues(exp.host, k).Observe(float64(v))
+		groupByAppID := make(map[string]labelValuesMap)
+		for _, item := range ses {
+			infobaseName := exp.findBaseName(item["infobase"])
+			appIdValues := groupByAppID[infobaseName]
+			if appIdValues == nil {
+				groupByAppID[infobaseName] = make(labelValuesMap)
+			}
+			groupByAppID[infobaseName][item["app-id"]]++
+		}
+
+		exp.gauge.Reset()
+		for infobaseName, labelValues := range groupByAppID {
+			for appid, v := range labelValues {
+				exp.gauge.WithLabelValues(infobaseName, appid).Set(float64(v))
+			}
+		}
 	}
 
 }
@@ -104,7 +144,12 @@ func (exp *ExporterSessions) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	exp.getValue()
-	exp.summary.Collect(ch)
+	if exp.summary != nil {
+		exp.summary.Collect(ch)
+	}
+	if exp.gauge != nil {
+		exp.gauge.Collect(ch)
+	}
 }
 
 func (exp *ExporterSessions) GetName() string {

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,11 +12,24 @@ import (
 	"sync"
 	"time"
 
+	"io"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/creasty/defaults"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
+
+type TypeMetricKind string
+
+const (
+	KindUndefined                      = ""
+	KindSummary         TypeMetricKind = "Summary"
+	KindGauge           TypeMetricKind = "Gauge"
+	KindNativeHistogram TypeMetricKind = "NativeHistogram"
+)
+
+type TypeHostLabelFrom string
 
 type Settings struct {
 	LogDir       string `yaml:"LogDir"`
@@ -27,12 +39,14 @@ type Settings struct {
 		Property map[string]interface{} `yaml:"Property"`
 		Name     string                 `yaml:"Name"`
 	} `yaml:"Exporters"`
+
 	DBCredentials *struct {
 		URL           string `yaml:"URL" json:"URL,omitempty"`
 		User          string `yaml:"User" json:"user,omitempty"`
 		Password      string `yaml:"Password" json:"password,omitempty"`
 		TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 	} `yaml:"DBCredentials"`
+
 	RAC *struct {
 		Path  string `yaml:"Path"`
 		Port  string `yaml:"Port"`
@@ -40,6 +54,15 @@ type Settings struct {
 		Login string `yaml:"Login"`
 		Pass  string `yaml:"Pass"`
 	} `yaml:"RAC"`
+
+	MetricKinds *struct {
+		Session      []TypeMetricKind `yaml:"Session" default:"[\"Summary\"]"`
+		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]" `
+	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
+
+	LabelModes *struct {
+		MetricNamePrefix string `yaml:"MetricNamePrefix"`
+	} `yaml:"LabelModes"`
 
 	mx *sync.RWMutex `yaml:"-"`
 	// login, pass string        `yaml:"-"`
@@ -49,9 +72,9 @@ type Settings struct {
 }
 
 type Bases struct {
-	Name     string `json:"Name"`
-	UserName string `json:"UserName"`
-	UserPass string `json:"UserPass"`
+	Name     string `json:"Name,omitempty"`
+	UserName string `json:"UserName,omitempty"`
+	UserPass string `json:"UserPass,omitempty"`
 }
 
 func LoadSettings(filePath string) (*Settings, error) {
@@ -75,7 +98,6 @@ func LoadSettings(filePath string) (*Settings, error) {
 	}
 
 	s.SettingsPath = filePath
-
 	return s, nil
 }
 
@@ -127,6 +149,24 @@ func (s *Settings) RAC_Pass() string {
 		return s.RAC.Pass
 	}
 	return ""
+}
+
+func (s *Settings) GetMetricNamePrefix() string {
+	if s.LabelModes != nil {
+		return s.LabelModes.MetricNamePrefix
+	}
+	return ""
+}
+
+func (s *Settings) GetRASHostPort() string {
+
+	rasHostPort := s.RAC_Host() + ":"
+	rasPort := s.RAC_Port()
+	if rasPort == "" {
+		rasPort = "1545"
+	}
+	rasHostPort += rasPort
+	return rasHostPort
 }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
@@ -206,7 +246,7 @@ func request(url, log, pass string, tlsConf *tls.Config) ([]byte, error) {
 			return nil, fmt.Errorf("REST вернул код возврата %d", resp.StatusCode)
 		}
 
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		return body, nil
 	}

@@ -1,12 +1,13 @@
 package exporter
 
 import (
+	"strconv"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/shirou/gopsutil/process"
-	"strconv"
 )
 
 //go:generate mockgen -source=$GOFILE -package=mock_models -destination=./mock/mockProcesses.go
@@ -24,9 +25,10 @@ func (cpu *Processes) Construct(s *settings.Settings) *Processes {
 	cpu.BaseExporter = newBase(cpu.GetName())
 	cpu.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + cpu.GetName()
 	cpu.summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name:       cpu.GetName(),
+			Name:       labelName,
 			Help:       "Метрики CPU/памяти в разрезе процессов",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},

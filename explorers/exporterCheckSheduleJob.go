@@ -30,10 +30,12 @@ func (exp *ExporterCheckSheduleJob) Construct(s *settings.Settings) *ExporterChe
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
 	exp.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: exp.GetName(),
-			Help: "Состояние галки \"блокировка регламентных заданий\": если галка установлена - значение будет 1; иначе 0; или метрика будет отсутствовать",
+			Name:        labelName,
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+			Help:        "Состояние галки \"блокировка регламентных заданий\": если галка установлена - значение будет 1; иначе 0; или метрика будет отсутствовать",
 		},
 		[]string{"base"},
 	)
