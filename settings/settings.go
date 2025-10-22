@@ -110,6 +110,13 @@ func LoadSettings(filePath string) (*Settings, error) {
 
 func (s *Settings) validateMetricKinds() {
 
+	if s.MetricKinds == nil {
+		s.MetricKinds = &struct {
+			Session      []TypeMetricKind "yaml:\"Session\""
+			SessionsData []TypeMetricKind "yaml:\"SessionsData\""
+		}{}
+	}
+
 	if s.MetricKinds.Session == nil {
 		s.MetricKinds.Session = append(s.MetricKinds.Session, KindSummary)
 	}
