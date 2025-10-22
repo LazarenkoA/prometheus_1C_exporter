@@ -23,17 +23,13 @@ import (
 type TypeMetricKind string
 
 const (
+	KindUndefined                      = ""
 	KindSummary         TypeMetricKind = "Summary"
 	KindGauge           TypeMetricKind = "Gauge"
 	KindNativeHistogram TypeMetricKind = "NativeHistogram"
 )
 
 type TypeHostLabelFrom string
-
-const (
-	HostLabelFromLocalMachine TypeHostLabelFrom = "HostLabelFromLocalMachine"
-	HostLabelFromRAS          TypeHostLabelFrom = "HostLabelFromRAS"
-)
 
 type Settings struct {
 	LogDir       string `yaml:"LogDir"`
@@ -60,9 +56,9 @@ type Settings struct {
 	} `yaml:"RAC"`
 
 	MetricKinds *struct {
-		Session      []TypeMetricKind `yaml:"Session"`
-		SessionsData []TypeMetricKind `yaml:"SessionsData"`
-	} `yaml:"MetricKinds"`
+		Session      []TypeMetricKind `yaml:"Session" default:"[\"Summary\"]"`
+		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]" `
+	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
 
 	LabelModes *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
@@ -102,29 +98,7 @@ func LoadSettings(filePath string) (*Settings, error) {
 	}
 
 	s.SettingsPath = filePath
-
-	s.validateMetricKinds()
-
 	return s, nil
-}
-
-func (s *Settings) validateMetricKinds() {
-
-	if s.MetricKinds == nil {
-		s.MetricKinds = &struct {
-			Session      []TypeMetricKind "yaml:\"Session\""
-			SessionsData []TypeMetricKind "yaml:\"SessionsData\""
-		}{}
-	}
-
-	if s.MetricKinds.Session == nil {
-		s.MetricKinds.Session = append(s.MetricKinds.Session, KindSummary)
-	}
-
-	if s.MetricKinds.SessionsData == nil {
-		s.MetricKinds.SessionsData = append(s.MetricKinds.SessionsData, KindSummary)
-	}
-
 }
 
 func (s *Settings) GetLogPass(ibname string) (login, pass string) {

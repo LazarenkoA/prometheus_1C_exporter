@@ -63,12 +63,6 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 }
 
 func (exp *ExporterSessions) getValue() {
-
-	var groupByAppID map[string]labelValuesMap
-	var appIdValues labelValuesMap
-	var groupByDB labelValuesMap
-	var infobaseName string
-
 	exp.logger.Info("получение данных экспортера")
 
 	ses, err := exp.getSessions()
@@ -78,8 +72,7 @@ func (exp *ExporterSessions) getValue() {
 	}
 
 	if exp.summary != nil {
-
-		groupByDB = map[string]int{}
+		groupByDB := map[string]int{}
 		for _, item := range ses {
 			groupByDB[exp.findBaseName(item["infobase"])]++
 		}
@@ -94,10 +87,10 @@ func (exp *ExporterSessions) getValue() {
 
 	if exp.gauge != nil {
 
-		groupByAppID = make(map[string]labelValuesMap)
+		groupByAppID := make(map[string]labelValuesMap)
 		for _, item := range ses {
-			infobaseName = exp.findBaseName(item["infobase"])
-			appIdValues = groupByAppID[infobaseName]
+			infobaseName := exp.findBaseName(item["infobase"])
+			appIdValues := groupByAppID[infobaseName]
 			if appIdValues == nil {
 				groupByAppID[infobaseName] = make(labelValuesMap)
 			}
