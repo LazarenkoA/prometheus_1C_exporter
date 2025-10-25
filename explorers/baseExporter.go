@@ -45,17 +45,16 @@ type cmdRunner struct {
 
 // базовый класс для всех метрик
 type BaseExporter struct {
-	mx        sync.RWMutex
-	summary   IPrometheusMetric //*prometheus.SummaryVec
-	summaries map[string]IPrometheusMetricExt
-	gauge     *prometheus.GaugeVec
-	settings  *settings.Settings
-	ctx       context.Context
-	cancel    context.CancelFunc
-	isLocked  atomic.Bool
-	logger    *zap.SugaredLogger
-	host      string
-	runner    IRunner
+	mx       sync.RWMutex
+	summary  IPrometheusMetric //*prometheus.SummaryVec
+	gauge    *prometheus.GaugeVec
+	settings *settings.Settings
+	ctx      context.Context
+	cancel   context.CancelFunc
+	isLocked atomic.Bool
+	logger   *zap.SugaredLogger
+	host     string
+	runner   IRunner
 }
 
 // базовый класс для всех метрик собираемых через RAC
@@ -269,7 +268,7 @@ func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
 
 func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 	exp.Metrics = []string{}
-	for k, _ := range set.GetExporters() {
+	for k := range set.GetExporters() {
 		exp.Metrics = append(exp.Metrics, k)
 	}
 

@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -41,23 +42,64 @@ type ExporterSessionsMemory struct {
 	ExporterSessions
 
 	// buff map[string]*sessionsData
-	buff map[string]*sessionsDataExt
+	buff       map[string]*sessionsDataExt
+	meterDescr map[string]string
+	histograms map[string]*prometheus.HistogramVec
 }
 
 func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
+	exp.meterDescr = map[string]string{
+		"memorytotal":         "Память (всего)",
+		"memorycurrent":       "Память (текущая)",
+		"readcurrent":         "Чтение (текущее)",
+		"readtotal":           "Чтение (всего)",
+		"writecurrent":        "Запись (текущая)",
+		"writetotal":          "Запись (всего)",
+		"durationcurrent":     "",
+		"durationcurrentdbms": "",
+		"durationall":         "",
+		"durationalldbms":     "",
+		"cputimecurrent":      "",
+		"cputimetotal":        "",
+		"dbmsbytesall":        "",
+		"callsall":            "Количество вызово (всего)",
+	}
+
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
-	exp.summary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:        labelName,
-			Help:        "Показатели сессий из кластера 1С",
-			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
-		},
-		[]string{"base", "user", "id", "datatype", "appid"},
-	)
+
+	if exp.usedSummary(s) {
+		exp.summary = prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Name:        labelName,
+				Help:        "Показатели сессий из кластера 1С",
+				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
+			},
+			[]string{"base", "user", "id", "datatype", "appid"},
+		)
+	}
+
+	if exp.usedHistogram(s) {
+
+		exp.histograms = map[string]*prometheus.HistogramVec{}
+		for nm, descr := range exp.meterDescr {
+
+			exp.histograms[nm] = prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{
+					Name:                            labelName + "_" + nm,
+					Help:                            "Гистограммы показателя сессий кластера 1С: " + descr,
+					ConstLabels:                     prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
+					NativeHistogramBucketFactor:     1.1,
+					NativeHistogramMaxBucketNumber:  20,
+					NativeHistogramMinResetDuration: 1 * time.Hour,
+				},
+				[]string{"base", "appid"},
+			)
+		}
+	}
 
 	exp.buff = map[string]*sessionsDataExt{}
 	exp.settings = s
@@ -104,28 +146,54 @@ func (exp *ExporterSessionsMemory) getValue() {
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
 
-	exp.summary.Reset()
+	if exp.usedSummary(nil) {
+		exp.summary.Reset()
+	}
+	if exp.usedHistogram(nil) {
+		for _, h := range exp.histograms {
+			h.Reset()
+		}
+	}
 	for k, v := range exp.buff {
 
-		with = v.GetWithAll()
-		with["id"] = k
-
-		for n, m := range v.metersData {
-			with["datatype"] = n
-			exp.summary.With(with).Observe(float64(m))
+		if exp.usedSummary(nil) {
+			with = v.GetWithAll()
+			with["id"] = k
+			for n, m := range v.metersData {
+				with["datatype"] = n
+				exp.summary.With(with).Observe(float64(m))
+			}
 		}
 
+		if exp.usedHistogram(nil) {
+			for n, m := range v.metersData {
+				hist := exp.histograms[n]
+				with = v.GetWith("base", "appid")
+				hist.With(with).Observe(float64(m))
+			}
+		}
 		delete(exp.buff, k)
 	}
 }
 
 func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
+
 	if exp.isLocked.Load() {
 		return
 	}
 
 	exp.getValue()
-	exp.summary.Collect(ch)
+
+	if exp.usedSummary(nil) {
+		exp.summary.Collect(ch)
+	}
+
+	if exp.usedHistogram(nil) {
+		for _, h := range exp.histograms {
+			h.Collect(ch)
+		}
+	}
+
 }
 
 func (exp *ExporterSessionsMemory) GetName() string {
@@ -167,7 +235,7 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 		data.metersData["durationcurrentdbms"] = atoi(item["duration current-dbms"])
 	}
 	data.metersData["durationall"] = atoi(item["duration-all"])
-	data.metersData["urationalldbms"] = atoi(item["duration-all-dbms"])
+	data.metersData["durationalldbms"] = atoi(item["duration-all-dbms"])
 	data.metersData["cputimecurrent"] = atoi(item["cpu-time-current"])
 	data.metersData["cputimetotal"] = atoi(item["cpu-time-total"])
 	data.metersData["dbmsbytesall"] = atoi(item["dbms-bytes-all"])
@@ -187,6 +255,22 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 
 	return v
 
+}
+
+func (exp *ExporterSessionsMemory) usedSummary(s *settings.Settings) bool {
+	sett := s
+	if sett == nil {
+		sett = exp.settings
+	}
+	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindSummary)
+}
+
+func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
+	sett := s
+	if sett == nil {
+		sett = exp.settings
+	}
+	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindNativeHistogram)
 }
 
 func (from *sessionsDataExt) ApplyTo(to *sessionsDataExt) {
@@ -217,7 +301,7 @@ func (from *sessionsDataExt) ApplyTo(to *sessionsDataExt) {
 
 func (data *sessionsDataExt) GetWithAll() prometheus.Labels {
 	names := []string{}
-	for k, _ := range data.labelsData {
+	for k := range data.labelsData {
 		names = append(names, k)
 	}
 	return data.GetWith(names...)
