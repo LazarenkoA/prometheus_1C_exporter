@@ -9,5 +9,12 @@ type IPrometheusMetric interface {
 	prometheus.Collector
 
 	WithLabelValues(lvs ...string) prometheus.Observer
+	With(labels prometheus.Labels) prometheus.Observer
 	Reset()
+}
+
+type IPrometheusMetricExt interface {
+	prometheus.Observer
+	prometheus.ObserverVec
+	prometheus.ExemplarObserver
 }
