@@ -12,27 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type sessionsData struct {
-	basename            string
-	appid               string
-	user                string
-	memorytotal         int64
-	memorycurrent       int64
-	readcurrent         int64
-	readtotal           int64
-	writecurrent        int64
-	writetotal          int64
-	durationcurrent     int64
-	durationcurrentdbms int64
-	durationall         int64
-	durationalldbms     int64
-	cputimecurrent      int64
-	cputimetotal        int64
-	dbmsbytesall        int64
-	callsall            int64
-	sessionid           string
-}
-
 type sessionsDataExt struct {
 	labelsData map[string]string
 	metersData map[string]int64
@@ -42,9 +21,10 @@ type ExporterSessionsMemory struct {
 	ExporterSessions
 
 	// buff map[string]*sessionsData
-	buff       map[string]*sessionsDataExt
-	meterDescr map[string]string
-	histograms map[string]*prometheus.HistogramVec
+	buff            map[string]*sessionsDataExt
+	meterDescr      map[string]string
+	histograms      map[string]*prometheus.HistogramVec
+	countsExemplars map[string]map[string]int
 }
 
 func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
@@ -86,7 +66,6 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 
 		exp.histograms = map[string]*prometheus.HistogramVec{}
 		for nm, descr := range exp.meterDescr {
-
 			exp.histograms[nm] = prometheus.NewHistogramVec(
 				prometheus.HistogramOpts{
 					Name:                            labelName + "_" + nm,
@@ -150,6 +129,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 		exp.summary.Reset()
 	}
 	if exp.usedHistogram(nil) {
+		exp.countsExemplars = make(map[string]map[string]int)
 		for _, h := range exp.histograms {
 			h.Reset()
 		}
@@ -166,11 +146,25 @@ func (exp *ExporterSessionsMemory) getValue() {
 		}
 
 		if exp.usedHistogram(nil) {
+			cntExml := exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]]
+			withLabel := v.GetWith("base", "appid")
+			withExeplar := v.GetWith("id", "user")
 			for n, m := range v.metersData {
 				hist := exp.histograms[n]
-				with = v.GetWith("base", "appid")
-				hist.With(with).Observe(float64(m))
+				if cntExml == 0 {
+					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExeplar)
+				} else {
+					hist.With(withLabel).Observe(float64(m))
+				}
 			}
+			if exp.countsExemplars[v.labelsData["base"]] == nil {
+				exp.countsExemplars[v.labelsData["base"]] = map[string]int{}
+			}
+			cntExml++
+			if cntExml >= 10 {
+				cntExml = 0
+			}
+			exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]] = cntExml
 		}
 		delete(exp.buff, k)
 	}
@@ -271,6 +265,10 @@ func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
 		sett = exp.settings
 	}
 	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindNativeHistogram)
+}
+
+func (exp *ExporterSessionsMemory) usedExemplars() bool {
+	return true
 }
 
 func (from *sessionsDataExt) ApplyTo(to *sessionsDataExt) {
