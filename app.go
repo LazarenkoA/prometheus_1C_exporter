@@ -19,6 +19,7 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/judwhite/go-svc"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -153,6 +154,6 @@ func (a *app) register() {
 		}
 	}
 	if a.settings.GetDisableGoCollector() {
-		prometheus.Unregister(prometheus.NewGoCollector())
+		prometheus.Unregister(collectors.NewGoCollector())
 	}
 }

@@ -148,11 +148,11 @@ func (exp *ExporterSessionsMemory) getValue() {
 		if exp.usedHistogram(nil) {
 			cntExml := exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]]
 			withLabel := v.GetWith("base", "appid")
-			withExeplar := v.GetWith("id", "user")
+			withExemplar := v.GetWith("id", "user")
 			for n, m := range v.metersData {
 				hist := exp.histograms[n]
 				if cntExml == 0 {
-					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExeplar)
+					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExemplar)
 				} else {
 					hist.With(withLabel).Observe(float64(m))
 				}
