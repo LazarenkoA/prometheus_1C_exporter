@@ -38,7 +38,7 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 		"readtotal":           "Чтение (всего)",
 		"writecurrent":        "Запись (текущая)",
 		"writetotal":          "Запись (всего)",
-		"durationcurrent":     "",
+		"durationcurrent":     "Время вызова (текущее)",
 		"durationcurrentdbms": "",
 		"durationall":         "",
 		"durationalldbms":     "",
@@ -46,6 +46,10 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 		"cputimetotal":        "",
 		"dbmsbytesall":        "",
 		"callsall":            "Количество вызово (всего)",
+		"durationallservice":  "",
+		"blockedbyls":         "",
+		"blockedbydmms":       "",
+		"dbproctook":          "",
 	}
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
@@ -229,11 +233,15 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 		data.metersData["durationcurrentdbms"] = atoi(item["duration current-dbms"])
 	}
 	data.metersData["durationall"] = atoi(item["duration-all"])
+	data.metersData["durationallservice"] = atoi(item["duration-all-service"])
 	data.metersData["durationalldbms"] = atoi(item["duration-all-dbms"])
 	data.metersData["cputimecurrent"] = atoi(item["cpu-time-current"])
 	data.metersData["cputimetotal"] = atoi(item["cpu-time-total"])
 	data.metersData["dbmsbytesall"] = atoi(item["dbms-bytes-all"])
 	data.metersData["callsall"] = atoi(item["calls-all"])
+	data.metersData["blockedbyls"] = atoi(item["blocked-by-ls"])
+	data.metersData["blockedbydmms"] = atoi(item["blocked-by-dbms"])
+	data.metersData["dbproctook"] = atoi(item["db-proc-took"])
 
 	exp.mx.Lock()
 

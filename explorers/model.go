@@ -12,9 +12,3 @@ type IPrometheusMetric interface {
 	With(labels prometheus.Labels) prometheus.Observer
 	Reset()
 }
-
-type IPrometheusMetricExt interface {
-	prometheus.Observer
-	prometheus.ObserverVec
-	prometheus.ExemplarObserver
-}
