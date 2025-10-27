@@ -159,13 +159,13 @@ func (exp *ExporterSessionsMemory) getValue() {
 					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExemplar)
 				} else {
 					hist.With(withLabel).Observe(float64(m))
-					if exp.countsExemplars[v.labelsData["base"]] == nil {
-						exp.countsExemplars[v.labelsData["base"]] = map[string]int{}
-					}
 				}
 				cntExml++
 				if cntExml >= 10 {
 					cntExml = 0
+				}
+				if exp.countsExemplars[v.labelsData["base"]] == nil {
+					exp.countsExemplars[v.labelsData["base"]] = map[string]int{}
 				}
 				exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]] = cntExml
 			}
