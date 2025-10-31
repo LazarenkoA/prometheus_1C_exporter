@@ -23,10 +23,11 @@ import (
 type TypeMetricKind string
 
 const (
-	KindUndefined                      = ""
-	KindSummary         TypeMetricKind = "Summary"
-	KindGauge           TypeMetricKind = "Gauge"
-	KindNativeHistogram TypeMetricKind = "NativeHistogram"
+	KindUndefined                        = ""
+	KindSummary           TypeMetricKind = "Summary"
+	KindGauge             TypeMetricKind = "Gauge"
+	KindNativeHistogram   TypeMetricKind = "NativeHistogram"
+	KindVictoriaHistogram TypeMetricKind = "VictoriaHistogram"
 )
 
 type TypeHostLabelFrom string

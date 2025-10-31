@@ -3,6 +3,7 @@ package exporter
 import (
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -12,45 +13,40 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type sessionsDataExt struct {
+type sessionsData struct {
 	labelsData map[string]string
 	metersData map[string]int64
 }
 
+type bufferedData map[string]*sessionsData
+
 type ExporterSessionsMemory struct {
 	ExporterSessions
 
-	// buff map[string]*sessionsData
-	buff            map[string]*sessionsDataExt
-	meterDescr      map[string]string
-	histograms      map[string]*prometheus.HistogramVec
-	countsExemplars map[string]map[string]int
+	buff        bufferedData
+	meterParams map[string]MeterParams
+	histograms  map[string]*prometheus.HistogramVec
+}
+
+type MeterParams struct {
+	Name         string
+	Description  string
+	SourceFields []string
+	ApplyMax     bool
+}
+
+type ExemplarFinder struct {
+	keys   map[string]map[string]map[string]string
+	values map[string]map[string]map[string]int64
+	data   *bufferedData
 }
 
 func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
-	exp.meterDescr = map[string]string{
-		"memorytotal":         "Память (всего)",
-		"memorycurrent":       "Память (текущая)",
-		"readcurrent":         "Чтение (текущее)",
-		"readtotal":           "Чтение (всего)",
-		"writecurrent":        "Запись (текущая)",
-		"writetotal":          "Запись (всего)",
-		"durationcurrent":     "Время вызова (текущее)",
-		"durationcurrentdbms": "",
-		"durationall":         "",
-		"durationalldbms":     "",
-		"cputimecurrent":      "",
-		"cputimetotal":        "",
-		"dbmsbytesall":        "",
-		"callsall":            "Количество вызово (всего)",
-		"durationallservice":  "",
-		"blockedbyls":         "",
-		"blockedbydmms":       "",
-		"dbproctook":          "",
-	}
+	exp.meterParams = make(map[string]MeterParams)
+	exp.initAllMeterParams()
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
 
@@ -69,11 +65,11 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 	if exp.usedHistogram(s) {
 
 		exp.histograms = map[string]*prometheus.HistogramVec{}
-		for nm, descr := range exp.meterDescr {
+		for nm, descr := range exp.meterParams {
 			exp.histograms[nm] = prometheus.NewHistogramVec(
 				prometheus.HistogramOpts{
 					Name:                            labelName + "_" + nm,
-					Help:                            "Гистограммы показателя сессий кластера 1С: " + descr,
+					Help:                            "Гистограммы показателя сессий кластера 1С: " + descr.Description,
 					ConstLabels:                     prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 					NativeHistogramBucketFactor:     1.1,
 					NativeHistogramMaxBucketNumber:  20,
@@ -84,7 +80,7 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 		}
 	}
 
-	exp.buff = map[string]*sessionsDataExt{}
+	exp.buff = bufferedData{}
 	exp.settings = s
 	exp.ExporterCheckSheduleJob.settings = s
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*5)
@@ -117,7 +113,6 @@ func atoi(n string) int64 {
 	if v, err := strconv.ParseInt(n, 10, 64); err == nil {
 		return v
 	}
-
 	return 0
 }
 
@@ -125,6 +120,8 @@ func (exp *ExporterSessionsMemory) getValue() {
 	exp.logger.Info("получение данных экспортера")
 
 	var with prometheus.Labels
+	var exemplarFinder ExemplarFinder
+	var usedExemplars bool
 
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
@@ -132,12 +129,17 @@ func (exp *ExporterSessionsMemory) getValue() {
 	if exp.usedSummary(nil) {
 		exp.summary.Reset()
 	}
+
 	if exp.usedHistogram(nil) {
-		exp.countsExemplars = make(map[string]map[string]int)
+		if exp.usedExemplars() {
+			exemplarFinder = findExemplars(&exp.buff)
+			usedExemplars = true
+		}
 		for _, h := range exp.histograms {
 			h.Reset()
 		}
 	}
+
 	for k, v := range exp.buff {
 
 		if exp.usedSummary(nil) {
@@ -150,26 +152,18 @@ func (exp *ExporterSessionsMemory) getValue() {
 		}
 
 		if exp.usedHistogram(nil) {
-			cntExml := exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]]
 			withLabel := v.GetWith("base", "appid")
 			withExemplar := v.GetWith("id", "user")
 			for n, m := range v.metersData {
 				hist := exp.histograms[n]
-				if exp.usedExemplars() && cntExml == 0 && m != 0 {
+				if usedExemplars && exemplarFinder.isExemplar(k, v.labelsData["base"], v.labelsData["appid"], n) {
 					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExemplar)
 				} else {
 					hist.With(withLabel).Observe(float64(m))
 				}
-				cntExml++
-				if cntExml >= 10 {
-					cntExml = 0
-				}
-				if exp.countsExemplars[v.labelsData["base"]] == nil {
-					exp.countsExemplars[v.labelsData["base"]] = map[string]int{}
-				}
-				exp.countsExemplars[v.labelsData["base"]][v.labelsData["appid"]] = cntExml
 			}
 		}
+
 		delete(exp.buff, k)
 	}
 }
@@ -202,15 +196,18 @@ func (exp *ExporterSessionsMemory) GetType() model.MetricType {
 	return model.TypeRAC
 }
 
-func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsDataExt {
-	sd := sessionsDataExt{
+func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsData {
+	sd := sessionsData{
 		labelsData: make(map[string]string),
 		metersData: make(map[string]int64),
 	}
 	return &sd
 }
 
-func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *sessionsDataExt {
+func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *sessionsData {
+
+	var readedVal int64
+	var existingVal int64
 
 	data := exp.newSessionsDataExt()
 	sessionid := item["session-id"]
@@ -220,42 +217,34 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 	data.labelsData["id"] = sessionid
 	data.labelsData["base"] = exp.findBaseName(item["infobase"])
 
-	data.metersData["memorytotal"] = atoi(item["memory-total"])
-	data.metersData["memorycurrent"] = atoi(item["memory-current"])
-	data.metersData["readcurrent"] = atoi(item["read-current"])
-	data.metersData["readtotal"] = atoi(item["read-total"])
-	data.metersData["writecurrent"] = atoi(item["write-current"])
-	data.metersData["writetotal"] = atoi(item["write-total"])
-	data.metersData["durationcurrent"] = atoi(item["duration-current"])
-	if item["duration-current-dbms"] != "" {
-		data.metersData["durationcurrentdbms"] = atoi(item["duration-current-dbms"])
-	} else {
-		data.metersData["durationcurrentdbms"] = atoi(item["duration current-dbms"])
+	for m, p := range exp.meterParams {
+		readedVal = p.readValue(item)
+		data.metersData[m] = readedVal
 	}
-	data.metersData["durationall"] = atoi(item["duration-all"])
-	data.metersData["durationallservice"] = atoi(item["duration-all-service"])
-	data.metersData["durationalldbms"] = atoi(item["duration-all-dbms"])
-	data.metersData["cputimecurrent"] = atoi(item["cpu-time-current"])
-	data.metersData["cputimetotal"] = atoi(item["cpu-time-total"])
-	data.metersData["dbmsbytesall"] = atoi(item["dbms-bytes-all"])
-	data.metersData["callsall"] = atoi(item["calls-all"])
-	data.metersData["blockedbyls"] = atoi(item["blocked-by-ls"])
-	data.metersData["blockedbydmms"] = atoi(item["blocked-by-dbms"])
-	data.metersData["dbproctook"] = atoi(item["db-proc-took"])
 
 	exp.mx.Lock()
 
-	v := exp.buff[sessionid]
-	if v == nil {
+	buffData := exp.buff[sessionid]
+	if buffData == nil {
 		exp.buff[sessionid] = data
 	} else {
-		data.ApplyTo(v)
+		for m, p := range exp.meterParams {
+			if !p.ApplyMax {
+				buffData.metersData[m] = data.metersData[m]
+			} else {
+				existingVal = buffData.metersData[m]
+				readedVal = data.metersData[m]
+				if readedVal > existingVal {
+					buffData.metersData[m] = readedVal
+				}
+			}
+		}
 		data = nil
 	}
 
 	exp.mx.Unlock()
 
-	return v
+	return buffData
 
 }
 
@@ -279,33 +268,7 @@ func (exp *ExporterSessionsMemory) usedExemplars() bool {
 	return true
 }
 
-func (from *sessionsDataExt) ApplyTo(to *sessionsDataExt) {
-
-	applyMeterValue := func(meterName string, onlyMax bool) {
-		if !onlyMax || from.metersData[meterName] > to.metersData[meterName] {
-			to.metersData[meterName] = from.metersData[meterName]
-		}
-	}
-
-	applyMeterValue("memorycurrent", true)
-	applyMeterValue("readcurrent", true)
-	applyMeterValue("cputimecurrent", true)
-	applyMeterValue("durationcurrentdbms", true)
-	applyMeterValue("durationcurrent", true)
-	applyMeterValue("writecurrent", true)
-
-	applyMeterValue("dbmsbytesall", false)
-	applyMeterValue("cputimetotal", false)
-	applyMeterValue("durationalldbms", false)
-	applyMeterValue("durationall", false)
-	applyMeterValue("writetotal", false)
-	applyMeterValue("readtotal", false)
-	applyMeterValue("memorytotal", false)
-	applyMeterValue("callsall", false)
-
-}
-
-func (data *sessionsDataExt) GetWithAll() prometheus.Labels {
+func (data *sessionsData) GetWithAll() prometheus.Labels {
 	names := []string{}
 	for k := range data.labelsData {
 		names = append(names, k)
@@ -313,10 +276,107 @@ func (data *sessionsDataExt) GetWithAll() prometheus.Labels {
 	return data.GetWith(names...)
 }
 
-func (data *sessionsDataExt) GetWith(names ...string) prometheus.Labels {
+func (data *sessionsData) GetWith(names ...string) prometheus.Labels {
 	getWith := make(prometheus.Labels)
 	for _, lb := range names {
 		getWith[lb] = data.labelsData[lb]
 	}
 	return getWith
+}
+
+func addMeterParams(allParams *map[string]MeterParams, name string, description string, sourceFields []string, applyMax bool) {
+	params := MeterParams{
+		Description:  description,
+		SourceFields: sourceFields,
+		ApplyMax:     applyMax,
+	}
+	if name == "" && len(sourceFields) != 0 {
+		params.Name = sourceFields[0]
+		params.Name = strings.Replace(params.Name, "-", "", -1)
+		params.Name = strings.Replace(params.Name, " ", "", -1)
+	} else {
+		params.Name = name
+	}
+	(*allParams)[params.Name] = params
+}
+
+func (exp *ExporterSessionsMemory) initAllMeterParams() {
+
+	params := &(exp.meterParams)
+
+	addMeterParams(params, "", "Память (всего)", []string{"memory-total"}, false)
+	addMeterParams(params, "", "Память (текущая)", []string{"memory-current"}, true)
+	addMeterParams(params, "", "Чтение (текущее)", []string{"read-current"}, true)
+	addMeterParams(params, "", "Чтение (всего)", []string{"read-total"}, false)
+	addMeterParams(params, "", "Запись (текущая)", []string{"write-current"}, true)
+	addMeterParams(params, "", "Запись (всего)", []string{"write-total"}, false)
+	addMeterParams(params, "", "Время вызова (текущее)", []string{"duration-current"}, true)
+	addMeterParams(params, "", "Длительность текущего вызова СУБД", []string{"duration-current-dbms", "duration current-dbms"}, true)
+	addMeterParams(params, "", "Длительность вызовов", []string{"duration-all"}, true)
+	addMeterParams(params, "", "", []string{"duration-all-service"}, true)
+	addMeterParams(params, "", "", []string{"duration-all-dbms"}, true)
+	addMeterParams(params, "", "", []string{"cpu-time-current"}, true)
+	addMeterParams(params, "", "", []string{"cpu-time-total"}, false)
+	addMeterParams(params, "", "", []string{"dbms-bytes-all"}, true)
+	addMeterParams(params, "", "Количество вызово (всего)", []string{"calls-all"}, true)
+	addMeterParams(params, "", "", []string{"blocked-by-ls"}, true)
+	addMeterParams(params, "", "", []string{"blocked-by-dbms"}, true)
+	addMeterParams(params, "", "", []string{"db-proc-took"}, true)
+
+}
+
+func (p *MeterParams) readValue(item map[string]string) int64 {
+	var txt string
+	for _, fn := range p.SourceFields {
+		txt = item[fn]
+		if txt != "" {
+			break
+		}
+	}
+	return atoi(txt)
+}
+
+func findExemplars(d *bufferedData) ExemplarFinder {
+
+	// Пока решено, что экземплярами по счетчикам будут сессии, где обнаружено максимальное значение
+
+	var maxVal int64
+	var base string
+	var appid string
+
+	finder := ExemplarFinder{
+		data:   d,
+		keys:   make(map[string]map[string]map[string]string),
+		values: make(map[string]map[string]map[string]int64),
+	}
+
+	for sessId, sessData := range *finder.data {
+		base = sessData.labelsData["base"]
+		appid = sessData.labelsData["appid"]
+		for paramId, paramVal := range sessData.metersData {
+
+			if finder.values[base] == nil {
+				finder.values[base] = make(map[string]map[string]int64)
+				finder.keys[base] = make(map[string]map[string]string)
+			}
+
+			if finder.values[base][appid] == nil {
+				finder.values[base][appid] = make(map[string]int64)
+				finder.keys[base][appid] = make(map[string]string)
+			}
+
+			maxVal = finder.values[base][appid][paramId]
+			if paramVal > maxVal {
+				finder.values[base][appid][paramId] = paramVal
+				finder.keys[base][appid][paramId] = sessId
+			}
+		}
+	}
+
+	return finder
+}
+
+func (finder *ExemplarFinder) isExemplar(sess string, base string, appid string, param string) bool {
+	targetSess := finder.keys[base][appid][param]
+	return sess == targetSess
 }
