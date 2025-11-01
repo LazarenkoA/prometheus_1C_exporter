@@ -36,8 +36,8 @@ type MeterParams struct {
 }
 
 type ExemplarFinder struct {
-	keys   map[string]map[string]map[string]string
-	values map[string]map[string]map[string]int64
+	keys   map[string]map[string]string
+	values map[string]map[string]int64
 	data   *bufferedData
 }
 
@@ -342,33 +342,26 @@ func findExemplars(d *bufferedData) ExemplarFinder {
 
 	var maxVal int64
 	var base string
-	var appid string
 
 	finder := ExemplarFinder{
 		data:   d,
-		keys:   make(map[string]map[string]map[string]string),
-		values: make(map[string]map[string]map[string]int64),
+		keys:   make(map[string]map[string]string),
+		values: make(map[string]map[string]int64),
 	}
 
 	for sessId, sessData := range *finder.data {
 		base = sessData.labelsData["base"]
-		appid = sessData.labelsData["appid"]
 		for paramId, paramVal := range sessData.metersData {
 
 			if finder.values[base] == nil {
-				finder.values[base] = make(map[string]map[string]int64)
-				finder.keys[base] = make(map[string]map[string]string)
+				finder.values[base] = make(map[string]int64)
+				finder.keys[base] = make(map[string]string)
 			}
 
-			if finder.values[base][appid] == nil {
-				finder.values[base][appid] = make(map[string]int64)
-				finder.keys[base][appid] = make(map[string]string)
-			}
-
-			maxVal = finder.values[base][appid][paramId]
+			maxVal = finder.values[base][paramId]
 			if paramVal > maxVal {
-				finder.values[base][appid][paramId] = paramVal
-				finder.keys[base][appid][paramId] = sessId
+				finder.values[base][paramId] = paramVal
+				finder.keys[base][paramId] = sessId
 			}
 		}
 	}
@@ -377,6 +370,6 @@ func findExemplars(d *bufferedData) ExemplarFinder {
 }
 
 func (finder *ExemplarFinder) isExemplar(sess string, base string, appid string, param string) bool {
-	targetSess := finder.keys[base][appid][param]
+	targetSess := finder.keys[base][param]
 	return sess == targetSess
 }
