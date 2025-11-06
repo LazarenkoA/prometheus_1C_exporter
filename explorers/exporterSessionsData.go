@@ -318,22 +318,33 @@ func (exp *ExporterSessionsMemory) initAllMeterParams() {
 	addMeterParams(params, "", "", []string{"cpu-time-current"}, true)
 	addMeterParams(params, "", "", []string{"cpu-time-total"}, false)
 	addMeterParams(params, "", "", []string{"dbms-bytes-all"}, true)
-	addMeterParams(params, "", "Количество вызово (всего)", []string{"calls-all"}, true)
+	addMeterParams(params, "", "Количество вызовов (всего)", []string{"calls-all"}, true)
 	addMeterParams(params, "", "", []string{"blocked-by-ls"}, true)
 	addMeterParams(params, "", "", []string{"blocked-by-dbms"}, true)
 	addMeterParams(params, "", "", []string{"db-proc-took"}, true)
+	addMeterParams(params, "sessionduration", "Длительность сеанса", []string{"started-at"}, true)
 
 }
 
 func (p *MeterParams) readValue(item map[string]string) int64 {
 	var txt string
+	var retVal int64
 	for _, fn := range p.SourceFields {
 		txt = item[fn]
 		if txt != "" {
 			break
 		}
 	}
-	return atoi(txt)
+	if p.Name == "sessionduration" {
+		st, e := time.Parse("2006-01-02T15:04:05", txt)
+		if e == nil {
+			retVal = int64(time.Since(st).Seconds())
+		}
+	} else {
+		retVal = atoi(txt)
+	}
+
+	return retVal
 }
 
 func findExemplars(d *bufferedData) ExemplarFinder {
