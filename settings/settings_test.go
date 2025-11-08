@@ -62,6 +62,30 @@ func Test_GetDeactivateAndReset(t *testing.T) {
 	}
 }
 
+func Test_LoadSettings(t *testing.T) {
+	t.Run("error", func(t *testing.T) {
+		s, err := LoadSettings("")
+		assert.EqualError(t, err, "файл настроек \"\" не найден")
+		assert.Nil(t, s)
+	})
+	t.Run("pass", func(t *testing.T) {
+		s, err := LoadSettings("../examples_settings.yaml")
+		assert.NoError(t, err)
+		assert.NotNil(t, s)
+	})
+	t.Run("pass env", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("RAC_LOGIN", "test"))
+		assert.NoError(t, os.Setenv("RAC_PASSWORD", "123"))
+
+		s, err := LoadSettings("../examples_settings.yaml")
+		assert.NoError(t, err)
+		if assert.NotNil(t, s) {
+			assert.Equal(t, "test", s.RAC.Login)
+			assert.Equal(t, "123", s.RAC.Pass)
+		}
+	})
+}
+
 func Test_GetLogPass(t *testing.T) {
 	s := &Settings{
 		mx: new(sync.RWMutex),
