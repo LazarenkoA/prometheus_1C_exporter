@@ -41,7 +41,12 @@ type ExemplarFinder struct {
 	data   *bufferedData
 }
 
+var localTimeLocation *time.Location
+
 func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
+
+	localTimeLocation, _ = time.LoadLocation("Local")
+
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
@@ -336,7 +341,7 @@ func (p *MeterParams) readValue(item map[string]string) int64 {
 		}
 	}
 	if p.Name == "sessionduration" {
-		st, e := time.Parse("2006-01-02T15:04:05", txt)
+		st, e := time.ParseInLocation("2006-01-02T15:04:05", txt, localTimeLocation)
 		if e == nil {
 			retVal = int64(time.Since(st).Seconds())
 		}
