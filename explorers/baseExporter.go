@@ -90,7 +90,7 @@ func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 
 	err := cmd.Start()
 	if err != nil {
-		return "", fmt.Errorf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
+		return "", errors.Wrap(err, "running error")
 	}
 
 	// запускаем в горутине т.к. наблюдалось что при выполнении RAC может происходить завсание, поэтому нам нужен таймаут
@@ -102,11 +102,11 @@ func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 	case <-time.After(timeout): // timeout
 		// завершаем процесс
 		cmd.Process.Kill()
-		return "", fmt.Errorf("выполнение команды прервано по таймауту\n\tПараметры: %v\n\t", cmd.Args)
+		return "", errors.New("command execution was interrupted by timeout")
 	case err := <-errch:
 		if err != nil {
 			stderr := cmd.Stderr.(*bytes.Buffer).String()
-			errText := fmt.Sprintf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
+			errText := fmt.Sprintf("Произошла ошибка запуска:\n\terr:%v\n\t", err.Error())
 			if stderr != "" {
 				errText += fmt.Sprintf("StdErr:%v\n", stderr)
 			}
