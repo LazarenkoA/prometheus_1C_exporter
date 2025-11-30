@@ -19,20 +19,33 @@ type sessionsData struct {
 }
 
 type bufferedData map[string]*sessionsData
+type MeterParamsCollection map[string]MeterParams
 
 type ExporterSessionsMemory struct {
 	ExporterSessions
 
 	buff        bufferedData
-	meterParams map[string]MeterParams
+	meterParams MeterParamsCollection
 	histograms  map[string]*prometheus.HistogramVec
 }
 
+type MeterDataType string
+
+const (
+	MeterDataUndefined MeterDataType = "" // Будет работать аналогично RASMeterNumber. Авто-определение не предусмотрено.
+	MeterDataNumber    MeterDataType = "Number"
+	MeterDataUnixDate  MeterDataType = "UnixDate"
+	MeterDataDuration  MeterDataType = "Duration" // Разница между датой-временем наблюдения и датой-временем из данных поля, в секундах.
+)
+
 type MeterParams struct {
-	Name         string
-	Description  string
-	SourceFields []string
-	ApplyMax     bool
+	collection        *MeterParamsCollection
+	Name              string
+	Description       string
+	SourceField       string
+	OtherSourceFields []string
+	ApplyMax          bool
+	DataType          MeterDataType
 }
 
 type ExemplarFinder struct {
@@ -289,61 +302,102 @@ func (data *sessionsData) GetWith(names ...string) prometheus.Labels {
 	return getWith
 }
 
-func addMeterParams(allParams *map[string]MeterParams, name string, description string, sourceFields []string, applyMax bool) {
+func addMeterParams(allParams *MeterParamsCollection, sourceField string, description string, applyMax bool) *MeterParams {
+
 	params := MeterParams{
-		Description:  description,
-		SourceFields: sourceFields,
-		ApplyMax:     applyMax,
+		Description: description,
+		SourceField: sourceField,
+		ApplyMax:    applyMax,
+		collection:  allParams,
+		DataType:    MeterDataUndefined,
 	}
-	if name == "" && len(sourceFields) != 0 {
-		params.Name = sourceFields[0]
-		params.Name = strings.Replace(params.Name, "-", "", -1)
-		params.Name = strings.Replace(params.Name, " ", "", -1)
-	} else {
-		params.Name = name
-	}
+	params.Name = sourceField
+	params.Name = strings.Replace(params.Name, "-", "", -1)
+	params.Name = strings.Replace(params.Name, " ", "", -1)
+
 	(*allParams)[params.Name] = params
+
+	return &params
+}
+
+func (mp *MeterParams) SetName(paramName string) *MeterParams {
+	delete(*mp.collection, mp.Name)
+	mp.Name = paramName
+	(*mp.collection)[mp.Name] = *mp
+	return mp
+}
+
+func (mp *MeterParams) SetOtherSourceFields(otherSourceFields []string) *MeterParams {
+	mp.OtherSourceFields = otherSourceFields
+	(*mp.collection)[mp.Name] = *mp
+	return mp
+}
+
+func (mp *MeterParams) SetDataType(dataType MeterDataType) *MeterParams {
+	mp.DataType = dataType
+	(*mp.collection)[mp.Name] = *mp
+	return mp
 }
 
 func (exp *ExporterSessionsMemory) initAllMeterParams() {
 
 	params := &(exp.meterParams)
 
-	addMeterParams(params, "", "Память (всего)", []string{"memory-total"}, false)
-	addMeterParams(params, "", "Память (текущая)", []string{"memory-current"}, true)
-	addMeterParams(params, "", "Чтение (текущее)", []string{"read-current"}, true)
-	addMeterParams(params, "", "Чтение (всего)", []string{"read-total"}, false)
-	addMeterParams(params, "", "Запись (текущая)", []string{"write-current"}, true)
-	addMeterParams(params, "", "Запись (всего)", []string{"write-total"}, false)
-	addMeterParams(params, "", "Время вызова (текущее)", []string{"duration-current"}, true)
-	addMeterParams(params, "", "Длительность текущего вызова СУБД", []string{"duration-current-dbms", "duration current-dbms"}, true)
-	addMeterParams(params, "", "Длительность вызовов", []string{"duration-all"}, true)
-	addMeterParams(params, "", "", []string{"duration-all-service"}, true)
-	addMeterParams(params, "", "", []string{"duration-all-dbms"}, true)
-	addMeterParams(params, "", "", []string{"cpu-time-current"}, true)
-	addMeterParams(params, "", "", []string{"cpu-time-total"}, false)
-	addMeterParams(params, "", "", []string{"dbms-bytes-all"}, true)
-	addMeterParams(params, "", "Количество вызовов (всего)", []string{"calls-all"}, true)
-	addMeterParams(params, "", "", []string{"blocked-by-ls"}, true)
-	addMeterParams(params, "", "", []string{"blocked-by-dbms"}, true)
-	addMeterParams(params, "", "", []string{"db-proc-took"}, true)
-	addMeterParams(params, "sessionduration", "Длительность сеанса", []string{"started-at"}, true)
+	addMeterParams(params, "memory-total", "Память (всего)", false)
+	addMeterParams(params, "memory-current", "Память (текущая)", true)
+	addMeterParams(params, "read-current", "Чтение (текущее)", true)
+	addMeterParams(params, "read-total", "Чтение (всего)", false)
+	addMeterParams(params, "write-current", "Запись (текущая)", true)
+	addMeterParams(params, "write-total", "Запись (всего)", false)
+	addMeterParams(params, "duration-current", "Время вызова (текущее)", true)
+	addMeterParams(params, "duration-current-dbms", "Длительность текущего вызова СУБД", true).SetOtherSourceFields([]string{"duration current-dbms"})
+	addMeterParams(params, "duration-all", "Общее время работы сессии", true)
+	addMeterParams(params, "duration-all-service", "Время работы сервисов кластера с начала сеанса или соединения", true)
+	addMeterParams(params, "duration-all-dbms", "Общее время выполнения операций в БД", true)
+	addMeterParams(params, "cpu-time-current", "Процессорное время (текущее)", true)
+	addMeterParams(params, "cpu-time-total", "Процессорное время (всего)", false)
+	addMeterParams(params, "dbms-bytes-all", "Объем данных, переданных из/в СУБД", true)
+	addMeterParams(params, "calls-all", "Количество вызовов (запросов) за все время", true)
+	addMeterParams(params, "blocked-by-ls", "Количество блокировок локального сервиса", true)
+	addMeterParams(params, "blocked-by-dbms", "Количество блокировок СУБД", true)
+	addMeterParams(params, "db-proc-took", "Время соединения СУБД ", true)
+	addMeterParams(params, "db-proc-took-at", "Продолжительность соединения СУБД ", true).SetName("dbproctookatduration").SetDataType(MeterDataDuration)
+	addMeterParams(params, "started-at", "Длительность сеанса", true).SetName("startedatduration").SetDataType(MeterDataDuration)
+	addMeterParams(params, "started-at", "Начало сеанса", true).SetDataType(MeterDataUnixDate)
+	addMeterParams(params, "last-active-at", "Прошло времени с последней активности в этой сессии", true).SetName("lastactiveatduration").SetDataType(MeterDataDuration)
+	addMeterParams(params, "last-active-at", "Время последней активности в этой сессии", true).SetDataType(MeterDataUnixDate)
+	addMeterParams(params, "passive-session-hibernate-time", "Время в секундах бездействия до перевода сессии в спящий режим", true)
+	addMeterParams(params, "hibernate-session-terminate-time", "время через которое сессия завершается после перехода в спящий режим", true)
 
 }
 
 func (p *MeterParams) readValue(item map[string]string) int64 {
+
 	var txt string
 	var retVal int64
-	for _, fn := range p.SourceFields {
-		txt = item[fn]
-		if txt != "" {
-			break
+
+	txt = item[p.SourceField]
+	if txt == "" && len(p.OtherSourceFields) != 0 {
+		for _, fn := range p.OtherSourceFields {
+			txt = item[fn]
+			if txt != "" {
+				break
+			}
 		}
 	}
-	if p.Name == "sessionduration" {
+
+	if txt == "" {
+		return retVal
+	}
+
+	if p.DataType == MeterDataDuration || p.DataType == MeterDataUnixDate {
 		st, e := time.ParseInLocation("2006-01-02T15:04:05", txt, localTimeLocation)
 		if e == nil {
-			retVal = int64(time.Since(st).Seconds())
+			if p.DataType == MeterDataDuration {
+				retVal = int64(time.Since(st).Seconds())
+			} else {
+				retVal = st.Unix()
+			}
 		}
 	} else {
 		retVal = atoi(txt)
