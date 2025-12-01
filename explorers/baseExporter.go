@@ -268,7 +268,7 @@ func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
 
 func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 	exp.Metrics = []string{}
-	for k := range set.GetExporters() {
+	for k, _ := range set.GetExporters() {
 		exp.Metrics = append(exp.Metrics, k)
 	}
 

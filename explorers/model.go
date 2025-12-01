@@ -9,6 +9,5 @@ type IPrometheusMetric interface {
 	prometheus.Collector
 
 	WithLabelValues(lvs ...string) prometheus.Observer
-	With(labels prometheus.Labels) prometheus.Observer
 	Reset()
 }
