@@ -118,6 +118,10 @@ func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) 
 
 func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
 	login, pass := exp.settings.GetLogPass(basename)
+	if login == "" {
+		CForce <- struct{}{} // принудительно запрашиваем данные из REST
+		return nil, fmt.Errorf("для базы %s не определен пользователь", basename)
+	}
 
 	var param []string
 	if exp.settings.RAC_Host() != "" {
