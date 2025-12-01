@@ -31,7 +31,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
 
-	if slices.Contains(s.MetricKinds.Session, settings.KindSummary) {
+	if exp.usedSummary(s) {
 		exp.summary = prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
 				Name:        labelName,
@@ -43,7 +43,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 		)
 	}
 
-	if slices.Contains(s.MetricKinds.Session, settings.KindGauge) {
+	if exp.usedGauge(s) {
 		exp.gauge = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        labelName + "_gauge",
@@ -71,7 +71,7 @@ func (exp *ExporterSessions) getValue() {
 		return
 	}
 
-	if exp.summary != nil {
+	if exp.usedSummary(exp.settings) {
 		groupByDB := map[string]int{}
 		for _, item := range ses {
 			groupByDB[exp.findBaseName(item["infobase"])]++
@@ -85,7 +85,7 @@ func (exp *ExporterSessions) getValue() {
 		}
 	}
 
-	if exp.gauge != nil {
+	if exp.usedGauge(exp.settings) {
 
 		groupByAppID := make(map[string]labelValuesMap)
 		for _, item := range ses {
@@ -144,10 +144,10 @@ func (exp *ExporterSessions) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	exp.getValue()
-	if exp.summary != nil {
+	if exp.usedSummary(exp.settings) {
 		exp.summary.Collect(ch)
 	}
-	if exp.gauge != nil {
+	if exp.usedGauge(exp.settings) {
 		exp.gauge.Collect(ch)
 	}
 }
@@ -158,4 +158,12 @@ func (exp *ExporterSessions) GetName() string {
 
 func (exp *ExporterSessions) GetType() model.MetricType {
 	return model.TypeRAC
+}
+
+func (exp *ExporterSessions) usedSummary(s *settings.Settings) bool {
+	return slices.Contains(s.MetricKinds.Session, settings.KindSummary)
+}
+
+func (exp *ExporterSessions) usedGauge(s *settings.Settings) bool {
+	return slices.Contains(s.MetricKinds.Session, settings.KindGauge)
 }

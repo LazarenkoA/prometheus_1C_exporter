@@ -65,6 +65,11 @@ func (a *app) Start() error {
 	}
 
 	go a.settings.GetDBCredentials(a.ctx, exp.CForce)
+
+	// if a.metric.Contains("shedule_job") && a.settings.DBCredentials != nil && a.settings.DBCredentials.URL != "" {
+	// 	go a.settings.GetDBCredentials(a.ctx, exp.CForce)
+	// }
+
 	go a.reloadWatcher()
 
 	a.register()
@@ -153,4 +158,7 @@ func (a *app) register() {
 			logger.DefaultLogger.Debugf("Метрика %q пропущена", ex.GetName())
 		}
 	}
+	// if a.settings.GetDisableGoCollector() {
+	// 	prometheus.Unregister(collectors.NewGoCollector())
+	// }
 }
