@@ -33,13 +33,13 @@ type sessionsData struct {
 	sessionid           string
 }
 
-type ExporterSessionsMemory struct {
+type ExporterSessionsData struct {
 	ExporterSessions
 
 	buff map[string]*sessionsData
 }
 
-func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
+func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessionsData {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
@@ -68,7 +68,7 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 	return exp
 }
 
-func (exp *ExporterSessionsMemory) collectingMetrics(delay time.Duration) {
+func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 	for {
 		ses, _ := exp.getSessions()
 		for _, item := range ses {
@@ -143,15 +143,7 @@ func (exp *ExporterSessionsMemory) collectingMetrics(delay time.Duration) {
 	}
 }
 
-func atoi(n string) int64 {
-	if v, err := strconv.ParseInt(n, 10, 64); err == nil {
-		return v
-	}
-
-	return 0
-}
-
-func (exp *ExporterSessionsMemory) getValue() {
+func (exp *ExporterSessionsData) getValue() {
 	exp.logger.Info("получение данных экспортера")
 
 	exp.mx.Lock()
@@ -178,7 +170,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 	}
 }
 
-func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
+func (exp *ExporterSessionsData) Collect(ch chan<- prometheus.Metric) {
 	if exp.isLocked.Load() {
 		return
 	}
@@ -187,10 +179,18 @@ func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
 	exp.summary.Collect(ch)
 }
 
-func (exp *ExporterSessionsMemory) GetName() string {
+func (exp *ExporterSessionsData) GetName() string {
 	return "sessions_data"
 }
 
-func (exp *ExporterSessionsMemory) GetType() model.MetricType {
+func (exp *ExporterSessionsData) GetType() model.MetricType {
 	return model.TypeRAC
+}
+
+func atoi(n string) int64 {
+	if v, err := strconv.ParseInt(n, 10, 64); err == nil {
+		return v
+	}
+
+	return 0
 }

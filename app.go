@@ -45,7 +45,7 @@ func (a *app) Init(_ svc.Environment) (err error) {
 	sJob := new(exp.ExporterCheckSheduleJob).Construct(a.settings)      // Проверка галки "блокировка регламентных заданий"
 	ses := new(exp.ExporterSessions).Construct(a.settings)              // Сеансы
 	conn := new(exp.ExporterConnects).Construct(a.settings)             // Соединения
-	currentMem := new(exp.ExporterSessionsMemory).Construct(a.settings) // Текущая память сеанса
+	currentMem := new(exp.ExporterSessionsData).Construct(a.settings)   // Текущая память сеанса
 	cpu := new(exp.CPU).Construct(a.settings)                           // CPU
 	proc := new(exp.Processes).Construct(a.settings)                    // Данные CPU/память в разрезе процессов
 	disk := new(exp.ExporterDisk).Construct(a.settings)                 // Диск
