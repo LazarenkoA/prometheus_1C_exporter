@@ -19,7 +19,6 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/judwhite/go-svc"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -153,7 +152,7 @@ func (a *app) register() {
 			logger.DefaultLogger.Debugf("Метрика %q пропущена", ex.GetName())
 		}
 	}
-	if a.settings.GetDisableGoCollector() {
-		prometheus.Unregister(collectors.NewGoCollector())
-	}
+	// if a.settings.GetDisableGoCollector() {
+	// 	prometheus.Unregister(collectors.NewGoCollector())
+	// }
 }

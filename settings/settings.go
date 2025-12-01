@@ -62,8 +62,8 @@ type Settings struct {
 	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
 
 	Other *struct {
-		MetricNamePrefix   string `yaml:"MetricNamePrefix"`
-		DisableGoCollector bool   `yaml:"DisableGoCollector" default:"false"`
+		MetricNamePrefix string `yaml:"MetricNamePrefix"`
+		// DisableGoCollector bool   `yaml:"DisableGoCollector" default:"false"`
 	} `yaml:"Other"`
 
 	mx *sync.RWMutex `yaml:"-"`
@@ -171,12 +171,12 @@ func (s *Settings) GetRASHostPort() string {
 	return rasHostPort
 }
 
-func (s *Settings) GetDisableGoCollector() bool {
-	if s.Other != nil {
-		return s.Other.DisableGoCollector
-	}
-	return false
-}
+// func (s *Settings) GetDisableGoCollector() bool {
+// 	if s.Other != nil {
+// 		return s.Other.DisableGoCollector
+// 	}
+// 	return false
+// }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 	if s.DBCredentials == nil || s.DBCredentials.URL == "" {
