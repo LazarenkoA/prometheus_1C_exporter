@@ -71,7 +71,7 @@ func (exp *ExporterSessions) getValue() {
 		return
 	}
 
-	if exp.usedSummary(nil) {
+	if exp.usedSummary(exp.settings) {
 		groupByDB := map[string]int{}
 		for _, item := range ses {
 			groupByDB[exp.findBaseName(item["infobase"])]++
@@ -85,7 +85,7 @@ func (exp *ExporterSessions) getValue() {
 		}
 	}
 
-	if exp.usedGauge(nil) {
+	if exp.usedGauge(exp.settings) {
 
 		groupByAppID := make(map[string]labelValuesMap)
 		for _, item := range ses {
@@ -144,10 +144,10 @@ func (exp *ExporterSessions) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	exp.getValue()
-	if exp.usedSummary(nil) {
+	if exp.usedSummary(exp.settings) {
 		exp.summary.Collect(ch)
 	}
-	if exp.usedGauge(nil) {
+	if exp.usedGauge(exp.settings) {
 		exp.gauge.Collect(ch)
 	}
 }
@@ -161,17 +161,9 @@ func (exp *ExporterSessions) GetType() model.MetricType {
 }
 
 func (exp *ExporterSessions) usedSummary(s *settings.Settings) bool {
-	sett := s
-	if sett == nil {
-		sett = exp.settings
-	}
-	return slices.Contains(sett.MetricKinds.Session, settings.KindSummary)
+	return slices.Contains(s.MetricKinds.Session, settings.KindSummary)
 }
 
 func (exp *ExporterSessions) usedGauge(s *settings.Settings) bool {
-	sett := s
-	if sett == nil {
-		sett = exp.settings
-	}
-	return slices.Contains(sett.MetricKinds.Session, settings.KindGauge)
+	return slices.Contains(s.MetricKinds.Session, settings.KindGauge)
 }

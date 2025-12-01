@@ -134,12 +134,8 @@ func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
-	if login != "" {
-		param = append(param, fmt.Sprintf("--infobase-user=%v", login))
-	}
-	if pass != "" {
-		param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
-	}
+	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
+	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
 
 	exp.logger.With("param", param).Debugf("Получаем информацию для базы %q", basename)
 	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {

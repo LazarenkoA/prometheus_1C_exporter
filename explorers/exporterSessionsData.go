@@ -144,11 +144,11 @@ func (exp *ExporterSessionsMemory) getValue() {
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
 
-	if exp.usedSummary(nil) {
+	if exp.usedSummary(exp.settings) {
 		exp.summary.Reset()
 	}
 
-	if exp.usedHistogram(nil) {
+	if exp.usedHistogram(exp.settings) {
 		if exp.usedExemplars() {
 			exemplarFinder = findExemplars(&exp.buff)
 			usedExemplars = true
@@ -160,7 +160,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 
 	for k, v := range exp.buff {
 
-		if exp.usedSummary(nil) {
+		if exp.usedSummary(exp.settings) {
 			with = v.GetWithAll()
 			with["id"] = k
 			for n, m := range v.metersData {
@@ -169,7 +169,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 			}
 		}
 
-		if exp.usedHistogram(nil) {
+		if exp.usedHistogram(exp.settings) {
 			withLabel := v.GetWith("base", "appid")
 			withExemplar := v.GetWith("id", "user")
 			for n, m := range v.metersData {
@@ -194,11 +194,11 @@ func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
 
 	exp.getValue()
 
-	if exp.usedSummary(nil) {
+	if exp.usedSummary(exp.settings) {
 		exp.summary.Collect(ch)
 	}
 
-	if exp.usedHistogram(nil) {
+	if exp.usedHistogram(exp.settings) {
 		for _, h := range exp.histograms {
 			h.Collect(ch)
 		}
@@ -275,11 +275,7 @@ func (exp *ExporterSessionsMemory) usedSummary(s *settings.Settings) bool {
 }
 
 func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
-	sett := s
-	if sett == nil {
-		sett = exp.settings
-	}
-	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindNativeHistogram)
+	return slices.Contains(s.MetricKinds.SessionsData, settings.KindNativeHistogram)
 }
 
 func (exp *ExporterSessionsMemory) usedExemplars() bool {
