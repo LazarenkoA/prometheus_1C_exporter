@@ -267,7 +267,11 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 }
 
 func (exp *ExporterSessionsMemory) usedSummary(s *settings.Settings) bool {
-	return slices.Contains(s.MetricKinds.SessionsData, settings.KindSummary)
+	sett := s
+	if sett == nil {
+		sett = exp.settings
+	}
+	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindSummary)
 }
 
 func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
