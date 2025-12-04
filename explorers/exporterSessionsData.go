@@ -15,7 +15,7 @@ import (
 
 type sessionsData struct {
 	labelsData map[string]string
-	metersData map[string]int64
+	metersData map[string]*int64
 }
 
 type bufferedData map[string]*sessionsData
@@ -127,11 +127,11 @@ func (exp *ExporterSessionsMemory) collectMetrics(delay time.Duration) {
 	}
 }
 
-func atoi(n string) int64 {
+func atoi(n string) *int64 {
 	if v, err := strconv.ParseInt(n, 10, 64); err == nil {
-		return v
+		return &v
 	}
-	return 0
+	return nil
 }
 
 func (exp *ExporterSessionsMemory) getValue() {
@@ -164,8 +164,11 @@ func (exp *ExporterSessionsMemory) getValue() {
 			with = v.GetWithAll()
 			with["id"] = k
 			for n, m := range v.metersData {
+				if m == nil {
+					continue
+				}
 				with["datatype"] = n
-				exp.summary.With(with).Observe(float64(m))
+				exp.summary.With(with).Observe(float64(*m))
 			}
 		}
 
@@ -173,11 +176,14 @@ func (exp *ExporterSessionsMemory) getValue() {
 			withLabel := v.GetWith("base", "appid")
 			withExemplar := v.GetWith("id", "user")
 			for n, m := range v.metersData {
+				if m == nil {
+					continue
+				}
 				hist := exp.histograms[n]
 				if usedExemplars && exemplarFinder.isExemplar(k, v.labelsData["base"], v.labelsData["appid"], n) {
-					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(m), withExemplar)
+					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(*m), withExemplar)
 				} else {
-					hist.With(withLabel).Observe(float64(m))
+					hist.With(withLabel).Observe(float64(*m))
 				}
 			}
 		}
@@ -217,15 +223,15 @@ func (exp *ExporterSessionsMemory) GetType() model.MetricType {
 func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsData {
 	sd := sessionsData{
 		labelsData: make(map[string]string),
-		metersData: make(map[string]int64),
+		metersData: make(map[string]*int64),
 	}
 	return &sd
 }
 
 func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *sessionsData {
 
-	var readedVal int64
-	var existingVal int64
+	var readedVal *int64
+	var existingVal *int64
 
 	data := exp.newSessionsDataExt()
 	sessionid := item["session-id"]
@@ -237,7 +243,9 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 
 	for m, p := range exp.meterParams {
 		readedVal = p.readValue(item)
-		data.metersData[m] = readedVal
+		if readedVal != nil {
+			data.metersData[m] = readedVal
+		}
 	}
 
 	exp.mx.Lock()
@@ -247,14 +255,17 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 		exp.buff[sessionid] = data
 	} else {
 		for m, p := range exp.meterParams {
-			if !p.ApplyMax {
-				buffData.metersData[m] = data.metersData[m]
-			} else {
-				existingVal = buffData.metersData[m]
-				readedVal = data.metersData[m]
-				if readedVal > existingVal {
-					buffData.metersData[m] = readedVal
-				}
+			existingVal = buffData.metersData[m]
+			readedVal = data.metersData[m]
+			if readedVal == nil || (readedVal != nil && existingVal != nil && *readedVal == *existingVal) {
+				continue
+			}
+			if existingVal == nil || !p.ApplyMax {
+				buffData.metersData[m] = readedVal
+				continue
+			}
+			if *readedVal > *existingVal {
+				buffData.metersData[m] = readedVal
 			}
 		}
 		data = nil
@@ -349,25 +360,25 @@ func (exp *ExporterSessionsMemory) initAllMeterParams() {
 	addMeterParams(params, "duration-current-dbms", "Длительность текущего вызова СУБД", true).SetOtherSourceFields([]string{"duration current-dbms"})
 	addMeterParams(params, "duration-all", "Общее время работы сессии", true)
 	addMeterParams(params, "duration-all-service", "Время работы сервисов кластера с начала сеанса или соединения", true)
-	addMeterParams(params, "duration-all-dbms", "Общее время выполнения операций в БД", true)
+	addMeterParams(params, "duration-all-dbms", "Общее время выполнения операций в СУБД", true)
 	addMeterParams(params, "cpu-time-current", "Процессорное время (текущее)", true)
 	addMeterParams(params, "cpu-time-total", "Процессорное время (всего)", false)
 	addMeterParams(params, "dbms-bytes-all", "Объем данных, переданных из/в СУБД", true)
 	addMeterParams(params, "calls-all", "Количество вызовов (запросов) за все время", true)
 	addMeterParams(params, "blocked-by-ls", "Количество блокировок локального сервиса", true)
 	addMeterParams(params, "blocked-by-dbms", "Количество блокировок СУБД", true)
-	addMeterParams(params, "db-proc-took", "Время соединения СУБД ", true)
+	addMeterParams(params, "db-proc-took", "Время соединения СУБД", true)
 	addMeterParams(params, "db-proc-took-at", "Продолжительность соединения СУБД ", true).SetName("dbproctookatduration").SetDataType(MeterDataDuration)
 	addMeterParams(params, "started-at", "Длительность сеанса", true).SetName("startedatduration").SetDataType(MeterDataDuration)
 	addMeterParams(params, "started-at", "Начало сеанса", true).SetDataType(MeterDataUnixDate)
-	addMeterParams(params, "last-active-at", "Прошло времени с последней активности в этой сессии", true).SetName("lastactiveatduration").SetDataType(MeterDataDuration)
-	addMeterParams(params, "last-active-at", "Время последней активности в этой сессии", true).SetDataType(MeterDataUnixDate)
+	addMeterParams(params, "last-active-at", "Прошло времени с последней активности сессии", true).SetName("lastactiveatduration").SetDataType(MeterDataDuration)
+	addMeterParams(params, "last-active-at", "Время последней активности сессии", true).SetDataType(MeterDataUnixDate)
 	addMeterParams(params, "passive-session-hibernate-time", "Время в секундах бездействия до перевода сессии в спящий режим", true)
-	addMeterParams(params, "hibernate-session-terminate-time", "время через которое сессия завершается после перехода в спящий режим", true)
+	addMeterParams(params, "hibernate-session-terminate-time", "Время, через которое сессия завершается после перехода в спящий режим", true)
 
 }
 
-func (p *MeterParams) readValue(item map[string]string) int64 {
+func (p *MeterParams) readValue(item map[string]string) *int64 {
 
 	var txt string
 	var retVal int64
@@ -383,7 +394,7 @@ func (p *MeterParams) readValue(item map[string]string) int64 {
 	}
 
 	if txt == "" {
-		return retVal
+		return nil
 	}
 
 	if p.DataType == MeterDataDuration || p.DataType == MeterDataUnixDate {
@@ -394,12 +405,14 @@ func (p *MeterParams) readValue(item map[string]string) int64 {
 			} else {
 				retVal = st.Unix()
 			}
+		} else {
+			return nil
 		}
 	} else {
-		retVal = atoi(txt)
+		return atoi(txt)
 	}
 
-	return retVal
+	return &retVal
 }
 
 func findExemplars(d *bufferedData) ExemplarFinder {
@@ -425,8 +438,8 @@ func findExemplars(d *bufferedData) ExemplarFinder {
 			}
 
 			maxVal = finder.values[base][paramId]
-			if paramVal > maxVal {
-				finder.values[base][paramId] = paramVal
+			if *paramVal > maxVal {
+				finder.values[base][paramId] = *paramVal
 				finder.keys[base][paramId] = sessId
 			}
 		}

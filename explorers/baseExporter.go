@@ -90,7 +90,7 @@ func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 
 	err := cmd.Start()
 	if err != nil {
-		return "", fmt.Errorf("Произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
+		return "", fmt.Errorf("произошла ошибка запуска:\n\terr:%v\n\tПараметры: %v\n\t", err.Error(), cmd.Args)
 	}
 
 	// запускаем в горутине т.к. наблюдалось что при выполнении RAC может происходить завсание, поэтому нам нужен таймаут
@@ -239,7 +239,7 @@ func (exp *BaseRACExporter) GetClusterID() string {
 		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
 		if result, err := exp.runner.Run(cmdCommand); err != nil {
-			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
+			exp.logger.Error(fmt.Errorf("произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
 		} else {
 			cluster = exp.formatResult(result)
 		}
