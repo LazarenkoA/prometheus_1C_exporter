@@ -19,7 +19,7 @@ type sessionsData struct {
 }
 
 type bufferedData map[string]*sessionsData
-type MeterParamsCollection map[string]MeterParams
+type MeterParamsCollection map[string]*MeterParams
 
 type ExporterSessionsMemory struct {
 	ExporterSessions
@@ -63,7 +63,7 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
-	exp.meterParams = make(map[string]MeterParams)
+	exp.meterParams = make(map[string]*MeterParams)
 	exp.initAllMeterParams()
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
@@ -116,7 +116,7 @@ func (exp *ExporterSessionsMemory) collectMetrics(delay time.Duration) {
 	for {
 		ses, _ := exp.getSessions()
 		for _, item := range ses {
-			exp.loadSessionsItem(item)
+			exp.loadSessionsItem(&item)
 		}
 
 		select {
@@ -188,7 +188,15 @@ func (exp *ExporterSessionsMemory) getValue() {
 			}
 		}
 
+		toDel := exp.buff[k]
+		clear(toDel.labelsData)
+		clear(toDel.metersData)
+		exp.buff[k] = nil
 		delete(exp.buff, k)
+
+		clear(exemplarFinder.keys)
+		clear(exemplarFinder.values)
+
 	}
 }
 
@@ -228,18 +236,18 @@ func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsData {
 	return &sd
 }
 
-func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *sessionsData {
+func (exp *ExporterSessionsMemory) loadSessionsItem(item *map[string]string) *sessionsData {
 
 	var readedVal *int64
 	var existingVal *int64
 
 	data := exp.newSessionsDataExt()
-	sessionid := item["session-id"]
+	sessionid := (*item)["session-id"]
 
-	data.labelsData["appid"] = item["app-id"]
-	data.labelsData["user"] = item["user-name"]
+	data.labelsData["appid"] = (*item)["app-id"]
+	data.labelsData["user"] = (*item)["user-name"]
 	data.labelsData["id"] = sessionid
-	data.labelsData["base"] = exp.findBaseName(item["infobase"])
+	data.labelsData["base"] = exp.findBaseName((*item)["infobase"])
 
 	for m, p := range exp.meterParams {
 		readedVal = p.readValue(item)
@@ -261,13 +269,18 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item map[string]string) *ses
 				continue
 			}
 			if existingVal == nil || !p.ApplyMax {
-				buffData.metersData[m] = readedVal
+				if existingVal == nil {
+					buffData.metersData[m] = new(int64)
+				}
+				*buffData.metersData[m] = *readedVal
 				continue
 			}
 			if *readedVal > *existingVal {
-				buffData.metersData[m] = readedVal
+				*buffData.metersData[m] = *readedVal
 			}
 		}
+		clear(data.labelsData)
+		clear(data.metersData)
 		data = nil
 	}
 
@@ -290,7 +303,7 @@ func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
 }
 
 func (exp *ExporterSessionsMemory) usedExemplars() bool {
-	return true
+	return exp.settings.Other.UseExemplars
 }
 
 func (data *sessionsData) GetWithAll() prometheus.Labels {
@@ -322,7 +335,7 @@ func addMeterParams(allParams *MeterParamsCollection, sourceField string, descri
 	params.Name = strings.Replace(params.Name, "-", "", -1)
 	params.Name = strings.Replace(params.Name, " ", "", -1)
 
-	(*allParams)[params.Name] = params
+	(*allParams)[params.Name] = &params
 
 	return &params
 }
@@ -330,19 +343,17 @@ func addMeterParams(allParams *MeterParamsCollection, sourceField string, descri
 func (mp *MeterParams) SetName(paramName string) *MeterParams {
 	delete(*mp.collection, mp.Name)
 	mp.Name = paramName
-	(*mp.collection)[mp.Name] = *mp
+	(*mp.collection)[mp.Name] = mp
 	return mp
 }
 
 func (mp *MeterParams) SetOtherSourceFields(otherSourceFields []string) *MeterParams {
 	mp.OtherSourceFields = otherSourceFields
-	(*mp.collection)[mp.Name] = *mp
 	return mp
 }
 
 func (mp *MeterParams) SetDataType(dataType MeterDataType) *MeterParams {
 	mp.DataType = dataType
-	(*mp.collection)[mp.Name] = *mp
 	return mp
 }
 
@@ -378,15 +389,15 @@ func (exp *ExporterSessionsMemory) initAllMeterParams() {
 
 }
 
-func (p *MeterParams) readValue(item map[string]string) *int64 {
+func (p *MeterParams) readValue(item *map[string]string) *int64 {
 
 	var txt string
 	var retVal int64
 
-	txt = item[p.SourceField]
+	txt = (*item)[p.SourceField]
 	if txt == "" && len(p.OtherSourceFields) != 0 {
 		for _, fn := range p.OtherSourceFields {
-			txt = item[fn]
+			txt = (*item)[fn]
 			if txt != "" {
 				break
 			}

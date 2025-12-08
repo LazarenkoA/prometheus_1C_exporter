@@ -63,6 +63,7 @@ type Settings struct {
 
 	Other *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
+		UseExemplars     bool   `yaml:"UseExemplars" default:"false"`
 		// DisableGoCollector bool   `yaml:"DisableGoCollector" default:"false"`
 	} `yaml:"Other"`
 

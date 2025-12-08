@@ -50,7 +50,7 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 				Help:        "Сессии 1С (Gauge)",
 				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
 			},
-			[]string{"base", "app-id"},
+			[]string{"base", "appid"},
 		)
 	}
 
