@@ -52,6 +52,8 @@ MetricKinds:
   Session: ["Summary"]
   # Данные о сессиях могут предоставлены в виде Summary, с детализацией по каждой сессии. Это режим "по умолчанию", если настройка не указана.
   # Также можно предоставлять данные в более агрегированном виде, в виде гистограммы. При этом используется разновидность гистограмм - Native histogram.
+  # Описание Native histogram https://prometheus.io/docs/specs/native_histograms/
+  # Для использования Native histogram, их необходимо включить в конфигурации Prometheus (--enable-feature=native-histograms). 
   # Можно указать оба режима вывода, перечислением режимом в массиве.
   SessionsData: ["Summary", "NativeHistogram"]
 

@@ -386,7 +386,7 @@ func Test_collectingMetrics(t *testing.T) {
 		return "", errors.New("error")
 	})
 
-	exp.collectingMetrics(time.Millisecond * 100)
+	exp.collectMetrics(time.Millisecond * 100)
 	exp.mx.RLock()
 	assert.Equal(t, int64(10), exp.buff["590"].metersData["memorycurrent"])
 	assert.Equal(t, int64(10), exp.buff["590"].metersData["durationcurrentdbms"])

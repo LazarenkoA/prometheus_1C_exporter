@@ -13,13 +13,81 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Структурированное хранение данных сессии, прочитанных из rac
 type sessionsData struct {
+	// Значения идентификаторов сессии ("base", "user" и т.п)
 	labelsData map[string]string
+	// Значения счетчиков сессии ("memorytotal" и т.п.)
 	metersData map[string]*int64
 }
 
+func (data *sessionsData) GetWithAll() prometheus.Labels {
+	names := []string{}
+	for k := range data.labelsData {
+		names = append(names, k)
+	}
+	return data.GetWith(names...)
+}
+
+func (data *sessionsData) GetWith(names ...string) prometheus.Labels {
+	getWith := make(prometheus.Labels)
+	for _, lb := range names {
+		getWith[lb] = data.labelsData[lb]
+	}
+	return getWith
+}
+
+// Типы данных счетчика
+type meterDataType string
+
+const (
+	// Будет работать аналогично MeterDataNumber. Авто-определение не предусмотрено.
+	MeterDataUndefined meterDataType = ""
+	// Числовой счетчик
+	MeterDataNumber meterDataType = "Number"
+	// Счетчик по дате. Будет выдавать дату в Unix-дате
+	MeterDataUnixDate meterDataType = "UnixDate"
+	// Счетчик по дате. Разница между датой-временем наблюдения и датой-временем из данных поля, в секундах.
+	MeterDataDuration meterDataType = "Duration"
+)
+
+// Описание счетчика
+type MeterParams struct {
+	// Наименование счетчика. Используется в метках и/или именах гистограмм.
+	Name string
+	// Описание счетчика. Используется в описании гистограммы.
+	Description string
+	// Имя поля, по которому значение счетчика вычитывается из данных сессии
+	SourceField string
+	// Опциональные дополнительные поля. Для единичных случаев (и платформ), когда наименование счетчика в данных rac может быть другим.
+	// См. https://bugboard.v8.1c.ru/error/000150161
+	OtherSourceFields []string
+	// Как применять значение счетчика.
+	// Данные счетчиков обновляются с каждым чтением из rac. ApplyMax регулирует, как использовать новое значение счетчика.
+	// При true, новое значение заменит старое, только если новое больше старого.
+	// При false новое значение всегда перетирает старое. В основном применяется для растущих счетчиков *total
+	ApplyMax bool
+	// Тип данных счетчика. По умолчанию MeterDataUndefined.
+	DataType meterDataType
+}
+
+func (mp *MeterParams) setName(paramName string) *MeterParams {
+	mp.Name = paramName
+	return mp
+}
+
+func (mp *MeterParams) setOtherSourceFields(otherSourceFields []string) *MeterParams {
+	mp.OtherSourceFields = otherSourceFields
+	return mp
+}
+
+func (mp *MeterParams) setDataType(dataType meterDataType) *MeterParams {
+	mp.DataType = dataType
+	return mp
+}
+
+type MeterParamsCollection []*MeterParams
 type bufferedData map[string]*sessionsData
-type MeterParamsCollection map[string]*MeterParams
 
 type ExporterSessionsData struct {
 	ExporterSessions
@@ -27,31 +95,6 @@ type ExporterSessionsData struct {
 	buff        bufferedData
 	meterParams MeterParamsCollection
 	histograms  map[string]*prometheus.HistogramVec
-}
-
-type MeterDataType string
-
-const (
-	MeterDataUndefined MeterDataType = "" // Будет работать аналогично RASMeterNumber. Авто-определение не предусмотрено.
-	MeterDataNumber    MeterDataType = "Number"
-	MeterDataUnixDate  MeterDataType = "UnixDate"
-	MeterDataDuration  MeterDataType = "Duration" // Разница между датой-временем наблюдения и датой-временем из данных поля, в секундах.
-)
-
-type MeterParams struct {
-	collection        *MeterParamsCollection
-	Name              string
-	Description       string
-	SourceField       string
-	OtherSourceFields []string
-	ApplyMax          bool
-	DataType          MeterDataType
-}
-
-type ExemplarFinder struct {
-	keys   map[string]map[string]string
-	values map[string]map[string]int64
-	data   *bufferedData
 }
 
 var localTimeLocation *time.Location
@@ -63,7 +106,7 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
 
-	exp.meterParams = make(map[string]*MeterParams)
+	exp.meterParams = make(MeterParamsCollection, 0, 10)
 	exp.initAllMeterParams()
 
 	labelName := s.GetMetricNamePrefix() + exp.GetName()
@@ -83,11 +126,11 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 	if exp.usedHistogram(s) {
 
 		exp.histograms = map[string]*prometheus.HistogramVec{}
-		for nm, descr := range exp.meterParams {
-			exp.histograms[nm] = prometheus.NewHistogramVec(
+		for _, mp := range exp.meterParams {
+			exp.histograms[mp.Name] = prometheus.NewHistogramVec(
 				prometheus.HistogramOpts{
-					Name:                            labelName + "_" + nm,
-					Help:                            "Гистограммы показателя сессий кластера 1С: " + descr.Description,
+					Name:                            labelName + "_" + mp.Name,
+					Help:                            "Гистограммы показателя сессий кластера 1С: " + mp.Description,
 					ConstLabels:                     prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 					NativeHistogramBucketFactor:     1.1,
 					NativeHistogramMaxBucketNumber:  20,
@@ -134,11 +177,11 @@ func atoi(n string) *int64 {
 	return nil
 }
 
-func (exp *ExporterSessionsMemory) getValue() {
+func (exp *ExporterSessionsData) getValue() {
 	exp.logger.Info("получение данных экспортера")
 
 	var with prometheus.Labels
-	var exemplarFinder ExemplarFinder
+	var exemplarChecker ExemplarChecker
 	var usedExemplars bool
 
 	exp.mx.Lock()
@@ -150,7 +193,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 
 	if exp.usedHistogram(exp.settings) {
 		if exp.usedExemplars() {
-			exemplarFinder = findExemplars(&exp.buff)
+			exemplarChecker = findExemplars(&exp.buff)
 			usedExemplars = true
 		}
 		for _, h := range exp.histograms {
@@ -180,7 +223,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 					continue
 				}
 				hist := exp.histograms[n]
-				if usedExemplars && exemplarFinder.isExemplar(k, v.labelsData["base"], v.labelsData["appid"], n) {
+				if usedExemplars && exemplarChecker.isExemplar(k, v.labelsData["base"], v.labelsData["appid"], n) {
 					hist.With(withLabel).(prometheus.ExemplarObserver).ObserveWithExemplar(float64(*m), withExemplar)
 				} else {
 					hist.With(withLabel).Observe(float64(*m))
@@ -194,8 +237,8 @@ func (exp *ExporterSessionsMemory) getValue() {
 		exp.buff[k] = nil
 		delete(exp.buff, k)
 
-		clear(exemplarFinder.keys)
-		clear(exemplarFinder.values)
+		clear(exemplarChecker.keys)
+		clear(exemplarChecker.values)
 
 	}
 }
@@ -228,7 +271,7 @@ func (exp *ExporterSessionsData) GetType() model.MetricType {
 	return model.TypeRAC
 }
 
-func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsData {
+func (exp *ExporterSessionsData) newSessionsDataExt() *sessionsData {
 	sd := sessionsData{
 		labelsData: make(map[string]string),
 		metersData: make(map[string]*int64),
@@ -236,7 +279,7 @@ func (exp *ExporterSessionsMemory) newSessionsDataExt() *sessionsData {
 	return &sd
 }
 
-func (exp *ExporterSessionsMemory) loadSessionsItem(item *map[string]string) *sessionsData {
+func (exp *ExporterSessionsData) loadSessionsItem(item *map[string]string) *sessionsData {
 
 	var readedVal *int64
 	var existingVal *int64
@@ -249,10 +292,10 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item *map[string]string) *se
 	data.labelsData["id"] = sessionid
 	data.labelsData["base"] = exp.findBaseName((*item)["infobase"])
 
-	for m, p := range exp.meterParams {
-		readedVal = p.readValue(item)
+	for _, mp := range exp.meterParams {
+		readedVal = mp.readValue(item)
 		if readedVal != nil {
-			data.metersData[m] = readedVal
+			data.metersData[mp.Name] = readedVal
 		}
 	}
 
@@ -262,21 +305,21 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item *map[string]string) *se
 	if buffData == nil {
 		exp.buff[sessionid] = data
 	} else {
-		for m, p := range exp.meterParams {
-			existingVal = buffData.metersData[m]
-			readedVal = data.metersData[m]
+		for _, p := range exp.meterParams {
+			existingVal = buffData.metersData[p.Name]
+			readedVal = data.metersData[p.Name]
 			if readedVal == nil || (readedVal != nil && existingVal != nil && *readedVal == *existingVal) {
 				continue
 			}
 			if existingVal == nil || !p.ApplyMax {
 				if existingVal == nil {
-					buffData.metersData[m] = new(int64)
+					buffData.metersData[p.Name] = new(int64)
 				}
-				*buffData.metersData[m] = *readedVal
+				*buffData.metersData[p.Name] = *readedVal
 				continue
 			}
 			if *readedVal > *existingVal {
-				*buffData.metersData[m] = *readedVal
+				*buffData.metersData[p.Name] = *readedVal
 			}
 		}
 		clear(data.labelsData)
@@ -290,113 +333,77 @@ func (exp *ExporterSessionsMemory) loadSessionsItem(item *map[string]string) *se
 
 }
 
-func (exp *ExporterSessionsMemory) usedSummary(s *settings.Settings) bool {
-	sett := s
-	if sett == nil {
-		sett = exp.settings
-	}
-	return slices.Contains(sett.MetricKinds.SessionsData, settings.KindSummary)
+func (exp *ExporterSessionsData) usedSummary(s *settings.Settings) bool {
+	return slices.Contains(s.MetricKinds.SessionsData, settings.KindSummary)
 }
 
-func (exp *ExporterSessionsMemory) usedHistogram(s *settings.Settings) bool {
+func (exp *ExporterSessionsData) usedHistogram(s *settings.Settings) bool {
 	return slices.Contains(s.MetricKinds.SessionsData, settings.KindNativeHistogram)
 }
 
-func (exp *ExporterSessionsMemory) usedExemplars() bool {
+func (exp *ExporterSessionsData) usedExemplars() bool {
 	return exp.settings.Other.UseExemplars
 }
 
-func (data *sessionsData) GetWithAll() prometheus.Labels {
-	names := []string{}
-	for k := range data.labelsData {
-		names = append(names, k)
-	}
-	return data.GetWith(names...)
-}
+func (allParams *MeterParamsCollection) add(sourceField string, description string, applyMax bool) *MeterParams {
 
-func (data *sessionsData) GetWith(names ...string) prometheus.Labels {
-	getWith := make(prometheus.Labels)
-	for _, lb := range names {
-		getWith[lb] = data.labelsData[lb]
-	}
-	return getWith
-}
-
-func addMeterParams(allParams *MeterParamsCollection, sourceField string, description string, applyMax bool) *MeterParams {
-
-	params := MeterParams{
+	mp := MeterParams{
 		Description: description,
 		SourceField: sourceField,
 		ApplyMax:    applyMax,
-		collection:  allParams,
 		DataType:    MeterDataUndefined,
 	}
-	params.Name = sourceField
-	params.Name = strings.Replace(params.Name, "-", "", -1)
-	params.Name = strings.Replace(params.Name, " ", "", -1)
+	mp.Name = sourceField
+	mp.Name = strings.ReplaceAll(mp.Name, "-", "")
+	mp.Name = strings.ReplaceAll(mp.Name, " ", "")
 
-	(*allParams)[params.Name] = &params
+	*allParams = append(*allParams, &mp)
 
-	return &params
+	return &mp
 }
 
-func (mp *MeterParams) SetName(paramName string) *MeterParams {
-	delete(*mp.collection, mp.Name)
-	mp.Name = paramName
-	(*mp.collection)[mp.Name] = mp
-	return mp
-}
-
-func (mp *MeterParams) SetOtherSourceFields(otherSourceFields []string) *MeterParams {
-	mp.OtherSourceFields = otherSourceFields
-	return mp
-}
-
-func (mp *MeterParams) SetDataType(dataType MeterDataType) *MeterParams {
-	mp.DataType = dataType
-	return mp
-}
-
-func (exp *ExporterSessionsMemory) initAllMeterParams() {
+func (exp *ExporterSessionsData) initAllMeterParams() {
 
 	params := &(exp.meterParams)
 
-	addMeterParams(params, "memory-total", "Память (всего)", false)
-	addMeterParams(params, "memory-current", "Память (текущая)", true)
-	addMeterParams(params, "read-current", "Чтение (текущее)", true)
-	addMeterParams(params, "read-total", "Чтение (всего)", false)
-	addMeterParams(params, "write-current", "Запись (текущая)", true)
-	addMeterParams(params, "write-total", "Запись (всего)", false)
-	addMeterParams(params, "duration-current", "Время вызова (текущее)", true)
-	addMeterParams(params, "duration-current-dbms", "Длительность текущего вызова СУБД", true).SetOtherSourceFields([]string{"duration current-dbms"})
-	addMeterParams(params, "duration-all", "Общее время работы сессии", true)
-	addMeterParams(params, "duration-all-service", "Время работы сервисов кластера с начала сеанса или соединения", true)
-	addMeterParams(params, "duration-all-dbms", "Общее время выполнения операций в СУБД", true)
-	addMeterParams(params, "cpu-time-current", "Процессорное время (текущее)", true)
-	addMeterParams(params, "cpu-time-total", "Процессорное время (всего)", false)
-	addMeterParams(params, "dbms-bytes-all", "Объем данных, переданных из/в СУБД", true)
-	addMeterParams(params, "calls-all", "Количество вызовов (запросов) за все время", true)
-	addMeterParams(params, "blocked-by-ls", "Количество блокировок локального сервиса", true)
-	addMeterParams(params, "blocked-by-dbms", "Количество блокировок СУБД", true)
-	addMeterParams(params, "db-proc-took", "Время соединения СУБД", true)
-	addMeterParams(params, "db-proc-took-at", "Продолжительность соединения СУБД ", true).SetName("dbproctookatduration").SetDataType(MeterDataDuration)
-	addMeterParams(params, "started-at", "Длительность сеанса", true).SetName("startedatduration").SetDataType(MeterDataDuration)
-	addMeterParams(params, "started-at", "Начало сеанса", true).SetDataType(MeterDataUnixDate)
-	addMeterParams(params, "last-active-at", "Прошло времени с последней активности сессии", true).SetName("lastactiveatduration").SetDataType(MeterDataDuration)
-	addMeterParams(params, "last-active-at", "Время последней активности сессии", true).SetDataType(MeterDataUnixDate)
-	addMeterParams(params, "passive-session-hibernate-time", "Время в секундах бездействия до перевода сессии в спящий режим", true)
-	addMeterParams(params, "hibernate-session-terminate-time", "Время, через которое сессия завершается после перехода в спящий режим", true)
+	params.add("memory-total", "Память (всего)", false)
+	params.add("memory-current", "Память (текущая)", true)
+	params.add("read-current", "Чтение (текущее)", true)
+	params.add("read-total", "Чтение (всего)", false)
+	params.add("write-current", "Запись (текущая)", true)
+	params.add("write-total", "Запись (всего)", false)
+	params.add("duration-current", "Время вызова (текущее)", true)
+	// Устанавливается дополнительное поле в OtherSourceFields для совместимости со старой платформой.
+	// Ссылка на багборд https://bugboard.v8.1c.ru/error/000150161
+	params.add("duration-current-dbms", "Длительность текущего вызова СУБД", true).setOtherSourceFields([]string{"duration current-dbms"})
+	params.add("duration-all", "Общее время работы сессии", true)
+	params.add("duration-all-service", "Время работы сервисов кластера с начала сеанса или соединения", true)
+	params.add("duration-all-dbms", "Общее время выполнения операций в СУБД", true)
+	params.add("cpu-time-current", "Процессорное время (текущее)", true)
+	params.add("cpu-time-total", "Процессорное время (всего)", false)
+	params.add("dbms-bytes-all", "Объем данных, переданных из/в СУБД", true)
+	params.add("calls-all", "Количество вызовов (запросов) за все время", true)
+	params.add("blocked-by-ls", "Количество блокировок локального сервиса", true)
+	params.add("blocked-by-dbms", "Количество блокировок СУБД", true)
+	params.add("db-proc-took", "Время соединения СУБД", true)
+	params.add("db-proc-took-at", "Продолжительность соединения СУБД ", true).setName("dbproctookatduration").setDataType(MeterDataDuration)
+	params.add("started-at", "Длительность сеанса", true).setName("startedatduration").setDataType(MeterDataDuration)
+	params.add("started-at", "Начало сеанса", true).setDataType(MeterDataUnixDate)
+	params.add("last-active-at", "Прошло времени с последней активности сессии", true).setName("lastactiveatduration").setDataType(MeterDataDuration)
+	params.add("last-active-at", "Время последней активности сессии", true).setDataType(MeterDataUnixDate)
+	params.add("passive-session-hibernate-time", "Время в секундах бездействия до перевода сессии в спящий режим", true)
+	params.add("hibernate-session-terminate-time", "Время, через которое сессия завершается после перехода в спящий режим", true)
 
 }
 
-func (p *MeterParams) readValue(item *map[string]string) *int64 {
+func (mp *MeterParams) readValue(item *map[string]string) *int64 {
 
 	var txt string
 	var retVal int64
 
-	txt = (*item)[p.SourceField]
-	if txt == "" && len(p.OtherSourceFields) != 0 {
-		for _, fn := range p.OtherSourceFields {
+	txt = (*item)[mp.SourceField]
+	if txt == "" && len(mp.OtherSourceFields) != 0 {
+		for _, fn := range mp.OtherSourceFields {
 			txt = (*item)[fn]
 			if txt != "" {
 				break
@@ -408,10 +415,10 @@ func (p *MeterParams) readValue(item *map[string]string) *int64 {
 		return nil
 	}
 
-	if p.DataType == MeterDataDuration || p.DataType == MeterDataUnixDate {
+	if mp.DataType == MeterDataDuration || mp.DataType == MeterDataUnixDate {
 		st, e := time.ParseInLocation("2006-01-02T15:04:05", txt, localTimeLocation)
 		if e == nil {
-			if p.DataType == MeterDataDuration {
+			if mp.DataType == MeterDataDuration {
 				retVal = int64(time.Since(st).Seconds())
 			} else {
 				retVal = st.Unix()
@@ -426,14 +433,14 @@ func (p *MeterParams) readValue(item *map[string]string) *int64 {
 	return &retVal
 }
 
-func findExemplars(d *bufferedData) ExemplarFinder {
+func findExemplars(d *bufferedData) ExemplarChecker {
 
 	// Пока решено, что экземплярами по счетчикам будут сессии, где обнаружено максимальное значение
 
 	var maxVal int64
 	var base string
 
-	finder := ExemplarFinder{
+	finder := ExemplarChecker{
 		data:   d,
 		keys:   make(map[string]map[string]string),
 		values: make(map[string]map[string]int64),
@@ -459,7 +466,13 @@ func findExemplars(d *bufferedData) ExemplarFinder {
 	return finder
 }
 
-func (finder *ExemplarFinder) isExemplar(sess string, base string, appid string, param string) bool {
+type ExemplarChecker struct {
+	keys   map[string]map[string]string
+	values map[string]map[string]int64
+	data   *bufferedData
+}
+
+func (finder *ExemplarChecker) isExemplar(sess string, base string, appid string, param string) bool {
 	targetSess := finder.keys[base][param]
 	return sess == targetSess
 }
