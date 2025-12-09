@@ -21,7 +21,7 @@ type sessionsData struct {
 type bufferedData map[string]*sessionsData
 type MeterParamsCollection map[string]*MeterParams
 
-type ExporterSessionsMemory struct {
+type ExporterSessionsData struct {
 	ExporterSessions
 
 	buff        bufferedData
@@ -56,7 +56,7 @@ type ExemplarFinder struct {
 
 var localTimeLocation *time.Location
 
-func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSessionsMemory {
+func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessionsData {
 
 	localTimeLocation, _ = time.LoadLocation("Local")
 
@@ -112,7 +112,7 @@ func (exp *ExporterSessionsMemory) Construct(s *settings.Settings) *ExporterSess
 	return exp
 }
 
-func (exp *ExporterSessionsMemory) collectMetrics(delay time.Duration) {
+func (exp *ExporterSessionsData) collectMetrics(delay time.Duration) {
 	for {
 		ses, _ := exp.getSessions()
 		for _, item := range ses {
@@ -200,7 +200,7 @@ func (exp *ExporterSessionsMemory) getValue() {
 	}
 }
 
-func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
+func (exp *ExporterSessionsData) Collect(ch chan<- prometheus.Metric) {
 
 	if exp.isLocked.Load() {
 		return
@@ -220,11 +220,11 @@ func (exp *ExporterSessionsMemory) Collect(ch chan<- prometheus.Metric) {
 
 }
 
-func (exp *ExporterSessionsMemory) GetName() string {
+func (exp *ExporterSessionsData) GetName() string {
 	return "sessions_data"
 }
 
-func (exp *ExporterSessionsMemory) GetType() model.MetricType {
+func (exp *ExporterSessionsData) GetType() model.MetricType {
 	return model.TypeRAC
 }
 

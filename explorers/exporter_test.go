@@ -201,7 +201,7 @@ func Test_Exporter(t *testing.T) {
 		}).MaxTimes(2)
 		summaryMock.EXPECT().Reset().MaxTimes(2)
 
-		exp := new(ExporterSessionsMemory).Construct(settings)
+		exp := new(ExporterSessionsData).Construct(settings)
 		exp.mx.Lock()
 		exp.summary = summaryMock
 		exp.clusterID = "123"
@@ -370,7 +370,7 @@ func Test_collectingMetrics(t *testing.T) {
 		fillBaseListRun.Lock() // что бы не запустился fillBaseList и все не испортил
 	}()
 
-	exp := new(ExporterSessionsMemory).Construct(settings)
+	exp := new(ExporterSessionsData).Construct(settings)
 	exp.mx.Lock()
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Millisecond)
 	exp.summary = summaryMock

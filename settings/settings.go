@@ -100,6 +100,14 @@ func LoadSettings(filePath string) (*Settings, error) {
 		return nil, errors.Wrap(err, "set default error")
 	}
 
+	// если логпас от RAS указан в env у него приоритет над конфигом
+	if login := os.Getenv("RAC_LOGIN"); login != "" {
+		s.RAC.Login = login
+	}
+	if pass := os.Getenv("RAC_PASSWORD"); pass != "" {
+		s.RAC.Pass = pass
+	}
+
 	s.SettingsPath = filePath
 	return s, nil
 }
