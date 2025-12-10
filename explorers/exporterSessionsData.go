@@ -271,7 +271,7 @@ func (exp *ExporterSessionsData) GetType() model.MetricType {
 	return model.TypeRAC
 }
 
-func (exp *ExporterSessionsData) newSessionsDataExt() *sessionsData {
+func newSessionsDataExt() *sessionsData {
 	sd := sessionsData{
 		labelsData: make(map[string]string),
 		metersData: make(map[string]*int64),
@@ -279,57 +279,58 @@ func (exp *ExporterSessionsData) newSessionsDataExt() *sessionsData {
 	return &sd
 }
 
-func (exp *ExporterSessionsData) loadSessionsItem(item *map[string]string) *sessionsData {
+func (exp *ExporterSessionsData) loadSessionsItem(racDataItem *map[string]string) *sessionsData {
 
 	var readedVal *int64
 	var existingVal *int64
 
-	data := exp.newSessionsDataExt()
-	sessionid := (*item)["session-id"]
+	sessionsData := newSessionsDataExt()
+	sessionid := (*racDataItem)["session-id"]
 
-	data.labelsData["appid"] = (*item)["app-id"]
-	data.labelsData["user"] = (*item)["user-name"]
-	data.labelsData["id"] = sessionid
-	data.labelsData["base"] = exp.findBaseName((*item)["infobase"])
+	sessionsData.labelsData["appid"] = (*racDataItem)["app-id"]
+	sessionsData.labelsData["user"] = (*racDataItem)["user-name"]
+	sessionsData.labelsData["id"] = sessionid
+	sessionsData.labelsData["base"] = exp.findBaseName((*racDataItem)["infobase"])
 
 	for _, mp := range exp.meterParams {
-		readedVal = mp.readValue(item)
+		readedVal = mp.readValue(racDataItem)
 		if readedVal != nil {
-			data.metersData[mp.Name] = readedVal
+			sessionsData.metersData[mp.Name] = readedVal
 		}
 	}
 
 	exp.mx.Lock()
 
-	buffData := exp.buff[sessionid]
-	if buffData == nil {
-		exp.buff[sessionid] = data
+	bufferData := exp.buff[sessionid]
+	if bufferData == nil {
+		exp.buff[sessionid] = sessionsData
+		bufferData = sessionsData
 	} else {
 		for _, p := range exp.meterParams {
-			existingVal = buffData.metersData[p.Name]
-			readedVal = data.metersData[p.Name]
+			existingVal = bufferData.metersData[p.Name]
+			readedVal = sessionsData.metersData[p.Name]
 			if readedVal == nil || (readedVal != nil && existingVal != nil && *readedVal == *existingVal) {
 				continue
 			}
 			if existingVal == nil || !p.ApplyMax {
 				if existingVal == nil {
-					buffData.metersData[p.Name] = new(int64)
+					bufferData.metersData[p.Name] = new(int64)
 				}
-				*buffData.metersData[p.Name] = *readedVal
+				*bufferData.metersData[p.Name] = *readedVal
 				continue
 			}
 			if *readedVal > *existingVal {
-				*buffData.metersData[p.Name] = *readedVal
+				*bufferData.metersData[p.Name] = *readedVal
 			}
 		}
-		clear(data.labelsData)
-		clear(data.metersData)
-		data = nil
+		clear(sessionsData.labelsData)
+		clear(sessionsData.metersData)
+		sessionsData = nil
 	}
 
 	exp.mx.Unlock()
 
-	return buffData
+	return bufferData
 
 }
 
