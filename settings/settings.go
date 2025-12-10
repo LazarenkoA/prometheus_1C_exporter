@@ -23,10 +23,11 @@ import (
 type TypeMetricKind string
 
 const (
-	KindUndefined                      = ""
-	KindSummary         TypeMetricKind = "Summary"
-	KindGauge           TypeMetricKind = "Gauge"
-	KindNativeHistogram TypeMetricKind = "NativeHistogram"
+	KindUndefined                        = ""
+	KindSummary           TypeMetricKind = "Summary"
+	KindGauge             TypeMetricKind = "Gauge"
+	KindNativeHistogram   TypeMetricKind = "NativeHistogram"
+	KindVictoriaHistogram TypeMetricKind = "VictoriaHistogram"
 )
 
 type TypeHostLabelFrom string
@@ -60,9 +61,11 @@ type Settings struct {
 		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]" `
 	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
 
-	LabelModes *struct {
+	Other *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
-	} `yaml:"LabelModes"`
+		UseExemplars     bool   `yaml:"UseExemplars" default:"false"`
+		// DisableGoCollector bool   `yaml:"DisableGoCollector" default:"false"`
+	} `yaml:"Other"`
 
 	mx *sync.RWMutex `yaml:"-"`
 	// login, pass string        `yaml:"-"`
@@ -160,8 +163,8 @@ func (s *Settings) RAC_Pass() string {
 }
 
 func (s *Settings) GetMetricNamePrefix() string {
-	if s.LabelModes != nil {
-		return s.LabelModes.MetricNamePrefix
+	if s.Other != nil {
+		return s.Other.MetricNamePrefix
 	}
 	return ""
 }
@@ -176,6 +179,13 @@ func (s *Settings) GetRASHostPort() string {
 	rasHostPort += rasPort
 	return rasHostPort
 }
+
+// func (s *Settings) GetDisableGoCollector() bool {
+// 	if s.Other != nil {
+// 		return s.Other.DisableGoCollector
+// 	}
+// 	return false
+// }
 
 func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 	if s.DBCredentials == nil || s.DBCredentials.URL == "" {

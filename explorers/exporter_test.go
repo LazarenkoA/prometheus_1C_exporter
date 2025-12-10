@@ -2,6 +2,11 @@ package exporter
 
 import (
 	"context"
+	"os/exec"
+	"reflect"
+	"testing"
+	"time"
+
 	mock_models "github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/agiledragon/gomonkey/v2"
@@ -15,10 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
-	"os/exec"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func Test_Exporter(t *testing.T) {
@@ -204,39 +205,45 @@ func Test_Exporter(t *testing.T) {
 		exp.mx.Lock()
 		exp.summary = summaryMock
 		exp.clusterID = "123"
+
+		sessData := new(sessionsData)
+		sessData.labelsData = map[string]string{
+			"basename":  "test",
+			"user":      "test",
+			"sessionid": "1",
+		}
+		sessData.metersData = map[string]*int64{
+			"memorytotal":         atoi("10"),
+			"memorycurrent":       atoi("6"),
+			"readcurrent":         atoi("5"),
+			"readtotal":           atoi("1"),
+			"writecurrent":        atoi("4"),
+			"writetotal":          atoi("22"),
+			"durationcurrent":     atoi("45"),
+			"durationcurrentdbms": atoi("473"),
+			"durationall":         atoi("43"),
+			"durationalldbms":     atoi("3"),
+			"cputimecurrent":      atoi("2"),
+			"cputimetotal":        atoi("0"),
+			"dbmsbytesall":        atoi("334"),
+			"callsall":            atoi("3432"),
+		}
+
 		exp.buff = map[string]*sessionsData{
-			"1": {
-				basename:            "test",
-				user:                "test",
-				memorytotal:         10,
-				memorycurrent:       6,
-				readcurrent:         5,
-				readtotal:           1,
-				writecurrent:        4,
-				writetotal:          22,
-				durationcurrent:     45,
-				durationcurrentdbms: 473,
-				durationall:         43,
-				durationalldbms:     3,
-				cputimecurrent:      2,
-				cputimetotal:        0,
-				dbmsbytesall:        334,
-				callsall:            3432,
-				sessionid:           "1",
-			},
+			"1": sessData,
 		}
 		exp.mx.Unlock()
 
 		t.Run("pass", func(t *testing.T) {
 			observer.EXPECT().Observe(gomock.Any()).Do(func(v float64) {
-				contains := lo.ContainsBy[*sessionsData](maps.Values(exp.buff), func(item *sessionsData) bool {
-					return item.memorytotal == int64(v) || item.memorycurrent == int64(v) ||
-						item.readcurrent == int64(v) || item.readtotal == int64(v) ||
-						item.writecurrent == int64(v) || item.writetotal == int64(v) ||
-						item.durationcurrent == int64(v) || item.durationcurrentdbms == int64(v) ||
-						item.durationall == int64(v) || item.durationalldbms == int64(v) ||
-						item.cputimecurrent == int64(v) || item.cputimetotal == int64(v) ||
-						item.dbmsbytesall == int64(v) || item.callsall == int64(v)
+				contains := lo.ContainsBy[*sessData](maps.Values(exp.buff), func(item *sessData) bool {
+					return *item.metersData["memorytotal"] == int64(v) || *item.metersData["memorycurrent"] == int64(v) ||
+						*item.metersData["readcurrent"] == int64(v) || *item.metersData["readtotal"] == int64(v) ||
+						*item.metersData["writecurrent"] == int64(v) || *item.metersData["writetotal"] == int64(v) ||
+						*item.metersData["durationcurrent"] == int64(v) || *item.metersData["durationcurrentdbms"] == int64(v) ||
+						*item.metersData["durationall"] == int64(v) || *item.metersData["durationalldbms"] == int64(v) ||
+						*item.metersData["cputimecurrent"] == int64(v) || *item.metersData["cputimetotal"] == int64(v) ||
+						*item.metersData["dbmsbytesall"] == int64(v) || *item.metersData["callsall"] == int64(v)
 				})
 				assert.True(t, contains)
 			}).Times(14)
@@ -379,11 +386,11 @@ func Test_collectingMetrics(t *testing.T) {
 		return "", errors.New("error")
 	})
 
-	exp.collectingMetrics(time.Millisecond * 100)
+	exp.collectMetrics(time.Millisecond * 100)
 	exp.mx.RLock()
-	assert.Equal(t, int64(10), exp.buff["590"].memorycurrent)
-	assert.Equal(t, int64(10), exp.buff["590"].durationcurrentdbms)
-	assert.Equal(t, int64(112815764), exp.buff["590"].readtotal)
+	assert.Equal(t, int64(10), exp.buff["590"].metersData["memorycurrent"])
+	assert.Equal(t, int64(10), exp.buff["590"].metersData["durationcurrentdbms"])
+	assert.Equal(t, int64(112815764), exp.buff["590"].metersData["readtotal"])
 
 	exp.mx.RUnlock()
 }

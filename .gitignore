@@ -23,3 +23,4 @@ profile
 # Dependency directories (remove the comment below to include it)
 # vendor/
 1C_exporter
+/1c_exporter.exe_

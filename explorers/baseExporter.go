@@ -239,7 +239,7 @@ func (exp *BaseRACExporter) GetClusterID() string {
 		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
 		cluster := make(map[string]string)
 		if result, err := exp.runner.Run(cmdCommand); err != nil {
-			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
+			exp.logger.Error(fmt.Errorf("произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
 		} else {
 			cluster = exp.formatResult(result)
 		}
@@ -268,7 +268,7 @@ func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
 
 func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 	exp.Metrics = []string{}
-	for k, _ := range set.GetExporters() {
+	for k := range set.GetExporters() {
 		exp.Metrics = append(exp.Metrics, k)
 	}
 
