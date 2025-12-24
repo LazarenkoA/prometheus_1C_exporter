@@ -27,7 +27,7 @@ func (exp *ExporterAvailablePerformance) Construct(s *settings.Settings) *Export
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
 		},
-		[]string{"host", "cluster", "pid", "type"},
+		[]string{"host", "cluster", "pid", "running", "use", "reserve", "type"},
 	)
 
 	exp.settings = s
@@ -42,7 +42,13 @@ func (exp *ExporterAvailablePerformance) getValue() {
 
 		exp.summary.Reset()
 		for _, item := range data {
-			exp.summary.WithLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string)).Observe(item["value"].(float64))
+			exp.summary.WithLabelValues(item["host"].(string),
+				item["cluster"].(string),
+				item["pid"].(string),
+				item["running"].(string),
+				item["use"].(string),
+				item["reserve"].(string),
+				item["type"].(string)).Observe(item["value"].(float64))
 		}
 	} else {
 		exp.summary.Reset()
@@ -89,10 +95,23 @@ func (exp *ExporterAvailablePerformance) getData() (result []map[string]interfac
 			tmp["avgservercalltime"] = avgservercalltime
 		}
 
+		// Количество соединений
+		if connections, err := strconv.ParseFloat(item["connections"], 64); err == nil {
+			tmp["connections"] = connections
+		}
+
+		// Занято памяти
+		if memorysize, err := strconv.ParseFloat(item["memory-size"], 64); err == nil {
+			tmp["memorysize"] = memorysize
+		}
+
 		for k, v := range tmp {
 			result = append(result, map[string]interface{}{
 				"host":    item["host"],
 				"pid":     item["pid"],
+				"running": item["running"],
+				"use":     item["use"],
+				"reserve": item["reserve"],
 				"cluster": clusterID,
 				"type":    k,
 				"value":   v,
