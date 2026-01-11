@@ -86,6 +86,7 @@ scrape_configs:
 |-------|------------|-----------------------------------|
 | GET   | /Pause      | metricNames<br/> offsetMin (опционально) |
 | GET   | /Continue   | metricNames                      |
+| POST  | /set_config |                       |
 
 **Примеры:**
 Приостановить сбор на 5 минут:
@@ -96,6 +97,11 @@ http://host:9091/Pause?metricNames=processes,connections&offsetMin=5
 Возобновить сбор:
 ``` 
 http://host:9091/Continue?metricNames=disk_metrics
+```
+
+Загрузить новый конфигурационный файл, с применением новых настроек:
+``` 
+curl -X POST http://localhost:9091/set_config -F "file=@settings.yml"
 ```
 
 ## 📊 Метрики

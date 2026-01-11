@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -93,7 +94,11 @@ func (a *app) reloadWatcher() {
 
 	<-c
 
-	// перечитываем настройки
+	a.renewSettings()
+}
+
+func (a *app) renewSettings() {
+
 	news, err := settings.LoadSettings(a.settings.SettingsPath)
 	if err != nil {
 		logger.DefaultLogger.Error(err)
@@ -103,6 +108,7 @@ func (a *app) reloadWatcher() {
 
 	logger.InitLogger(a.settings.LogDir, a.settings.LogLevel)
 
+	a.unregisterAll()
 	a.metric.FillMetrics(a.settings)
 	a.register()
 
@@ -122,6 +128,8 @@ func (a *app) initHTTP() {
 	siteMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	siteMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	siteMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	siteMux.HandleFunc("POST /set_config", a.setConfig)
 
 	a.httpSrv = &http.Server{
 		Handler: siteMux,
@@ -153,4 +161,37 @@ func (a *app) register() {
 			logger.DefaultLogger.Debugf("Метрика %q пропущена", ex.GetName())
 		}
 	}
+}
+
+func (a *app) setConfig(w http.ResponseWriter, r *http.Request) {
+
+	logger.DefaultLogger.Info("Начинаем обработку метода /set_config")
+
+	if r.Method != "POST" {
+		w.WriteHeader(405)
+		logger.DefaultLogger.Error("Требуется использование метода POST")
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		w.WriteHeader(400)
+		logger.DefaultLogger.Error(err)
+		return
+	}
+	defer file.Close()
+
+	out, err := os.Create(a.settings.SettingsPath)
+	if err != nil {
+		w.WriteHeader(500)
+		logger.DefaultLogger.Error(err)
+		return
+	}
+	defer out.Close()
+
+	io.Copy(out, file)
+	w.WriteHeader(201)
+
+	a.renewSettings()
+
 }
