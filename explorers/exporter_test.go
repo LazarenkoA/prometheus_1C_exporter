@@ -372,17 +372,32 @@ func Test_collectingMetrics(t *testing.T) {
 	exp.ctx, exp.cancel = context.WithCancel(context.Background())
 	exp.mx.Unlock()
 
-	run.EXPECT().Run(gomock.Any()).Return(testDatasession1(), nil)
-	run.EXPECT().Run(gomock.Any()).Return(testDatasession2(), nil)
+	freeze := make(chan struct{})
+
 	run.EXPECT().Run(gomock.Any()).DoAndReturn(func(_ *exec.Cmd) (string, error) {
 		exp.cancel()
-		return "", errors.New("error")
-	})
 
-	exp.collectingMetrics(time.Millisecond * 100)
+		go func() {
+			time.Sleep(time.Millisecond * 100)
+			close(freeze)
+		}()
+
+		return testDatasession1(), nil
+	})
+	//run.EXPECT().Run(gomock.Any()).Return(testDatasession2(), nil)
+	//run.EXPECT().Run(gomock.Any()).DoAndReturn(func(_ *exec.Cmd) (string, error) {
+	//	exp.cancel()
+	//	time.Sleep(time.Millisecond * 100)
+	//	close(freeze)
+	//
+	//	return "", errors.New("error")
+	//})
+
+	<-freeze
 	exp.mx.RLock()
+
 	assert.Equal(t, int64(10), exp.buff["590"].memorycurrent)
-	assert.Equal(t, int64(10), exp.buff["590"].durationcurrentdbms)
+	assert.Equal(t, int64(130), exp.buff["590"].durationcurrentdbms)
 	assert.Equal(t, int64(112815764), exp.buff["590"].readtotal)
 
 	exp.mx.RUnlock()
@@ -417,10 +432,10 @@ db-proc-took-at                  :
 duration-all                     : 100430
 duration-all-dbms                : 24372
 duration-current                 : 0
-duration-current-dbms            : 0
+duration-current-dbms            : 130
 duration-last-5min               : 2349
 duration-last-5min-dbms          : 247
-memory-current                   : 0
+memory-current                   : 10
 memory-last-5min                 : 2297385
 memory-total                     : 268360299
 read-current                     : 0
