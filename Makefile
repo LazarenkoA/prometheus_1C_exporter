@@ -23,7 +23,10 @@ run:
 	go run main.go app.go --settings=examples_settings.yaml
 
 test:
-	go test ./... -gcflags=all=-l
+	go test ./... -gcflags=all=-l -race
+# при ошибке на windows
+# cgo: C compiler "gcc" not found: exec: "gcc": executable file not found in %PATH%
+# скачать и установить https://www.msys2.org/
 
 run_docker:
 	docker run -d --name prometheus -p 9090:9090 -v ./prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:v2.44.0 --config.file=/etc/prometheus/prometheus.yml --enable-feature=native-histograms

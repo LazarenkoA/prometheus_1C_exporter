@@ -202,6 +202,7 @@ func Test_Exporter(t *testing.T) {
 
 		exp := new(ExporterSessionsData).Construct(settings)
 		exp.mx.Lock()
+		exp.BaseExporter.mx.Lock()
 		exp.summary = summaryMock
 		exp.clusterID = "123"
 		exp.buff = map[string]*sessionsData{
@@ -226,6 +227,7 @@ func Test_Exporter(t *testing.T) {
 			},
 		}
 		exp.mx.Unlock()
+		exp.BaseExporter.mx.Unlock()
 
 		t.Run("pass", func(t *testing.T) {
 			observer.EXPECT().Observe(gomock.Any()).Do(func(v float64) {
@@ -373,7 +375,6 @@ func Test_collectingMetrics(t *testing.T) {
 	exp.summary = summaryMock
 	exp.clusterID = "123"
 	exp.runner = run
-	exp.mx.Unlock()
 
 	freeze := make(chan struct{})
 
@@ -387,14 +388,7 @@ func Test_collectingMetrics(t *testing.T) {
 
 		return testDatasession1(), nil
 	})
-	//run.EXPECT().Run(gomock.Any()).Return(testDatasession2(), nil)
-	//run.EXPECT().Run(gomock.Any()).DoAndReturn(func(_ *exec.Cmd) (string, error) {
-	//	exp.cancel()
-	//	time.Sleep(time.Millisecond * 100)
-	//	close(freeze)
-	//
-	//	return "", errors.New("error")
-	//})
+	exp.mx.Unlock()
 
 	<-freeze
 	exp.mx.RLock()
