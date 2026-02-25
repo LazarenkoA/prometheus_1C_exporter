@@ -1,6 +1,8 @@
 package exporter
 
 import (
+	"runtime/trace"
+
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/pkg/errors"
@@ -40,6 +42,8 @@ func (exp *ExporterDisk) Construct(s *settings.Settings) *ExporterDisk {
 }
 
 func (exp *ExporterDisk) getValue() {
+	defer trace.StartRegion(exp.ctx, "Disk.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	dInfo, err := exp.hInfo.IOCounters()
@@ -60,6 +64,8 @@ func (exp *ExporterDisk) getValue() {
 }
 
 func (exp *ExporterDisk) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "Disk.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

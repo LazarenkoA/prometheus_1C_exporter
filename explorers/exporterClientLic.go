@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"runtime/trace"
 	"strings"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -34,6 +35,8 @@ func (exp *ExporterClientLic) Construct(s *settings.Settings) *ExporterClientLic
 }
 
 func (exp *ExporterClientLic) getValue() {
+	defer trace.StartRegion(exp.ctx, "ClientLic.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	var group map[string]int
@@ -92,6 +95,8 @@ func (exp *ExporterClientLic) getLic() (licData []map[string]string, err error) 
 }
 
 func (exp *ExporterClientLic) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "ClientLic.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

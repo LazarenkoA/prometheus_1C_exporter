@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"runtime/trace"
 	"strconv"
 	"strings"
 	"sync"
@@ -119,6 +120,8 @@ func (r *cmdRunner) Run(cmd *exec.Cmd) (string, error) {
 }
 
 func (exp *BaseExporter) run(cmd *exec.Cmd) (string, error) {
+	defer trace.StartRegion(exp.ctx, "Base.run").End()
+
 	exp.logger.With("исполняемый файл", cmd.Path).
 		With("параметры", cmd.Args).
 		Debug("выполнение команды")
@@ -187,6 +190,8 @@ func (exp *BaseRACExporter) formatMultiResult(strIn string, outData *[]map[strin
 }
 
 func (exp *BaseRACExporter) formatResult(strIn string) map[string]string {
+	defer trace.StartRegion(exp.ctx, "Base.formatResult").End()
+
 	strIn = normalizeEncoding(strIn)
 	result := make(map[string]string)
 	for _, line := range strings.Split(strIn, "\n") {

@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"runtime/trace"
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -42,6 +43,8 @@ func (exp *CPU) Construct(s *settings.Settings) *CPU {
 }
 
 func (exp *CPU) getValue() {
+	defer trace.StartRegion(exp.ctx, "CPU.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	percentage, err := exp.hInfo.TotalCPUPercent(0, false)
@@ -57,6 +60,8 @@ func (exp *CPU) getValue() {
 }
 
 func (exp *CPU) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "CPU.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

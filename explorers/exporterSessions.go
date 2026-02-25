@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"runtime/trace"
 	"slices"
 	"strings"
 	"sync"
@@ -63,6 +64,8 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 }
 
 func (exp *ExporterSessions) getValue() {
+	defer trace.StartRegion(exp.ctx, "Sessions.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	ses, err := exp.getSessions()
@@ -108,6 +111,8 @@ func (exp *ExporterSessions) getValue() {
 }
 
 func (exp *ExporterSessions) getSessions() (sesData []map[string]string, err error) {
+	defer trace.StartRegion(exp.ctx, "Sessions.getSessions").End()
+
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
 
@@ -139,6 +144,8 @@ func (exp *ExporterSessions) getSessions() (sesData []map[string]string, err err
 }
 
 func (exp *ExporterSessions) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "Sessions.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

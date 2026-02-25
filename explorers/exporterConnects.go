@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"runtime/trace"
 	"strings"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
@@ -37,6 +38,8 @@ func (exp *ExporterConnects) Construct(s *settings.Settings) *ExporterConnects {
 }
 
 func (exp *ExporterConnects) getValue() {
+	defer trace.StartRegion(exp.ctx, "Connects.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	connects, err := exp.getConnects()
@@ -61,6 +64,8 @@ func (exp *ExporterConnects) getValue() {
 }
 
 func (exp *ExporterConnects) getConnects() (connData []map[string]string, err error) {
+	defer trace.StartRegion(exp.ctx, "Connects.getConnects").End()
+
 	connData = []map[string]string{}
 
 	var param []string
@@ -86,6 +91,8 @@ func (exp *ExporterConnects) getConnects() (connData []map[string]string, err er
 }
 
 func (exp *ExporterConnects) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "Connects.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

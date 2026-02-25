@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"runtime/trace"
 	"strconv"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -41,6 +42,8 @@ func (cpu *Processes) Construct(s *settings.Settings) *Processes {
 }
 
 func (cpu *Processes) getValue() {
+	defer trace.StartRegion(cpu.ctx, "Processes.getValue").End()
+
 	cpu.logger.Info("получение данных экспортера")
 
 	processes, err := cpu.hInfo.Processes()
@@ -69,6 +72,8 @@ func (cpu *Processes) getValue() {
 }
 
 func (cpu *Processes) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(cpu.ctx, "Processes.Collect").End()
+
 	if cpu.isLocked.Load() {
 		return
 	}

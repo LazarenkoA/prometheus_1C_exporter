@@ -65,7 +65,7 @@ func (a *app) Start() error {
 	}
 
 	go a.settings.GetDBCredentials(a.ctx, exp.CForce)
-	go a.reloadWatcher()
+	go a.gracefulShutdown()
 
 	a.register()
 	go func() {
@@ -86,14 +86,22 @@ func (a *app) Stop() error {
 	return a.httpSrv.Shutdown(ctx)
 }
 
-func (a *app) reloadWatcher() {
-	// Обработка сигала от ОС
+func (a *app) gracefulShutdown() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP) // SIGHUP получаем при отпавки reload
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGTERM)
 
-	<-c
+	for sig := range c {
+		switch sig {
+		case syscall.SIGHUP:
+			a.reloadWatcher()
+		case syscall.SIGTERM:
+			a.Stop()
+			return
+		}
+	}
+}
 
-	// перечитываем настройки
+func (a *app) reloadWatcher() {
 	news, err := settings.LoadSettings(a.settings.SettingsPath)
 	if err != nil {
 		logger.DefaultLogger.Error(err)
@@ -104,6 +112,7 @@ func (a *app) reloadWatcher() {
 	logger.InitLogger(a.settings.LogDir, a.settings.LogLevel)
 
 	a.metric.FillMetrics(a.settings)
+	a.unregisterAll()
 	a.register()
 
 	logger.DefaultLogger.Info("Обновлены настройки")

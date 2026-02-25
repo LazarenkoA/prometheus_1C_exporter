@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"runtime/trace"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,8 @@ func (exp *ExporterAvailablePerformance) Construct(s *settings.Settings) *Export
 }
 
 func (exp *ExporterAvailablePerformance) getValue() {
+	defer trace.StartRegion(exp.ctx, "AvailablePerformance.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	if data, err := exp.getData(); err == nil {
@@ -123,6 +126,8 @@ func (exp *ExporterAvailablePerformance) readData() (string, error) {
 }
 
 func (exp *ExporterAvailablePerformance) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "AvailablePerformance.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

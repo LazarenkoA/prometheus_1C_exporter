@@ -65,7 +65,10 @@ func main() {
 // https://www.jajaldoang.com/post/profiling-go-app-with-pprof/
 // go tool pprof -svg heap > out.svg (визуальный граф)
 // go tool pprof -http=:8082 .\heap (просмотр в браузере)
-//
+// go tool trace trace.out
+// go tool pprof -http=:8082 http://localhost:5000/debug/pprof/heap?debug=1
+// go tool pprof -http=:8082 pproftest http://localhost:5000/debug/pprof/profile?seconds=9
+
 //  go vet -vettool="C:\GOPATH\go\bin\fieldalignment.exe" ./...
 //
 // go test -fuzz=Fuzz_formatMultiResult .\explorers\ -fuzztime=30s

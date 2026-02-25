@@ -3,6 +3,7 @@ package exporter
 import (
 	"fmt"
 	"os/exec"
+	"runtime/trace"
 	"strings"
 	"sync"
 	"time"
@@ -49,6 +50,8 @@ func (exp *ExporterCheckSheduleJob) Construct(s *settings.Settings) *ExporterChe
 }
 
 func (exp *ExporterCheckSheduleJob) getValue() {
+	defer trace.StartRegion(exp.ctx, "CheckSheduleJob.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	if listCheck, err := exp.getData(); err == nil {
@@ -221,6 +224,8 @@ func (exp *ExporterCheckSheduleJob) getListInfobase() error {
 }
 
 func (exp *ExporterCheckSheduleJob) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "CheckSheduleJob.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}

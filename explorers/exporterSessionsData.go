@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"math"
+	"runtime/trace"
 	"strconv"
 	"time"
 
@@ -69,6 +70,8 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 }
 
 func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
+	defer trace.StartRegion(exp.ctx, "SessionsData.collectingMetrics").End()
+
 	for {
 		ses, _ := exp.getSessions()
 		for _, item := range ses {
@@ -144,6 +147,8 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 }
 
 func (exp *ExporterSessionsData) getValue() {
+	defer trace.StartRegion(exp.ctx, "SessionsData.getValue").End()
+
 	exp.logger.Info("получение данных экспортера")
 
 	exp.mx.Lock()
@@ -171,6 +176,8 @@ func (exp *ExporterSessionsData) getValue() {
 }
 
 func (exp *ExporterSessionsData) Collect(ch chan<- prometheus.Metric) {
+	defer trace.StartRegion(exp.ctx, "SessionsData.Collect").End()
+
 	if exp.isLocked.Load() {
 		return
 	}
