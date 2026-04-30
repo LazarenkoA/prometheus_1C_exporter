@@ -1,7 +1,6 @@
 package exporter
 
 import (
-	"math"
 	"runtime/trace"
 	"strconv"
 	"time"
@@ -15,6 +14,7 @@ import (
 
 type sessionsData struct {
 	basename            string
+	host                string
 	appid               string
 	user                string
 	memorytotal         int64
@@ -75,32 +75,34 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 	for {
 		ses, _ := exp.getSessions()
 		for _, item := range ses {
-			appid, _ := item["app-id"]
-			user, _ := item["user-name"]
-			memorytotal, _ := item["memory-total"]
-			memorycurrent, _ := item["memory-current"]
-			readcurrent, _ := item["read-current"]
-			readtotal, _ := item["read-total"]
-			writecurrent, _ := item["write-current"]
-			writetotal, _ := item["write-total"]
-			durationcurrent, _ := item["duration-current"]
-			durationcurrentdbms, _ := item["duration-current-dbms"]
+			appid := item["app-id"]
+			host := item["host"]
+			user := item["user-name"]
+			memorytotal := item["memory-total"]
+			memorycurrent := item["memory-current"]
+			readcurrent := item["read-current"]
+			readtotal := item["read-total"]
+			writecurrent := item["write-current"]
+			writetotal := item["write-total"]
+			durationcurrent := item["duration-current"]
+			durationcurrentdbms := item["duration-current-dbms"]
 			if durationcurrentdbms == "" {
-				durationcurrentdbms, _ = item["duration current-dbms"]
+				durationcurrentdbms = item["duration current-dbms"]
 			}
-			durationall, _ := item["duration-all"]
-			durationalldbms, _ := item["duration-all-dbms"]
-			cputimecurrent, _ := item["cpu-time-current"]
-			cputimetotal, _ := item["cpu-time-total"]
-			dbmsbytesall, _ := item["dbms-bytes-all"]
-			callsall, _ := item["calls-all"]
-			sessionid, _ := item["session-id"]
+			durationall := item["duration-all"]
+			durationalldbms := item["duration-all-dbms"]
+			cputimecurrent := item["cpu-time-current"]
+			cputimetotal := item["cpu-time-total"]
+			dbmsbytesall := item["dbms-bytes-all"]
+			callsall := item["calls-all"]
+			sessionid := item["session-id"]
 
 			exp.mx.Lock()
 			if v, ok := exp.buff[sessionid]; !ok {
 				exp.buff[sessionid] = &sessionsData{
 					basename:            exp.findBaseName(item["infobase"]),
 					appid:               appid,
+					host:                host,
 					user:                user,
 					memorytotal:         atoi(memorytotal),
 					memorycurrent:       atoi(memorycurrent),
@@ -119,20 +121,20 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 					sessionid:           sessionid,
 				}
 			} else {
-				v.memorycurrent = int64(math.Max(float64(v.memorycurrent), float64(atoi(memorycurrent))))
-				v.readcurrent = int64(math.Max(float64(v.readcurrent), float64(atoi(readcurrent))))
-				v.cputimecurrent = int64(math.Max(float64(v.cputimecurrent), float64(atoi(cputimecurrent))))
-				v.durationcurrentdbms = int64(math.Max(float64(v.durationcurrentdbms), float64(atoi(durationcurrentdbms))))
-				v.durationcurrent = int64(math.Max(float64(v.durationcurrent), float64(atoi(durationcurrent))))
-				v.writecurrent = int64(math.Max(float64(v.writecurrent), float64(atoi(writecurrent))))
-				v.dbmsbytesall = atoi(dbmsbytesall)
-				v.cputimetotal = atoi(cputimetotal)
-				v.durationalldbms = atoi(durationalldbms)
-				v.durationall = atoi(durationall)
-				v.writetotal = atoi(writetotal)
-				v.readtotal = atoi(readtotal)
-				v.memorytotal = atoi(memorytotal)
-				v.callsall = atoi(callsall)
+				v.memorycurrent = max(v.memorycurrent, atoi(memorycurrent))
+				v.readcurrent = max(v.readcurrent, atoi(readcurrent))
+				v.cputimecurrent = max(v.cputimecurrent, atoi(cputimecurrent))
+				v.durationcurrentdbms = max(v.durationcurrentdbms, atoi(durationcurrentdbms))
+				v.durationcurrent = max(v.durationcurrent, atoi(durationcurrent))
+				v.writecurrent = max(v.writecurrent, atoi(writecurrent))
+				v.dbmsbytesall = max(v.dbmsbytesall, atoi(dbmsbytesall))
+				v.cputimetotal = max(v.cputimetotal, atoi(cputimetotal))
+				v.durationalldbms = max(v.durationalldbms, atoi(durationalldbms))
+				v.durationall = max(v.durationall, atoi(durationall))
+				v.writetotal = max(v.writetotal, atoi(writetotal))
+				v.readtotal = max(v.readtotal, atoi(readtotal))
+				v.memorytotal = max(v.memorytotal, atoi(memorytotal))
+				v.callsall = max(v.callsall, atoi(callsall))
 				exp.buff[sessionid] = v
 			}
 			exp.mx.Unlock()
@@ -156,20 +158,20 @@ func (exp *ExporterSessionsData) getValue() {
 
 	exp.summary.Reset()
 	for k, v := range exp.buff {
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "memorytotal", v.appid).Observe(float64(v.memorytotal))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "memorycurrent", v.appid).Observe(float64(v.memorycurrent))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "readcurrent", v.appid).Observe(float64(v.readcurrent))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "readtotal", v.appid).Observe(float64(v.readtotal))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "writecurrent", v.appid).Observe(float64(v.writecurrent))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "writetotal", v.appid).Observe(float64(v.writetotal))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "durationcurrent", v.appid).Observe(float64(v.durationcurrent))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "durationcurrentdbms", v.appid).Observe(float64(v.durationcurrentdbms))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "durationall", v.appid).Observe(float64(v.durationall))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "durationalldbms", v.appid).Observe(float64(v.durationalldbms))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "cputimecurrent", v.appid).Observe(float64(v.cputimecurrent))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "cputimetotal", v.appid).Observe(float64(v.cputimetotal))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "dbmsbytesall", v.appid).Observe(float64(v.dbmsbytesall))
-		exp.summary.WithLabelValues(exp.host, v.basename, v.user, v.sessionid, "callsall", v.appid).Observe(float64(v.callsall))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "memorytotal", v.appid).Observe(float64(v.memorytotal))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "memorycurrent", v.appid).Observe(float64(v.memorycurrent))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "readcurrent", v.appid).Observe(float64(v.readcurrent))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "readtotal", v.appid).Observe(float64(v.readtotal))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "writecurrent", v.appid).Observe(float64(v.writecurrent))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "writetotal", v.appid).Observe(float64(v.writetotal))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "durationcurrent", v.appid).Observe(float64(v.durationcurrent))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "durationcurrentdbms", v.appid).Observe(float64(v.durationcurrentdbms))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "durationall", v.appid).Observe(float64(v.durationall))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "durationalldbms", v.appid).Observe(float64(v.durationalldbms))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "cputimecurrent", v.appid).Observe(float64(v.cputimecurrent))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "cputimetotal", v.appid).Observe(float64(v.cputimetotal))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "dbmsbytesall", v.appid).Observe(float64(v.dbmsbytesall))
+		exp.summary.WithLabelValues(v.host, v.basename, v.user, v.sessionid, "callsall", v.appid).Observe(float64(v.callsall))
 
 		delete(exp.buff, k)
 	}

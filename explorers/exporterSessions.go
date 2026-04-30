@@ -38,9 +38,9 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 				Name:        labelName,
 				Help:        "Сессии 1С",
 				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
 			},
-			[]string{"base"},
+			[]string{"host", "base"},
 		)
 	}
 
@@ -49,9 +49,9 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 			prometheus.GaugeOpts{
 				Name:        labelName + "_gauge",
 				Help:        "Сессии 1С (Gauge)",
-				ConstLabels: prometheus.Labels{"host": exp.host, "ras_host": s.GetRASHostPort()},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
 			},
-			[]string{"base", "app-id"},
+			[]string{"host", "base", "app-id"},
 		)
 	}
 
@@ -75,35 +75,35 @@ func (exp *ExporterSessions) getValue() {
 	}
 
 	if exp.summary != nil {
-		groupByDB := map[string]int{}
+		groupByDB := map[groupKey]int{}
 		for _, item := range ses {
-			groupByDB[exp.findBaseName(item["infobase"])]++
+			groupByDB[groupKey{host: item["host"], key: exp.findBaseName(item["infobase"])}]++
 		}
 
 		exp.summary.Reset()
 
 		// с разбивкой по БД
 		for infobaseName, v := range groupByDB {
-			exp.summary.WithLabelValues(infobaseName).Observe(float64(v))
+			exp.summary.WithLabelValues(infobaseName.host, infobaseName.key).Observe(float64(v))
 		}
 	}
 
 	if exp.gauge != nil {
-
-		groupByAppID := make(map[string]labelValuesMap)
+		groupByAppID := make(map[groupKey]labelValuesMap)
 		for _, item := range ses {
-			infobaseName := exp.findBaseName(item["infobase"])
-			appIdValues := groupByAppID[infobaseName]
+			key := groupKey{host: item["host"], key: exp.findBaseName(item["infobase"])}
+
+			appIdValues := groupByAppID[key]
 			if appIdValues == nil {
-				groupByAppID[infobaseName] = make(labelValuesMap)
+				groupByAppID[key] = make(labelValuesMap)
 			}
-			groupByAppID[infobaseName][item["app-id"]]++
+			groupByAppID[key][item["app-id"]]++
 		}
 
 		exp.gauge.Reset()
 		for infobaseName, labelValues := range groupByAppID {
 			for appid, v := range labelValues {
-				exp.gauge.WithLabelValues(infobaseName, appid).Set(float64(v))
+				exp.gauge.WithLabelValues(infobaseName.host, infobaseName.key, appid).Set(float64(v))
 			}
 		}
 	}

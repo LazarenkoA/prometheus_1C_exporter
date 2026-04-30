@@ -11,3 +11,8 @@ type IPrometheusMetric interface {
 	WithLabelValues(lvs ...string) prometheus.Observer
 	Reset()
 }
+
+type groupKey struct {
+	host string
+	key  string
+}

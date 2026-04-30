@@ -39,24 +39,23 @@ func (exp *ExporterClientLic) getValue() {
 
 	exp.logger.Info("получение данных экспортера")
 
-	var group map[string]int
+	group := map[groupKey]int{}
 
 	lic, _ := exp.getLic()
 	exp.logger.Debugf("количество лицензий %v", len(lic))
 
 	if len(lic) > 0 {
-		group = map[string]int{}
 		for _, item := range lic {
-			key := item["rmngr-address"]
-			if strings.Trim(key, " ") == "" {
-				key = item["license-type"] // Клиентские лиц может быть HASP, если сервер лиц. не задан, группируем по license-type
+			key := groupKey{host: item["host"], key: item["rmngr-address"]}
+			if strings.Trim(key.key, " ") == "" {
+				key.key = item["license-type"] // Клиентские лиц может быть HASP, если сервер лиц. не задан, группируем по license-type
 			}
 			group[key]++
 		}
 
 		exp.summary.Reset()
 		for k, v := range group {
-			exp.summary.WithLabelValues(exp.host, k).Observe(float64(v))
+			exp.summary.WithLabelValues(k.host, strings.Trim(k.key, "\"")).Observe(float64(v))
 		}
 
 	} else {

@@ -49,16 +49,19 @@ func (exp *ExporterConnects) getValue() {
 		return
 	}
 
-	groupByDB := map[string]int{}
+	groupByDB := map[groupKey]int{}
 	for _, item := range connects {
-		groupByDB[exp.findBaseName(item["infobase"])]++
+		groupByDB[groupKey{
+			host: item["host"],
+			key:  exp.findBaseName(item["infobase"]),
+		}]++
 	}
 
 	exp.summary.Reset()
 
 	// с разбивкой по БД
 	for k, v := range groupByDB {
-		exp.summary.WithLabelValues(exp.host, k).Observe(float64(v))
+		exp.summary.WithLabelValues(k.host, k.key).Observe(float64(v))
 	}
 
 }
