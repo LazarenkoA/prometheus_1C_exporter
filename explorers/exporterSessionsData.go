@@ -50,9 +50,9 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 			Name:        labelName,
 			Help:        "Показатели сессий из кластера 1С",
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 		},
-		[]string{"host", "base", "user", "id", "datatype", "appid"},
+		[]string{"cluster_host", "base", "user", "id", "datatype", "appid"},
 	)
 
 	exp.buff = map[string]*sessionsData{}

@@ -26,9 +26,9 @@ func (exp *ExporterAvailablePerformance) Construct(s *settings.Settings) *Export
 			Name:        labelName,
 			Help:        "Доступная производительность хоста",
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 		},
-		[]string{"host", "cluster", "pid", "type"},
+		[]string{"cluster_host", "cluster", "pid", "type"},
 	)
 
 	exp.settings = s

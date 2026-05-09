@@ -25,9 +25,9 @@ func (exp *ExporterClientLic) Construct(s *settings.Settings) *ExporterClientLic
 			Name:        labelName,
 			Help:        "Клиентские лицензии 1С",
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 		},
-		[]string{"host", "licSRV"},
+		[]string{"cluster_host", "licSRV"},
 	)
 
 	exp.settings = s

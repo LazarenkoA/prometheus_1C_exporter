@@ -38,9 +38,9 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 				Name:        labelName,
 				Help:        "Сессии 1С",
 				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 			},
-			[]string{"host", "base"},
+			[]string{"cluster_host", "base"},
 		)
 	}
 
@@ -49,9 +49,9 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 			prometheus.GaugeOpts{
 				Name:        labelName + "_gauge",
 				Help:        "Сессии 1С (Gauge)",
-				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort()},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
 			},
-			[]string{"host", "base", "app-id"},
+			[]string{"cluster_host", "base", "app-id"},
 		)
 	}
 
