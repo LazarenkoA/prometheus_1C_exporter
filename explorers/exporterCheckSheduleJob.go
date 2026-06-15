@@ -57,7 +57,7 @@ func (exp *ExporterCheckSheduleJob) getValue() {
 	if listCheck, err := exp.getData(); err == nil {
 		//exp.gauge.Reset()
 		for key, value := range listCheck {
-			exp.gauge.WithLabelValues(key).Set(lo.If(value, 1.).Else(0.))
+			exp.gauge.WithLabelValues(sanitizeLabelValue(key)).Set(lo.If(value, 1.).Else(0.))
 		}
 	} else {
 		exp.gauge.Reset()

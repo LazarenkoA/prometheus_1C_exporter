@@ -47,7 +47,7 @@ type cmdRunner struct {
 // базовый класс для всех метрик
 type BaseExporter struct {
 	mx       sync.RWMutex
-	summary  IPrometheusMetric //*prometheus.SummaryVec
+	summary  IPrometheusMetric
 	gauge    *prometheus.GaugeVec
 	settings *settings.Settings
 	ctx      context.Context
@@ -376,4 +376,22 @@ func appendParam(in []string, value string) []string {
 		in = append(in, value)
 	}
 	return in
+}
+
+// sanitizeLabelValue приводит строку к валидному UTF-8 и убирает нулевые байты.
+func sanitizeLabelValue(v string) string {
+	// Заменяем невалидные байты на пустую строку.
+	s := strings.ToValidUTF8(v, "_")
+
+	// Prometheus также не любит нулевые байты в label values.
+	return strings.ReplaceAll(s, "\x00", "_")
+}
+
+// sanitizeLabelValues применяет sanitizeLabelValue ко всем label значениям.
+func sanitizeLabelValues(vals ...string) []string {
+	out := make([]string, len(vals))
+	for i, v := range vals {
+		out[i] = sanitizeLabelValue(v)
+	}
+	return out
 }

@@ -45,7 +45,8 @@ func (exp *ExporterAvailablePerformance) getValue() {
 
 		exp.summary.Reset()
 		for _, item := range data {
-			exp.summary.WithLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string)).Observe(item["value"].(float64))
+			labels := sanitizeLabelValues(item["host"].(string), item["cluster"].(string), item["pid"].(string), item["type"].(string))
+			exp.summary.WithLabelValues(labels...).Observe(item["value"].(float64))
 		}
 	} else {
 		exp.summary.Reset()

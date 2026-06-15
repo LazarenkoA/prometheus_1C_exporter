@@ -61,7 +61,8 @@ func (exp *ExporterConnects) getValue() {
 
 	// с разбивкой по БД
 	for k, v := range groupByDB {
-		exp.summary.WithLabelValues(k.host, k.key).Observe(float64(v))
+		labels := sanitizeLabelValues(k.host, k.key)
+		exp.summary.WithLabelValues(labels...).Observe(float64(v))
 	}
 
 }

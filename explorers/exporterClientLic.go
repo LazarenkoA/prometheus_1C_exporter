@@ -55,7 +55,7 @@ func (exp *ExporterClientLic) getValue() {
 
 		exp.summary.Reset()
 		for k, v := range group {
-			exp.summary.WithLabelValues(k.host, strings.Trim(k.key, "\"")).Observe(float64(v))
+			exp.summary.WithLabelValues(sanitizeLabelValues(k.host, strings.Trim(k.key, "\""))...).Observe(float64(v))
 		}
 
 	} else {

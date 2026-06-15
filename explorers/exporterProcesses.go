@@ -63,10 +63,10 @@ func (cpu *Processes) getValue() {
 		}
 
 		if procName, err := p.Name(); err == nil {
-			cpu.summary.WithLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "cpu").Observe(cpuPercent)
-			cpu.summary.WithLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryPercent").Observe(float64(memPercent))
-			cpu.summary.WithLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryRSS").Observe(float64(memInfo.RSS))
-			cpu.summary.WithLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryVMS").Observe(float64(memInfo.VMS))
+			cpu.summary.WithLabelValues(sanitizeLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "cpu")...).Observe(cpuPercent)
+			cpu.summary.WithLabelValues(sanitizeLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryPercent")...).Observe(float64(memPercent))
+			cpu.summary.WithLabelValues(sanitizeLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryRSS")...).Observe(float64(memInfo.RSS))
+			cpu.summary.WithLabelValues(sanitizeLabelValues(cpu.host, strconv.Itoa(int(p.Pid)), procName, "memoryVMS")...).Observe(float64(memInfo.VMS))
 		}
 	}
 }

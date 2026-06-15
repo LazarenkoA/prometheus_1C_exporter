@@ -130,3 +130,38 @@ func Test_GetVal(t *testing.T) {
 	v2 := GetVal[string](tmp)
 	assert.Equal(t, "dsdsd", v2)
 }
+
+func TestSanitizeLabelValue(t *testing.T) {
+	t.Run("validUTF8", func(t *testing.T) {
+		in := "normal-hostname"
+		got := sanitizeLabelValue(in)
+		assert.Equal(t, got, in)
+	})
+	t.Run("invalidUTF8BytesAreRemoved", func(t *testing.T) {
+		in := "ADMIN-\x8f\x8a\x8f\x8a"
+		got := sanitizeLabelValue(in)
+
+		assert.Equal(t, "ADMIN-_", got)
+	})
+	t.Run("removesNullByte", func(t *testing.T) {
+		in := "host\x00name"
+		got := sanitizeLabelValue(in)
+		assert.Equal(t, "host_name", got)
+	})
+}
+
+func TestSanitizeLabelValues_MultipleValues(t *testing.T) {
+	in := []string{
+		"normal",
+		"value\x00with\x00nulls",
+	}
+	got := sanitizeLabelValues(in...)
+
+	if len(got) != len(in) {
+		t.Fatalf("expected len %d, got %d", len(in), len(got))
+	}
+
+	assert.Equal(t, "normal", got[0])
+	assert.Equal(t, "value_with_nulls", got[1])
+
+}

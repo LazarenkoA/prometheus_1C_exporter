@@ -55,7 +55,7 @@ func (exp *CPU) getValue() {
 
 	exp.summary.Reset()
 	if len(percentage) == 1 {
-		exp.summary.WithLabelValues(exp.host).Observe(percentage[0])
+		exp.summary.WithLabelValues(sanitizeLabelValue(exp.host)).Observe(percentage[0])
 	}
 }
 

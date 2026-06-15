@@ -84,7 +84,7 @@ func (exp *ExporterSessions) getValue() {
 
 		// с разбивкой по БД
 		for infobaseName, v := range groupByDB {
-			exp.summary.WithLabelValues(infobaseName.host, infobaseName.key).Observe(float64(v))
+			exp.summary.WithLabelValues(sanitizeLabelValues(infobaseName.host, infobaseName.key)...).Observe(float64(v))
 		}
 	}
 
@@ -103,7 +103,7 @@ func (exp *ExporterSessions) getValue() {
 		exp.gauge.Reset()
 		for infobaseName, labelValues := range groupByAppID {
 			for appid, v := range labelValues {
-				exp.gauge.WithLabelValues(infobaseName.host, infobaseName.key, appid).Set(float64(v))
+				exp.gauge.WithLabelValues(sanitizeLabelValues(infobaseName.host, infobaseName.key, appid)...).Set(float64(v))
 			}
 		}
 	}

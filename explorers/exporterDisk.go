@@ -54,11 +54,11 @@ func (exp *ExporterDisk) getValue() {
 
 	exp.summary.Reset()
 	for k, v := range dInfo {
-		exp.summary.WithLabelValues(exp.host, k, "WeightedIO").Observe(float64(v.WeightedIO))
-		exp.summary.WithLabelValues(exp.host, k, "IopsInProgress").Observe(float64(v.IopsInProgress))
-		exp.summary.WithLabelValues(exp.host, k, "ReadCount").Observe(float64(v.ReadCount))
-		exp.summary.WithLabelValues(exp.host, k, "WriteCount").Observe(float64(v.WriteCount))
-		exp.summary.WithLabelValues(exp.host, k, "IoTime").Observe(float64(v.IoTime))
+		exp.summary.WithLabelValues(sanitizeLabelValues(exp.host, k, "WeightedIO")...).Observe(float64(v.WeightedIO))
+		exp.summary.WithLabelValues(sanitizeLabelValues(exp.host, k, "IopsInProgress")...).Observe(float64(v.IopsInProgress))
+		exp.summary.WithLabelValues(sanitizeLabelValues(exp.host, k, "ReadCount")...).Observe(float64(v.ReadCount))
+		exp.summary.WithLabelValues(sanitizeLabelValues(exp.host, k, "WriteCount")...).Observe(float64(v.WriteCount))
+		exp.summary.WithLabelValues(sanitizeLabelValues(exp.host, k, "IoTime")...).Observe(float64(v.IoTime))
 	}
 
 }
