@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"context"
+	"fmt"
 	mock_models "github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/agiledragon/gomonkey/v2"
@@ -204,6 +205,7 @@ func Test_Exporter(t *testing.T) {
 		exp.mx.Lock()
 		exp.BaseExporter.mx.Lock()
 		exp.summary = summaryMock
+		exp.gauge = nil // legacy Summary test; Gauge is the safe default for new configs
 		exp.clusterID = "123"
 		exp.buff = map[string]*sessionsData{
 			"1": {
@@ -373,6 +375,7 @@ func Test_collectingMetrics(t *testing.T) {
 	exp.mx.Lock()
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Millisecond)
 	exp.summary = summaryMock
+	exp.gauge = nil // legacy Summary test; Gauge is the safe default for new configs
 	exp.clusterID = "123"
 	exp.runner = run
 
@@ -398,6 +401,104 @@ func Test_collectingMetrics(t *testing.T) {
 	assert.Equal(t, int64(112815764), exp.buff["590"].readtotal)
 
 	exp.mx.RUnlock()
+}
+
+func TestSessionsDataKeepsDistinctFreshSessionsBelowLimit(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &settings.Settings{}
+	run := mock_models.NewMockIRunner(ctrl)
+	exp := new(ExporterSessionsData)
+	exp.BaseExporter = newBase(exp.GetName())
+	exp.settings = cfg
+	exp.ExporterCheckSheduleJob.settings = cfg
+	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second)
+	exp.buff = make(map[string]*sessionsData)
+	exp.clusterID = "cluster"
+	exp.runner = run
+
+	run.EXPECT().Run(gomock.Any()).DoAndReturn(func(_ *exec.Cmd) (string, error) {
+		exp.cancel()
+		return "session-id : first\ninfobase : base-first\n\nsession-id : second\ninfobase : base-second\n", nil
+	})
+
+	exp.collectingMetrics(time.Hour)
+
+	exp.mx.RLock()
+	defer exp.mx.RUnlock()
+	assert.Len(t, exp.buff, 2)
+	assert.Less(t, len(exp.buff), maxSessionsDataBufferEntries)
+	assert.Contains(t, exp.buff, "first")
+	assert.Contains(t, exp.buff, "second")
+}
+
+func TestSessionsDataBufferIsBoundedAndExpiresWithoutScrape(t *testing.T) {
+	exp := &ExporterSessionsData{
+		buff: make(map[string]*sessionsData),
+	}
+	now := time.Now()
+
+	for i := 0; i < maxSessionsDataBufferEntries+100; i++ {
+		id := fmt.Sprintf("session-%d", i)
+		exp.buff[id] = &sessionsData{sessionid: id, lastSeen: now}
+		exp.bufferOrder = append(exp.bufferOrder, id)
+		exp.pruneSessionsDataBufferLocked(now)
+	}
+
+	assert.LessOrEqual(t, len(exp.buff), maxSessionsDataBufferEntries)
+	assert.LessOrEqual(t, len(exp.bufferOrder), maxSessionsDataBufferEntries)
+
+	for id, item := range exp.buff {
+		item.lastSeen = now.Add(-sessionsDataBufferTTL - time.Second)
+		exp.buff[id] = item
+	}
+	exp.pruneSessionsDataBufferLocked(now)
+	assert.Empty(t, exp.buff)
+	assert.Empty(t, exp.bufferOrder)
+}
+
+func TestSessionsDataGaugeAvoidsSummaryQuantilesForHighCardinality(t *testing.T) {
+	exp := &ExporterSessionsData{
+		buff: make(map[string]*sessionsData),
+	}
+	exp.ExporterSessions.ExporterCheckSheduleJob.BaseRACExporter.BaseExporter = newBase("sessions_data")
+	exp.gauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "sessions_data_gauge",
+	}, []string{"cluster_host", "base", "user", "id", "datatype", "appid"})
+	for i := 0; i < 250; i++ {
+		id := fmt.Sprintf("session-%d", i)
+		exp.buff[id] = &sessionsData{sessionid: id, memorycurrent: int64(i)}
+	}
+
+	assert.Nil(t, exp.summary)
+	out := make(chan prometheus.Metric, 250*14)
+	exp.Collect(out)
+	close(out)
+	assert.Equal(t, 250*14, len(out))
+	assert.Empty(t, exp.buff)
+}
+
+func TestSessionsDataEnabledTrimsExporterName(t *testing.T) {
+	var s settings.Settings
+	assert.NoError(t, yaml.Unmarshal([]byte("Exporters:\n  - Name: ' sessions_data '\n"), &s))
+
+	exp := new(ExporterSessionsData).Construct(&s)
+	defer exp.Stop()
+
+	assert.True(t, sessionsDataEnabled(&s))
+	assert.NotNil(t, exp.gauge)
+}
+
+func TestSessionsDataUnsupportedMetricKindFallsBackToSummary(t *testing.T) {
+	var s settings.Settings
+	assert.NoError(t, yaml.Unmarshal([]byte("Exporters:\n  - Name: sessions_data\nMetricKinds:\n  SessionsData: [NativeHistogram]\n"), &s))
+
+	exp := new(ExporterSessionsData).Construct(&s)
+	defer exp.Stop()
+
+	assert.NotNil(t, exp.summary)
+	assert.Nil(t, exp.gauge)
 }
 
 func testDatasession1() string {

@@ -45,12 +45,18 @@ func (a *app) Init(_ svc.Environment) (err error) {
 	sJob := new(exp.ExporterCheckSheduleJob).Construct(a.settings)      // Проверка галки "блокировка регламентных заданий"
 	ses := new(exp.ExporterSessions).Construct(a.settings)              // Сеансы
 	conn := new(exp.ExporterConnects).Construct(a.settings)             // Соединения
-	currentMem := new(exp.ExporterSessionsData).Construct(a.settings)   // Текущая память сеанса
 	cpu := new(exp.CPU).Construct(a.settings)                           // CPU
 	proc := new(exp.Processes).Construct(a.settings)                    // Данные CPU/память в разрезе процессов
 	disk := new(exp.ExporterDisk).Construct(a.settings)                 // Диск
 
-	a.metric.AppendExporter(proc, cpu, disk, currentMem, lic, perf, sJob, ses, conn)
+	a.metric.AppendExporter(proc, cpu, disk, lic, perf, sJob, ses, conn)
+	// sessions_data starts a background RAC sampler. Do not construct it when
+	// the exporter is explicitly disabled, otherwise it would still consume
+	// RAC/process resources despite not being registered.
+	if a.metric.Contains("sessions_data") {
+		currentMem := new(exp.ExporterSessionsData).Construct(a.settings)
+		a.metric.AppendExporter(currentMem)
+	}
 	a.initHTTP()
 
 	return nil
@@ -122,7 +128,7 @@ func (a *app) initHTTP() {
 	siteMux := http.NewServeMux()
 	siteMux.Handle("/metrics", promhttp.Handler())
 	siteMux.Handle("/metrics_os", promhttp.HandlerFor(a.osRegistry, promhttp.HandlerOpts{}))
-	siteMux.Handle("/metrics_rac", promhttp.HandlerFor(a.racRegistry, promhttp.HandlerOpts{}))
+	siteMux.Handle("/metrics_rac", limitConcurrentRequests(promhttp.HandlerFor(a.racRegistry, promhttp.HandlerOpts{}), 1))
 	siteMux.Handle("/Continue", exp.Continue(a.metric))
 	siteMux.Handle("/Pause", exp.Pause(a.metric))
 
@@ -136,6 +142,26 @@ func (a *app) initHTTP() {
 		Handler: siteMux,
 		Addr:    ":" + a.port,
 	}
+}
+
+// limitConcurrentRequests bounds active scrapes for expensive endpoints.
+// Rejecting while busy is preferable to queueing an unbounded number of RAC
+// calls behind a slow scrape.
+func limitConcurrentRequests(next http.Handler, maxConcurrent int) http.Handler {
+	if maxConcurrent < 1 {
+		maxConcurrent = 1
+	}
+	sem := make(chan struct{}, maxConcurrent)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case sem <- struct{}{}:
+			defer func() { <-sem }()
+			next.ServeHTTP(w, r)
+		default:
+			http.Error(w, "metrics endpoint is busy", http.StatusServiceUnavailable)
+		}
+	})
 }
 
 func (a *app) unregisterAll() {

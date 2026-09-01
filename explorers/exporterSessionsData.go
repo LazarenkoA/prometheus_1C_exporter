@@ -3,6 +3,7 @@ package exporter
 import (
 	"runtime/trace"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
@@ -32,32 +33,72 @@ type sessionsData struct {
 	dbmsbytesall        int64
 	callsall            int64
 	sessionid           string
+	lastSeen            time.Time
 }
+
+const (
+	// The buffer must not depend on Prometheus scraping. A missed scrape should
+	// therefore retain data only for a short window and never for more than a
+	// fixed number of sessions.
+	sessionsDataBufferTTL        = 2 * time.Minute
+	maxSessionsDataBufferEntries = 10000
+)
 
 type ExporterSessionsData struct {
 	ExporterSessions
 
-	buff map[string]*sessionsData
+	buff        map[string]*sessionsData
+	bufferOrder []string
 }
 
 func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessionsData {
 	exp.BaseExporter = newBase(exp.GetName())
 	exp.logger.Info("Создание объекта")
-
-	labelName := s.GetMetricNamePrefix() + exp.GetName()
-	exp.summary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:        labelName,
-			Help:        "Показатели сессий из кластера 1С",
-			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
-		},
-		[]string{"cluster_host", "base", "user", "id", "datatype", "appid"},
-	)
-
-	exp.buff = map[string]*sessionsData{}
 	exp.settings = s
 	exp.ExporterCheckSheduleJob.settings = s
+	exp.buff = map[string]*sessionsData{}
+
+	// Do not start the RAC/base-list or sampling goroutines for an explicitly
+	// disabled exporter. app.Init also avoids constructing it, but keeping this
+	// guard here makes the lifecycle safe for other callers and tests.
+	if !sessionsDataEnabled(s) {
+		return exp
+	}
+
+	labelName := s.GetMetricNamePrefix() + exp.GetName()
+
+	// SessionsData has its own metric-kind setting. Summary remains available
+	// for compatibility, while Gauge is the safe default (see README).
+	newSummary := func() {
+		exp.summary = prometheus.NewSummaryVec(
+			prometheus.SummaryOpts{
+				Name:        labelName,
+				Help:        "Показатели сессий из кластера 1С",
+				Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+				ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
+			},
+			[]string{"cluster_host", "base", "user", "id", "datatype", "appid"},
+		)
+	}
+	for _, kind := range sessionsDataMetricKinds(s) {
+		switch kind {
+		case settings.KindSummary:
+			newSummary()
+		case settings.KindGauge:
+			exp.gauge = prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name:        labelName + "_gauge",
+					Help:        "Показатели сессий из кластера 1С (Gauge)",
+					ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
+				},
+				[]string{"cluster_host", "base", "user", "id", "datatype", "appid"},
+			)
+		}
+	}
+	if exp.summary == nil && exp.gauge == nil {
+		newSummary()
+	}
+
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*5)
 	go exp.fillBaseList() // в данном экспортере нужен список баз
 
@@ -71,10 +112,20 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 
 func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 	defer trace.StartRegion(exp.ctx, "SessionsData.collectingMetrics").End()
+	if delay <= 0 {
+		delay = time.Second
+	}
+	ticker := time.NewTicker(delay)
+	defer ticker.Stop()
 
 	for {
 		ses, _ := exp.getSessions()
+		now := time.Now()
 		for _, item := range ses {
+			// findBaseName takes the package-level base-list lock. Resolve it
+			// before taking the buffer lock to preserve lock ordering with
+			// fillBaseList.
+			basename := exp.findBaseName(item["infobase"])
 			appid := item["app-id"]
 			host := item["host"]
 			user := item["user-name"]
@@ -99,8 +150,11 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 
 			exp.mx.Lock()
 			if v, ok := exp.buff[sessionid]; !ok {
+				if len(exp.buff) >= maxSessionsDataBufferEntries {
+					exp.evictSessionsDataBufferEntryLocked()
+				}
 				exp.buff[sessionid] = &sessionsData{
-					basename:            exp.findBaseName(item["infobase"]),
+					basename:            basename,
 					appid:               appid,
 					host:                host,
 					user:                user,
@@ -119,7 +173,9 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 					dbmsbytesall:        atoi(dbmsbytesall),
 					callsall:            atoi(callsall),
 					sessionid:           sessionid,
+					lastSeen:            now,
 				}
+				exp.bufferOrder = append(exp.bufferOrder, sessionid)
 			} else {
 				v.memorycurrent = max(v.memorycurrent, atoi(memorycurrent))
 				v.readcurrent = max(v.readcurrent, atoi(readcurrent))
@@ -135,13 +191,17 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 				v.readtotal = max(v.readtotal, atoi(readtotal))
 				v.memorytotal = max(v.memorytotal, atoi(memorytotal))
 				v.callsall = max(v.callsall, atoi(callsall))
+				v.lastSeen = now
 				exp.buff[sessionid] = v
 			}
 			exp.mx.Unlock()
 		}
+		exp.mx.Lock()
+		exp.pruneSessionsDataBufferLocked(now)
+		exp.mx.Unlock()
 
 		select {
-		case <-time.After(delay):
+		case <-ticker.C:
 		case <-exp.ctx.Done():
 			return
 		}
@@ -156,24 +216,89 @@ func (exp *ExporterSessionsData) getValue() {
 	exp.mx.Lock()
 	defer exp.mx.Unlock()
 
-	exp.summary.Reset()
+	exp.pruneSessionsDataBufferLocked(time.Now())
+	if exp.summary != nil {
+		exp.summary.Reset()
+	}
+	if exp.gauge != nil {
+		exp.gauge.Reset()
+	}
 	for k, v := range exp.buff {
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "memorytotal", v.appid)...).Observe(float64(v.memorytotal))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "memorycurrent", v.appid)...).Observe(float64(v.memorycurrent))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "readcurrent", v.appid)...).Observe(float64(v.readcurrent))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "readtotal", v.appid)...).Observe(float64(v.readtotal))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "writecurrent", v.appid)...).Observe(float64(v.writecurrent))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "writetotal", v.appid)...).Observe(float64(v.writetotal))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "durationcurrent", v.appid)...).Observe(float64(v.durationcurrent))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "durationcurrentdbms", v.appid)...).Observe(float64(v.durationcurrentdbms))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "durationall", v.appid)...).Observe(float64(v.durationall))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "durationalldbms", v.appid)...).Observe(float64(v.durationalldbms))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "cputimecurrent", v.appid)...).Observe(float64(v.cputimecurrent))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "cputimetotal", v.appid)...).Observe(float64(v.cputimetotal))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "dbmsbytesall", v.appid)...).Observe(float64(v.dbmsbytesall))
-		exp.summary.WithLabelValues(sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, "callsall", v.appid)...).Observe(float64(v.callsall))
+		exp.observeSessionData(v, "memorytotal", v.memorytotal)
+		exp.observeSessionData(v, "memorycurrent", v.memorycurrent)
+		exp.observeSessionData(v, "readcurrent", v.readcurrent)
+		exp.observeSessionData(v, "readtotal", v.readtotal)
+		exp.observeSessionData(v, "writecurrent", v.writecurrent)
+		exp.observeSessionData(v, "writetotal", v.writetotal)
+		exp.observeSessionData(v, "durationcurrent", v.durationcurrent)
+		exp.observeSessionData(v, "durationcurrentdbms", v.durationcurrentdbms)
+		exp.observeSessionData(v, "durationall", v.durationall)
+		exp.observeSessionData(v, "durationalldbms", v.durationalldbms)
+		exp.observeSessionData(v, "cputimecurrent", v.cputimecurrent)
+		exp.observeSessionData(v, "cputimetotal", v.cputimetotal)
+		exp.observeSessionData(v, "dbmsbytesall", v.dbmsbytesall)
+		exp.observeSessionData(v, "callsall", v.callsall)
 
 		delete(exp.buff, k)
+	}
+	exp.bufferOrder = exp.bufferOrder[:0]
+}
+
+func (exp *ExporterSessionsData) observeSessionData(v *sessionsData, datatype string, value int64) {
+	labels := sanitizeLabelValues(v.host, v.basename, v.user, v.sessionid, datatype, v.appid)
+	if exp.summary != nil {
+		exp.summary.WithLabelValues(labels...).Observe(float64(value))
+	}
+	if exp.gauge != nil {
+		exp.gauge.WithLabelValues(labels...).Set(float64(value))
+	}
+}
+
+func (exp *ExporterSessionsData) pruneSessionsDataBufferLocked(now time.Time) {
+	for id, item := range exp.buff {
+		if item == nil || (!item.lastSeen.IsZero() && now.Sub(item.lastSeen) >= sessionsDataBufferTTL) {
+			delete(exp.buff, id)
+		}
+	}
+
+	// Keep the eviction index bounded too. Entries can be removed by a scrape
+	// or by TTL pruning, so stale IDs must not accumulate in the order slice.
+	seen := make(map[string]struct{}, len(exp.buff))
+	order := make([]string, 0, len(exp.buff))
+	for _, id := range exp.bufferOrder {
+		if _, ok := exp.buff[id]; ok {
+			if _, duplicate := seen[id]; !duplicate {
+				seen[id] = struct{}{}
+				order = append(order, id)
+			}
+		}
+	}
+	for id := range exp.buff {
+		if _, ok := seen[id]; !ok {
+			order = append(order, id)
+		}
+	}
+	exp.bufferOrder = order
+
+	for len(exp.buff) > maxSessionsDataBufferEntries {
+		exp.evictSessionsDataBufferEntryLocked()
+	}
+}
+
+func (exp *ExporterSessionsData) evictSessionsDataBufferEntryLocked() {
+	for len(exp.bufferOrder) > 0 {
+		id := exp.bufferOrder[0]
+		exp.bufferOrder = exp.bufferOrder[1:]
+		if _, ok := exp.buff[id]; ok {
+			delete(exp.buff, id)
+			return
+		}
+	}
+
+	// This fallback also handles callers/tests that seed buff directly.
+	for id := range exp.buff {
+		delete(exp.buff, id)
+		return
 	}
 }
 
@@ -185,7 +310,32 @@ func (exp *ExporterSessionsData) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	exp.getValue()
-	exp.summary.Collect(ch)
+	if exp.summary != nil {
+		exp.summary.Collect(ch)
+	}
+	if exp.gauge != nil {
+		exp.gauge.Collect(ch)
+	}
+}
+
+func sessionsDataMetricKinds(s *settings.Settings) []settings.TypeMetricKind {
+	if s != nil && s.MetricKinds != nil && len(s.MetricKinds.SessionsData) > 0 {
+		return s.MetricKinds.SessionsData
+	}
+	return []settings.TypeMetricKind{settings.KindGauge}
+}
+
+func sessionsDataEnabled(s *settings.Settings) bool {
+	if s == nil || len(s.GetExporters()) == 0 {
+		return true
+	}
+	for name := range s.GetExporters() {
+		name = strings.Trim(name, " ")
+		if name == "all" || name == "sessions_data" {
+			return true
+		}
+	}
+	return false
 }
 
 func (exp *ExporterSessionsData) GetName() string {
