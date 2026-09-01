@@ -86,6 +86,16 @@ func Test_LoadSettings(t *testing.T) {
 	})
 }
 
+func Test_LoadSettingsLegacyMetricKindsDefaultsSessionsDataToGauge(t *testing.T) {
+	path := settingsPath("MetricKinds:\n  Session: [\"Summary\"]\nRAC:\n  Path: rac\n")
+	defer os.Remove(path)
+
+	s, err := LoadSettings(path)
+	if assert.NoError(t, err) && assert.NotNil(t, s.MetricKinds) {
+		assert.Equal(t, []TypeMetricKind{KindGauge}, s.MetricKinds.SessionsData)
+	}
+}
+
 func Test_GetLogPass(t *testing.T) {
 	s := &Settings{
 		mx: new(sync.RWMutex),

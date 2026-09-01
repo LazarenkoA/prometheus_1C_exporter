@@ -112,7 +112,8 @@ RAC-метрики    | Лицензии, соединения, сеансы   |
 Метрика            | Описание                                  | Тип данных
 -------------------|-------------------------------------------|-------------
 `available_performance`   |   Доступная производительность хоста       | SummaryVec
-`sessions_data`    |   Показатели сессий из кластера 1С     | SummaryVec
+`sessions_data`    |   Показатели сессий из кластера 1С     | SummaryVec (только при явной настройке)
+`sessions_data_gauge` | Показатели сессий из кластера 1С без quantile-состояния | GaugeVec
 `session`  |    Сессии 1С        | SummaryVec и/или GaugeVec
 `connect`       |    Соединения 1С         | SummaryVec
 `client_lic`     |  Киентские лицензии 1С            | SummaryVec
@@ -158,6 +159,23 @@ CPU time (консоль 1С)
 ```
 rate(sessions_data{quantile="0.99", datatype="cputimetotal"}[5m])
 ```
+
+### SessionsData: безопасный режим и миграция
+
+Начиная с этой версии `MetricKinds.SessionsData` по умолчанию использует
+`Gauge`, а метрика называется `sessions_data_gauge`. Это предотвращает
+взрывное потребление памяти от per-session `Summary` при большом числе
+сеансов. Для сохранения старого имени и Summary-рядов укажите явно:
+
+```yaml
+MetricKinds:
+  SessionsData: ["Summary"]
+```
+
+При переходе обновите PromQL с `sessions_data{...}` на
+`sessions_data_gauge{...}`; label-набор (`cluster_host`, `base`, `user`, `id`,
+`datatype`, `appid`) остается тем же. Буфер промежуточных samples ограничен
+10 000 сессиями и TTL 2 минуты и очищается независимо от Prometheus scrape.
 
 ## Визуализация
 В каталоге dashboards доступен предварительно настроенный дашборд для  Grafana.

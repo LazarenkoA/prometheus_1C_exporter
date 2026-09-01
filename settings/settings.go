@@ -56,9 +56,11 @@ type Settings struct {
 	} `yaml:"RAC"`
 
 	MetricKinds *struct {
-		Session      []TypeMetricKind `yaml:"Session" default:"[\"Summary\"]"`
-		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]" `
-	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
+		Session []TypeMetricKind `yaml:"Session" default:"[\"Summary\"]"`
+		// SessionsData defaults to Gauge because a per-session Summary creates
+		// quantile state for every label set and can consume unbounded memory.
+		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Gauge\"]" `
+	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Gauge\"]}"`
 
 	LabelModes *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
