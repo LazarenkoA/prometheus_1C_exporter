@@ -242,17 +242,19 @@ func (exp *BaseRACExporter) GetClusterID() string {
 		param = append(param, "list")
 
 		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
-		cluster := make(map[string]string)
-		if result, err := exp.runner.Run(cmdCommand); err != nil {
-			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error())) // Если идентификатор кластера не получен, то нет смысла продолжать работу приложения
-		} else {
-			cluster = exp.formatResult(result)
+		result, err := exp.runner.Run(cmdCommand)
+		if err != nil {
+			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error()))
+			return
 		}
 
-		if id, ok := cluster["cluster"]; !ok {
-			exp.logger.Error(errors.New("Не удалось получить идентификатор кластера"))
-		} else {
+		var clusters []map[string]string
+		exp.formatMultiResult(result, &clusters)
+
+		if id := selectCluster(clusters, exp.settings.RAC_Cluster()); id != "" {
 			exp.clusterID = id
+		} else {
+			exp.logger.Error(fmt.Errorf("Не удалось получить идентификатор кластера (RAC.Cluster=%q, найдено кластеров: %d)", exp.settings.RAC_Cluster(), len(clusters)))
 		}
 	}
 
@@ -265,6 +267,25 @@ func (exp *BaseRACExporter) GetClusterID() string {
 	exp.mx.Unlock()
 
 	return exp.clusterID
+}
+
+// selectCluster выбирает кластер из вывода "rac cluster list".
+// want - UUID, имя (без кавычек) или "host:port" кластера; пусто - первый кластер в списке.
+func selectCluster(clusters []map[string]string, want string) string {
+	for _, c := range clusters {
+		id := c["cluster"]
+		if id == "" {
+			continue
+		}
+		if want == "" {
+			return id
+		}
+		name := strings.Trim(c["name"], `"`)
+		if strings.EqualFold(id, want) || strings.EqualFold(name, want) || strings.EqualFold(c["host"]+":"+c["port"], want) {
+			return id
+		}
+	}
+	return ""
 }
 
 func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
