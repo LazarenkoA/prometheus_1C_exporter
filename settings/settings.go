@@ -53,6 +53,8 @@ type Settings struct {
 		Host  string `yaml:"Host"`
 		Login string `yaml:"Login"`
 		Pass  string `yaml:"Pass"`
+		// Cluster - UUID или имя кластера (как в "rac cluster list"). Если пусто - берется первый кластер.
+		Cluster string `yaml:"Cluster"`
 	} `yaml:"RAC"`
 
 	MetricKinds *struct {
@@ -155,6 +157,13 @@ func (s *Settings) RAC_Login() string {
 func (s *Settings) RAC_Pass() string {
 	if s.RAC != nil {
 		return s.RAC.Pass
+	}
+	return ""
+}
+
+func (s *Settings) RAC_Cluster() string {
+	if s.RAC != nil {
+		return strings.TrimSpace(s.RAC.Cluster)
 	}
 	return ""
 }
