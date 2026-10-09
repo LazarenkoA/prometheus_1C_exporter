@@ -224,6 +224,7 @@ func Test_Exporter(t *testing.T) {
 				dbmsbytesall:        334,
 				callsall:            3432,
 				sessionid:           "1",
+				lastSeen:            time.Now(),
 			},
 		}
 		exp.mx.Unlock()
@@ -375,6 +376,8 @@ func Test_collectingMetrics(t *testing.T) {
 	exp.summary = summaryMock
 	exp.clusterID = "123"
 	exp.runner = run
+	// сеанс, которого кластер давно не показывает, а опроса Prometheus всё не было
+	exp.buff["100"] = &sessionsData{sessionid: "100", lastSeen: time.Now().Add(-sessionsBuffTTL - time.Minute)}
 
 	freeze := make(chan struct{})
 
@@ -396,6 +399,8 @@ func Test_collectingMetrics(t *testing.T) {
 	assert.Equal(t, int64(10), exp.buff["590"].memorycurrent)
 	assert.Equal(t, int64(130), exp.buff["590"].durationcurrentdbms)
 	assert.Equal(t, int64(112815764), exp.buff["590"].readtotal)
+	assert.False(t, exp.buff["590"].lastSeen.IsZero())
+	assert.NotContains(t, exp.buff, "100")
 
 	exp.mx.RUnlock()
 }

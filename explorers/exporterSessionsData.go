@@ -32,7 +32,13 @@ type sessionsData struct {
 	dbmsbytesall        int64
 	callsall            int64
 	sessionid           string
+	lastSeen            time.Time // когда кластер последний раз показывал сеанс
 }
+
+// sessionsBuffTTL — сколько сеанс, которого кластер больше не показывает, ждёт в буфере опроса Prometheus.
+// Буфер очищает только опрос: без этого предела при перерыве в опросах (сбой сети, остановка Prometheus)
+// в нём копились бы все сеансы за весь перерыв, и первый опрос разворачивал бы их в метрики разом.
+const sessionsBuffTTL = 2 * time.Minute
 
 type ExporterSessionsData struct {
 	ExporterSessions
@@ -51,6 +57,9 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 			Help:        "Показатели сессий из кластера 1С",
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			ConstLabels: prometheus.Labels{"ras_host": s.GetRASHostPort(), "host": exp.host},
+			// Метрика сбрасывается на каждом опросе, у серии одно наблюдение: скользящее окно из 5 корзин
+			// (по умолчанию) ничего не даёт, а стоит ~50 КБ памяти на серию. Выдача метрики та же.
+			AgeBuckets: 1,
 		},
 		[]string{"cluster_host", "base", "user", "id", "datatype", "appid"},
 	)
@@ -74,6 +83,7 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 
 	for {
 		ses, _ := exp.getSessions()
+		now := time.Now()
 		for _, item := range ses {
 			appid := item["app-id"]
 			host := item["host"]
@@ -119,6 +129,7 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 					dbmsbytesall:        atoi(dbmsbytesall),
 					callsall:            atoi(callsall),
 					sessionid:           sessionid,
+					lastSeen:            now,
 				}
 			} else {
 				v.memorycurrent = max(v.memorycurrent, atoi(memorycurrent))
@@ -135,15 +146,29 @@ func (exp *ExporterSessionsData) collectingMetrics(delay time.Duration) {
 				v.readtotal = max(v.readtotal, atoi(readtotal))
 				v.memorytotal = max(v.memorytotal, atoi(memorytotal))
 				v.callsall = max(v.callsall, atoi(callsall))
+				v.lastSeen = now
 				exp.buff[sessionid] = v
 			}
 			exp.mx.Unlock()
 		}
 
+		exp.mx.Lock()
+		exp.pruneBuff(now.Add(-sessionsBuffTTL))
+		exp.mx.Unlock()
+
 		select {
 		case <-time.After(delay):
 		case <-exp.ctx.Done():
 			return
+		}
+	}
+}
+
+// pruneBuff убирает из буфера сеансы, которых кластер не показывал с момента border. Вызывать под exp.mx.
+func (exp *ExporterSessionsData) pruneBuff(border time.Time) {
+	for k, v := range exp.buff {
+		if v.lastSeen.Before(border) {
+			delete(exp.buff, k)
 		}
 	}
 }
