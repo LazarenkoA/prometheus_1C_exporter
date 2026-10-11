@@ -10,11 +10,9 @@ import (
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-	"github.com/samber/lo"
-
 	"github.com/pkg/errors"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/samber/lo"
 )
 
 type ExporterCheckSheduleJob struct {
@@ -54,18 +52,13 @@ func (exp *ExporterCheckSheduleJob) getValue() {
 
 	exp.logger.Info("получение данных экспортера")
 
-	if listCheck, err := exp.getData(); err == nil {
-		//exp.gauge.Reset()
-		for key, value := range listCheck {
-			exp.gauge.WithLabelValues(sanitizeLabelValue(key)).Set(lo.If(value, 1.).Else(0.))
-		}
-	} else {
-		exp.gauge.Reset()
-		exp.logger.Error(err)
+	listCheck := exp.getData()
+	for key, value := range listCheck {
+		exp.gauge.WithLabelValues(sanitizeLabelValue(key)).Set(lo.If(value, 1.).Else(0.))
 	}
 }
 
-func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) {
+func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool) {
 	exp.logger.Debug("Получение данных")
 
 	data = make(map[string]bool)
@@ -87,7 +80,7 @@ func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) 
 
 			for db := range chanIn {
 				if baseinfo, err := exp.getInfoBase(db.guid, db.name); err == nil {
-					db.value = strings.ToLower(baseinfo["scheduled-jobs-deny"]) != "off"
+					db.value = !strings.EqualFold(baseinfo["scheduled-jobs-deny"], "off")
 					chanOut <- db
 				} else {
 					exp.logger.Error(err)
@@ -116,10 +109,10 @@ func (exp *ExporterCheckSheduleJob) getData() (data map[string]bool, err error) 
 		data[db.name] = db.value
 	}
 
-	return data, nil
+	return data
 }
 
-func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[string]string, error) {
+func (exp *ExporterCheckSheduleJob) getInfoBase(baseGUID, basename string) (map[string]string, error) {
 	login, pass := exp.settings.GetLogPass(basename)
 	if login == "" {
 		CForce <- struct{}{} // принудительно запрашиваем данные из REST
@@ -127,32 +120,33 @@ func (exp *ExporterCheckSheduleJob) getInfoBase(baseGuid, basename string) (map[
 	}
 
 	var param []string
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
-	param = append(param, "infobase")
-	param = append(param, "info")
+	param = append(param, "infobase", "info")
 	param = exp.appendLogPass(param)
-
-	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
-	param = append(param, fmt.Sprintf("--infobase=%v", baseGuid))
-	param = append(param, fmt.Sprintf("--infobase-user=%v", login))
-	param = append(param, fmt.Sprintf("--infobase-pwd=%v", pass))
+	param = append(param,
+		fmt.Sprintf("--cluster=%v", exp.GetClusterID()),
+		fmt.Sprintf("--infobase=%v", baseGUID),
+		fmt.Sprintf("--infobase-user=%v", login),
+		fmt.Sprintf("--infobase-pwd=%v", pass),
+	)
 
 	exp.logger.With("param", param).Debugf("Получаем информацию для базы %q", basename)
-	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...))
+	if err != nil {
 		exp.logger.Error(err)
 		return map[string]string{}, err
-	} else {
-		var baseInfo []map[string]string
-		exp.formatMultiResult(result, &baseInfo)
-		if len(baseInfo) > 0 {
-			return baseInfo[0], nil
-		} else {
-			return nil, errors.New(fmt.Sprintf("Не удалось получить информацию по базе %q", basename))
-		}
 	}
+
+	var baseInfo []map[string]string
+	exp.formatMultiResult(result, &baseInfo)
+	if len(baseInfo) == 0 {
+		return nil, fmt.Errorf("не удалось получить информацию по базе %q", basename)
+	}
+	return baseInfo[0], nil
 }
 
 func (exp *ExporterCheckSheduleJob) findBaseName(ref string) string {
@@ -202,23 +196,22 @@ func (exp *ExporterCheckSheduleJob) getListInfobase() error {
 	defer mx.Unlock()
 
 	var param []string
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
-	param = append(param, "infobase")
-	param = append(param, "summary")
-	param = append(param, "list")
+	param = append(param, "infobase", "summary", "list")
 	param = exp.appendLogPass(param)
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	if result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	result, err := exp.run(exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...))
+	if err != nil {
 		return err
-	} else {
-		exp.mx.Lock()
-		exp.formatMultiResult(result, &baseList)
-		exp.mx.Unlock()
 	}
+	exp.mx.Lock()
+	exp.formatMultiResult(result, &baseList)
+	exp.mx.Unlock()
 
 	return nil
 }

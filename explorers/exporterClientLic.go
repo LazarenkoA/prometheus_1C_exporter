@@ -71,24 +71,22 @@ func (exp *ExporterClientLic) getLic() (licData []map[string]string, err error) 
 	var param []string
 
 	// если заполнен хост, то порт может быть не заполнен, если не заполнен хост, а заполнен порт, то так не будет работать, поэтому условие с портом внутри
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
-	param = append(param, "session")
-	param = append(param, "list")
+	param = append(param, "session", "list")
 	param = exp.appendLogPass(param)
+	param = append(param, "--licenses", fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	param = append(param, "--licenses")
-	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
-
-	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
-	if result, err := exp.run(cmdCommand); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...)
+	result, err := exp.run(cmdCommand)
+	if err != nil {
 		exp.logger.Error(err)
 		return []map[string]string{}, err
-	} else {
-		exp.formatMultiResult(result, &licData)
 	}
+	exp.formatMultiResult(result, &licData)
 
 	return licData, nil
 }

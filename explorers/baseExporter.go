@@ -15,16 +15,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
+	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
-
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/softlandia/cpd"
 	"go.uber.org/zap"
 	"golang.org/x/text/encoding/charmap"
-
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 )
 
 var (
@@ -174,7 +172,7 @@ func (exp *BaseRACExporter) formatMultiResult(strIn string, outData *[]map[strin
 	exp.logger.Debug("Парс многострочного результата")
 
 	strIn = normalizeEncoding(strIn)
-	strIn = strings.Replace(strIn, "\r", "", -1)
+	strIn = strings.ReplaceAll(strIn, "\r", "")
 	*outData = []map[string]string{} // очистка
 
 	reg := regexp.MustCompile(`(?m)^$`)
@@ -207,9 +205,9 @@ func (exp *BaseRACExporter) formatResult(strIn string) map[string]string {
 }
 
 func (exp *BaseRACExporter) appendLogPass(param []string) []string {
-	if login := exp.settings.RAC_Login(); login != "" {
+	if login := exp.settings.RACLogin(); login != "" {
 		param = append(param, fmt.Sprintf("--cluster-user=%v", login))
-		if pwd := exp.settings.RAC_Pass(); pwd != "" {
+		if pwd := exp.settings.RACPass(); pwd != "" {
 			param = append(param, fmt.Sprintf("--cluster-pwd=%v", pwd))
 		}
 	}
@@ -234,27 +232,27 @@ func (exp *BaseRACExporter) GetClusterID() string {
 		defer exp.logger.Debug("получен идентификатор кластера ", exp.clusterID)
 
 		var param []string
-		if exp.settings.RAC_Host() != "" {
-			param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+		if exp.settings.RACHost() != "" {
+			param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 		}
 
-		param = append(param, "cluster")
-		param = append(param, "list")
+		param = append(param, "cluster", "list")
 
-		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
+		// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+		cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...)
 		result, err := exp.runner.Run(cmdCommand)
 		if err != nil {
-			exp.logger.Error(fmt.Errorf("Произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error()))
+			exp.logger.Error(fmt.Errorf("произошла ошибка выполнения при попытке получить идентификатор кластера: \n\t%v", err.Error()))
 			return
 		}
 
 		var clusters []map[string]string
 		exp.formatMultiResult(result, &clusters)
 
-		if id := selectCluster(clusters, exp.settings.RAC_Cluster()); id != "" {
+		if id := selectCluster(clusters, exp.settings.RACCluster()); id != "" {
 			exp.clusterID = id
 		} else {
-			exp.logger.Error(fmt.Errorf("Не удалось получить идентификатор кластера (RAC.Cluster=%q, найдено кластеров: %d)", exp.settings.RAC_Cluster(), len(clusters)))
+			exp.logger.Error(fmt.Errorf("не удалось получить идентификатор кластера (RAC.Cluster=%q, найдено кластеров: %d)", exp.settings.RACCluster(), len(clusters)))
 		}
 	}
 
@@ -294,7 +292,7 @@ func (exp *Metrics) AppendExporter(ex ...model.IExporter) {
 
 func (exp *Metrics) FillMetrics(set *settings.Settings) *Metrics {
 	exp.Metrics = []string{}
-	for k, _ := range set.GetExporters() {
+	for k := range set.GetExporters() {
 		exp.Metrics = append(exp.Metrics, k)
 	}
 
@@ -317,7 +315,7 @@ func (exp *Metrics) Contains(name string) bool {
 
 func (exp *Metrics) findExporter(names ...string) (result []model.IExporter) {
 	for _, name := range names {
-		for i, _ := range exp.Exporters {
+		for i := range exp.Exporters {
 			if strings.EqualFold(exp.Exporters[i].GetName(), strings.Trim(name, " ")) || name == "all" {
 				result = append(result, exp.Exporters[i])
 			}
@@ -350,7 +348,7 @@ func Pause(metrics *Metrics) http.Handler {
 
 		logger.DefaultLogger.Infof("Приостановить сбор метрик %q", metricNames)
 		exps := metrics.findExporter(strings.Split(metricNames, ",")...)
-		for i, _ := range exps {
+		for i := range exps {
 			exps[i].Pause(exps[i].GetName())
 
 			// автовключение паузы

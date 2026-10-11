@@ -15,13 +15,13 @@ func main() {
 }
 
 func run() (err error) {
-	b_lastversion, err := exec.Command("git", "describe", "--abbrev=0").Output()
+	bLastversion, err := exec.Command("git", "describe", "--abbrev=0").Output()
 	if err != nil {
 		fmt.Println("Произошла ошибка: ", err)
 		return
 	}
 
-	lastversion := strings.Trim(string(b_lastversion), "\r\n")
+	lastversion := strings.Trim(string(bLastversion), "\r\n")
 	splitted := strings.Split(lastversion, ".")
 	if len(splitted) < 3 {
 		fmt.Println("последняя версия некорректного формата")

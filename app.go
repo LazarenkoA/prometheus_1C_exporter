@@ -12,13 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
-	"github.com/prometheus/client_golang/prometheus"
-
 	exp "github.com/LazarenkoA/prometheus_1C_exporter/explorers"
+	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/judwhite/go-svc"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -82,7 +81,8 @@ func (a *app) Stop() error {
 
 	defer a.cancel()
 
-	ctx, _ := context.WithTimeout(a.ctx, time.Second*10)
+	ctx, cancelTimeout := context.WithTimeout(a.ctx, time.Second*10)
+	defer cancelTimeout()
 	return a.httpSrv.Shutdown(ctx)
 }
 
@@ -133,8 +133,9 @@ func (a *app) initHTTP() {
 	siteMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	a.httpSrv = &http.Server{
-		Handler: siteMux,
-		Addr:    ":" + a.port,
+		Handler:           siteMux,
+		Addr:              ":" + a.port,
+		ReadHeaderTimeout: time.Second * 10,
 	}
 }
 

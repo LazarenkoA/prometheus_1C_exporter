@@ -13,7 +13,6 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/pkg/errors"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -56,7 +55,6 @@ func (exp *ExporterSessions) Construct(s *settings.Settings) *ExporterSessions {
 	}
 
 	exp.settings = s
-	exp.ExporterCheckSheduleJob.settings = s
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*5)
 
 	go exp.fillBaseList()
@@ -93,8 +91,8 @@ func (exp *ExporterSessions) getValue() {
 		for _, item := range ses {
 			key := groupKey{host: item["host"], key: exp.findBaseName(item["infobase"])}
 
-			appIdValues := groupByAppID[key]
-			if appIdValues == nil {
+			appIDValues := groupByAppID[key]
+			if appIDValues == nil {
 				groupByAppID[key] = make(labelValuesMap)
 			}
 			groupByAppID[key][item["app-id"]]++
@@ -122,8 +120,8 @@ func (exp *ExporterSessions) getSessions() (sesData []map[string]string, err err
 	}
 
 	var param []string
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
 	param = append(param, "session", "list")
@@ -131,13 +129,14 @@ func (exp *ExporterSessions) getSessions() (sesData []map[string]string, err err
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
-	if result, err := exp.run(cmdCommand); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...)
+	result, err := exp.run(cmdCommand)
+	if err != nil {
 		exp.logger.Error(err)
 		return []map[string]string{}, err
-	} else {
-		exp.formatMultiResult(result, &sesData)
 	}
+	exp.formatMultiResult(result, &sesData)
 
 	exp.cache.Add("result", sesData)
 	return sesData, nil

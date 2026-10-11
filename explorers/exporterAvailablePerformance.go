@@ -58,19 +58,20 @@ func (exp *ExporterAvailablePerformance) getData() (result []map[string]interfac
 
 	// /opt/1C/v8.3/x86_64/rac process --cluster=ee5adb9a-14fa-11e9-7589-005056032522 list
 	var procData []map[string]string
-	if sourceData, err := exp.readData(); err != nil {
+	sourceData, err := exp.readData()
+	if err != nil {
 		return result, err
-	} else {
-		exp.formatMultiResult(sourceData, &procData)
 	}
+	exp.formatMultiResult(sourceData, &procData)
 
 	clusterID := exp.GetClusterID()
 	for _, item := range procData {
 		tmp := make(map[string]float64)
 
 		// Доступная производительность
-		if perfomance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil {
-			tmp["available"] = perfomance
+		//nolint:misspell // ключ "available-perfomance" — так его выводит rac (опечатка 1С), менять нельзя
+		if performance, err := strconv.ParseFloat(item["available-perfomance"], 64); err == nil {
+			tmp["available"] = performance
 		}
 
 		// среднее время обслуживания рабочим процессом одного клиентского обращения. Оно складывается из значений свойств avg-db-call-time, avg-lock-call-time, avg-server-call-time
@@ -109,21 +110,22 @@ func (exp *ExporterAvailablePerformance) getData() (result []map[string]interfac
 
 func (exp *ExporterAvailablePerformance) readData() (string, error) {
 	var param []string
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
 	param = append(param, "process", "list")
 	param = exp.appendLogPass(param)
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
-	if result, err := exp.run(cmdCommand); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...)
+	result, err := exp.run(cmdCommand)
+	if err != nil {
 		exp.logger.Error(err)
 		return "", err
-	} else {
-		return result, nil
 	}
+	return result, nil
 }
 
 func (exp *ExporterAvailablePerformance) Collect(ch chan<- prometheus.Metric) {

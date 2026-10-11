@@ -1,17 +1,182 @@
+version: "2"
 run:
-  tests: true
-  skip-dirs:
-    - bin
-
+  concurrency: 8        # Количество параллельных потоков для анализа кода
+  issues-exit-code: 1   # Код выхода при обнаружении проблем (1 = ошибка)
+  tests: false          # Не проверять файлы тестов
 output:
-  format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+  formats:
+    text:                    # Текстовый формат
+      path: stdout           # Вывод в стандартный поток вывода
+      print-linter-name: true  # Выводить имя linter'а перед сообщением
+      print-issued-lines: true # Выводить строки кода с ошибками
 
 linters:
-  enable-all: true
-  disable:
-    - gochecknoglobals
-    - errcheck
-    - gosimple
-    - lll
+  default: none # Отключить все linter'ы по умолчанию
+  enable: # Активировать следующие linter'ы:
+    #- errcheck       # Проверяет, что ошибки обрабатываются
+    - errorlint      # Проверяет правильную работу с ошибками в Go после введения wrapping (%w)
+    #- wrapcheck      # Проверяет, что ошибки правильно оборачиваются
+    - gosec          # Проверяет на уязвимости безопасности
+    - govet          # Выполняет стандартную проверку кода Go
+    - ineffassign    # Находит неэффективные присваивания
+    - staticcheck    # Статический анализ кода
+    #- unused         # Находит неиспользуемый код
+    - tagalign       # Проверяет выравнивание тегов структур
+    - gocritic       # Расширенный набор проверок: баги, стиль, производительность
+    - revive         # Быстрая замена golint с гибкой конфигурацией правил
+    - misspell       # Находит орфографические ошибки в комментариях и строках
+    - unconvert      # Удаляет избыточные преобразования типов
+    - unparam        # Находит параметры, всегда вызываемые с одним и тем же значением
+  settings: # Настройки конкретных linter'ов
+    unparam:
+      check-exported: false # Не проверять экспортируемые функции на неиспользуемые параметры
+    tagalign:
+      sort: false  # Не сортировать теги
+    misspell:
+      locale: US            # Использовать американский вариант английского
+      ignore-words:
+        - cancelled         # Игнорировать слово "cancelled" (британское написание)
+    revive:
+      ignore-generated-header: false # Не игнорировать сгенерированные заголовки файлов
+      severity: "warning"            # Уровень сообщений по умолчанию — предупреждение
+      confidence: 0.0                # Минимальный порог уверенности для срабатывания правил
+      rules:
+        #- name: blank-imports          # Запрещает пустые импорты (import _)
+        - name: context-keys-type      # Ключи контекста должны быть пользовательскими типами, не строками
+        - name: time-naming            # Переменные типа time.Duration не должны иметь суффикс Secs/Millis и т.п.
+        - name: var-declaration        # Переменные не должны объявляться с явным нулевым значением
+        - name: unexported-return      # Экспортируемые функции не должны возвращать неэкспортируемые типы
+        - name: errorf                 # Использовать fmt.Errorf вместо errors.New(fmt.Sprintf(...))
+        - name: context-as-argument    # context.Context должен быть первым аргументом функции
+        - name: dot-imports            # Запрещает dot-импорты (import . "pkg")
+        - name: error-return           # Возвращаемое значение ошибки должно быть последним
+        - name: error-strings          # Строки ошибок не должны начинаться с заглавной буквы или заканчиваться точкой
+        - name: error-naming           # Переменные типа error должны иметь суффикс Err/err
+        #- name: increment-decrement    # Использовать i++ / i-- вместо i += 1 / i -= 1
+        - name: var-naming             # Имена переменных должны соответствовать конвенциям Go (camelCase, аббревиатуры)
+        #- name: package-comments       # Каждый пакет должен иметь комментарий
+        - name: range                  # В range-цикле не нужно использовать индекс, если нужен только элемент
+        - name: receiver-naming        # Имя получателя метода должно быть единообразным в рамках типа
+        - name: indent-error-flow      # Не оборачивать возврат ошибки в else после if err != nil
+        - name: superfluous-else       # Убирает лишний else после return/break/continue
+        - name: modifies-parameter     # Предупреждает о модификации параметров функции
+        - name: unreachable-code       # Находит недостижимый код после return/break/continue
+        - name: struct-tag             # Проверяет корректность тегов структур
+        - name: constant-logical-expr  # Находит логические выражения с константным результатом
+        - name: bool-literal-in-expr   # Запрещает сравнение булевых значений с true/false
+        - name: redefines-builtin-id   # Запрещает переопределять встроенные идентификаторы (len, cap, new и т.д.)
+        - name: imports-blacklist      # Запрещает импорт пакетов из чёрного списка
+        - name: range-val-in-closure   # Предупреждает об использовании переменной range в замыкании
+        - name: range-val-address      # Предупреждает о взятии адреса переменной range
+        - name: waitgroup-by-value     # sync.WaitGroup не должен передаваться по значению
+        - name: atomic                 # Операции sync/atomic должны использоваться корректно
+        - name: call-to-gc             # Запрещает явный вызов runtime.GC()
+        - name: duplicated-imports     # Запрещает дублирующиеся импорты
+        #        - name: defer
+        #          arguments:
+        #            - - "call-chain"           # Запрещает цепочки вызовов в defer (defer foo.Bar().Baz())
+        - name: unconditional-recursion # Находит безусловную рекурсию (всегда вызывает саму себя)
+        - name: identical-branches     # Находит ветки if/else с одинаковым телом
+    gocritic:
+      disable-all: true  # Отключить все проверки gocritic по умолчанию
+      enabled-checks:
+        - appendCombine       # Объединяет несколько append в один вызов
+        - argOrder            # Проверяет порядок аргументов в вызовах функций
+        - assignOp            # Заменяет x = x + y на x += y
+        - badCond             # Находит подозрительные условия в if/for
+        - boolExprSimplify    # Упрощает булевы выражения
+        - builtinShadow       # Предупреждает о переопределении встроенных функций (len, make и т.д.)
+        - captLocal           # Локальные переменные не должны начинаться с заглавной буквы
+        - caseOrder           # Константы в case должны идти в порядке возрастания
+        - codegenComment      # Проверяет корректность комментария code generation
+        - commentedOutCode    # Находит закомментированный код
+        - commentedOutImport  # Находит закомментированные импорты
+        - defaultCaseOrder    # default в switch должен быть последним или первым
+        - deprecatedComment   # Проверяет формат комментария Deprecated:
+        - docStub             # Находит stub-комментарии вида "Foo does foo"
+        - dupArg              # Находит вызовы с одинаковыми аргументами (f(x, x))
+        - dupBranchBody       # Находит ветки if/switch с одинаковым телом
+        - dupCase             # Находит дублирующиеся case в switch
+        - dupSubExpr          # Находит дублирующиеся подвыражения (x == x)
+        - elseif              # Предлагает заменить else { if ... } на else if
+        - emptyFallthrough    # Запрещает пустой fallthrough
+        - equalFold           # Предлагает использовать strings.EqualFold вместо ToLower/ToUpper для сравнения
+        - flagDeref           # Предупреждает о разыменовании флагов сразу при объявлении (*flag.Bool(...))
+        - flagName            # Имена флагов должны использовать дефис, не подчёркивание
+        - hexLiteral          # Буквы в hex-литералах должны быть в верхнем регистре
+        - indexAlloc          # Заменяет bytes[i] = b в цикле на append при создании слайса
+        - initClause          # Предлагает вынести init-выражение из if/for в отдельную строку
+        - methodExprCall      # Предлагает заменить вызов через выражение метода на обычный вызов
+        - nilValReturn        # Предупреждает о возврате nil в функциях, возвращающих интерфейс
+        - octalLiteral        # Предупреждает об устаревшем синтаксисе восьмеричных литералов (07 вместо 0o7)
+        - offBy1              # Находит ошибки off-by-one в индексах
+        - rangeExprCopy       # Предупреждает о копировании массива в range-выражении
+        - regexpMust          # Предлагает заменить regexp.Compile + panic на regexp.MustCompile
+        - sloppyLen           # Упрощает проверки длины слайса (len(s) >= 1 → len(s) > 0)
+        - stringXbytes        # Предлагает []byte(s) вместо конвертации через string там, где возможно
+        - switchTrue          # Предлагает заменить switch true { case ...: } на if/else if
+        - typeAssertChain     # Предлагает заменить цепочку type assert на type switch
+        - typeSwitchVar       # В type switch рекомендует использовать x := y.(type)
+        - typeUnparen         # Убирает лишние скобки в утверждениях типов
+        - underef             # Убирает лишнее разыменование указателя (*&x → x)
+        - unlambda            # Предлагает заменить func(x) { f(x) } на f
+        - unnecessaryBlock    # Находит ненужные блоки { }
+        - unslice             # Заменяет s[:] на s там, где это эквивалентно
+        - valSwap             # Предлагает использовать a, b = b, a вместо tmp-переменной
+        - weakCond            # Находит слабые (всегда истинные/ложные) условия
+  exclusions:      # Исключения из проверок
+    generated: lax # Лояльное отношение к сгенерированному коду
+    presets:
+      - comments               # Исключает правила для комментариев
+      - common-false-positives # Исключает частые ложноположительные результаты
+      - legacy                 # Исключает устаревшие правила
+      - std-error-handling     # Исключает правила для обработки стандартных ошибок
+    rules:
+      - path: (.+)\.go$ # Для всех .go файлов
+        text: G104  # Исключить правило G104 (проверка ошибок)
+      - path: (.+)\.go$ # Для всех .go файлов
+        text: exported func .* returns unexported type .*, which can be annoying to use  # Исключить сообщение о возвращаемых непубличных типах
+      - path: (.+)\.go$ # Для всех .go файлов
+        text: should have a package comment # Исключить требование комментариев к пакетам
+      #- path: (.+)\.go$ # Для всех .go файлов
+      #  text: don't use an underscore in package name # Исключить проверку подчеркиваний в именах пакетов
+      - path: (.+)\.go$ # Для всех .go файлов
+        text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked # Исключить проверку игнорируемых ошибок
+      - path: (.+)\.go$ # Для всех .go файлов
+        text: should check returned error before deferring # Исключить проверку ошибок перед defer
+    paths: # Исключения путей
+      - \.pb\.go$
+      - \.pb\.gw\.go$
+      - example
+      - bin
+      - vendor
+      - var
+      - tmp
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters: # Настройки форматтеров кода
+  enable: # Активировать форматтеры:
+    - gci       # Упорядочивает импорты согласно конфигурации
+  settings:
+    gci:
+      sections:
+        - standard                       # Стандартные пакеты Go
+        - default                        # Дефолтные импорты
+        - prefix(portal.works.prod.sbt)  # Специальные импорты с префиксом
+  exclusions:  # Исключения для форматтеров
+    generated: lax # Лояльное отношение к сгенерированному коду
+    paths: # Исключения путей
+      - \.pb\.go$
+      - \.pb\.gw\.go$
+      - example
+      - bin
+      - vendor
+      - var
+      - tmp
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$

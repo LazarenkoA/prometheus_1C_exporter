@@ -2,6 +2,11 @@ package exporter
 
 import (
 	"context"
+	"os/exec"
+	"reflect"
+	"testing"
+	"time"
+
 	mock_models "github.com/LazarenkoA/prometheus_1C_exporter/explorers/mock"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/agiledragon/gomonkey/v2"
@@ -15,10 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
-	"os/exec"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func Test_Exporter(t *testing.T) {

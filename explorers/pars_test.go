@@ -1,11 +1,11 @@
 package exporter
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"testing"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func Test_RAC(t *testing.T) {

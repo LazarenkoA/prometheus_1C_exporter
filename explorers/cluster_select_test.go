@@ -66,7 +66,7 @@ func TestGetClusterID(t *testing.T) {
 		s := &settings.Settings{}
 		err := yaml.Unmarshal([]byte(fmt.Sprintf("RAC:\n  Path: rac\n  Cluster: %q\n", want)), s)
 		assert.NoError(t, err)
-		assert.Equal(t, want, s.RAC_Cluster())
+		assert.Equal(t, want, s.RACCluster())
 
 		run := mock_models.NewMockIRunner(c)
 		run.EXPECT().Run(gomock.Any()).Return(testDataTwoClusters(), nil)

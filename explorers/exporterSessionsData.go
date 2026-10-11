@@ -8,7 +8,6 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -66,7 +65,6 @@ func (exp *ExporterSessionsData) Construct(s *settings.Settings) *ExporterSessio
 
 	exp.buff = map[string]*sessionsData{}
 	exp.settings = s
-	exp.ExporterCheckSheduleJob.settings = s
 	exp.cache = expirable.NewLRU[string, []map[string]string](5, nil, time.Second*5)
 	go exp.fillBaseList() // в данном экспортере нужен список баз
 

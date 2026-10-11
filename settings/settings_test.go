@@ -23,9 +23,9 @@ func Test_GetDeactivateAndReset(t *testing.T) {
 	s := &Settings{
 		mx: new(sync.RWMutex),
 		DBCredentials: &struct {
-			URL           string `yaml:"URL" json:"URL,omitempty"`
-			User          string `yaml:"User" json:"user,omitempty"`
-			Password      string `yaml:"Password" json:"password,omitempty"`
+			URL           string `yaml:"URL"           json:"URL,omitempty"`
+			User          string `yaml:"User"          json:"user,omitempty"`
+			Password      string `yaml:"Password"      json:"password,omitempty"`
 			TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 		}{
 			URL:           "http://localhost/DBCredentials",

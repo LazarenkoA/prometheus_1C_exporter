@@ -7,7 +7,6 @@ import (
 	"github.com/LazarenkoA/prometheus_1C_exporter/explorers/model"
 	"github.com/LazarenkoA/prometheus_1C_exporter/settings"
 	"github.com/pkg/errors"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 

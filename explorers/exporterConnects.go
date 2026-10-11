@@ -31,7 +31,6 @@ func (exp *ExporterConnects) Construct(s *settings.Settings) *ExporterConnects {
 	)
 
 	exp.settings = s
-	exp.ExporterCheckSheduleJob.settings = s
 	go exp.fillBaseList()
 
 	return exp
@@ -73,23 +72,23 @@ func (exp *ExporterConnects) getConnects() (connData []map[string]string, err er
 	connData = []map[string]string{}
 
 	var param []string
-	if exp.settings.RAC_Host() != "" {
-		param = append(param, strings.Join(appendParam([]string{exp.settings.RAC_Host()}, exp.settings.RAC_Port()), ":"))
+	if exp.settings.RACHost() != "" {
+		param = append(param, strings.Join(appendParam([]string{exp.settings.RACHost()}, exp.settings.RACPort()), ":"))
 	}
 
-	param = append(param, "connection")
-	param = append(param, "list")
+	param = append(param, "connection", "list")
 	param = exp.appendLogPass(param)
 
 	param = append(param, fmt.Sprintf("--cluster=%v", exp.GetClusterID()))
 
-	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RAC_Path(), param...)
-	if result, err := exp.run(cmdCommand); err != nil {
+	// #nosec G204 -- путь к rac и параметры команды берутся из доверенного файла настроек
+	cmdCommand := exec.CommandContext(exp.ctx, exp.settings.RACPath(), param...)
+	result, err := exp.run(cmdCommand)
+	if err != nil {
 		exp.logger.Error(err)
 		return []map[string]string{}, err
-	} else {
-		exp.formatMultiResult(result, &connData)
 	}
+	exp.formatMultiResult(result, &connData)
 
 	return connData, nil
 }

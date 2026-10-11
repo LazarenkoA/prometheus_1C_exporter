@@ -5,14 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"io"
 
 	"github.com/LazarenkoA/prometheus_1C_exporter/logger"
 	"github.com/creasty/defaults"
@@ -41,9 +40,9 @@ type Settings struct {
 	} `yaml:"Exporters"`
 
 	DBCredentials *struct {
-		URL           string `yaml:"URL" json:"URL,omitempty"`
-		User          string `yaml:"User" json:"user,omitempty"`
-		Password      string `yaml:"Password" json:"password,omitempty"`
+		URL           string `yaml:"URL"           json:"URL,omitempty"`
+		User          string `yaml:"User"          json:"user,omitempty"`
+		Password      string `yaml:"Password"      json:"password,omitempty"`
 		TLSSkipVerify bool   `yaml:"TLSSkipVerify" json:"TLSSkipVerify,omitempty"`
 	} `yaml:"DBCredentials"`
 
@@ -58,17 +57,17 @@ type Settings struct {
 	} `yaml:"RAC"`
 
 	MetricKinds *struct {
-		Session      []TypeMetricKind `yaml:"Session" default:"[\"Summary\"]"`
-		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]" `
+		Session      []TypeMetricKind `yaml:"Session"      default:"[\"Summary\"]"`
+		SessionsData []TypeMetricKind `yaml:"SessionsData" default:"[\"Summary\"]"`
 	} `yaml:"MetricKinds" default:"{\"Session\": [\"Summary\"], \"SessionsData\": [\"Summary\"]}"`
 
 	LabelModes *struct {
 		MetricNamePrefix string `yaml:"MetricNamePrefix"`
 	} `yaml:"LabelModes"`
 
-	mx *sync.RWMutex `yaml:"-"`
-	// login, pass string        `yaml:"-"`
-	bases []Bases `yaml:"-"`
+	mx *sync.RWMutex
+	// login, pass string
+	bases []Bases
 
 	LogLevel int `yaml:"LogLevel" default:"4"` // Уровень логирования от 2 до 6, где 2 - ошибка, 3 - предупреждение, 4 - информация, 5 - дебаг, 6 - трейс
 }
@@ -85,12 +84,12 @@ func LoadSettings(filePath string) (*Settings, error) {
 	}
 	file, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка чтения файла %q\n%v", filePath, err)
+		return nil, fmt.Errorf("ошибка чтения файла %q\n%w", filePath, err)
 	}
 
 	s := new(Settings)
 	if err := yaml.Unmarshal(file, s); err != nil {
-		return nil, fmt.Errorf("ошибка десериализации настроек: %v", err)
+		return nil, fmt.Errorf("ошибка десериализации настроек: %w", err)
 	}
 
 	s.mx = new(sync.RWMutex)
@@ -126,42 +125,42 @@ func (s *Settings) GetLogPass(ibname string) (login, pass string) {
 	return
 }
 
-func (s *Settings) RAC_Path() string {
+func (s *Settings) RACPath() string {
 	if s.RAC != nil {
 		return s.RAC.Path
 	}
 	return ""
 }
 
-func (s *Settings) RAC_Port() string {
+func (s *Settings) RACPort() string {
 	if s.RAC != nil {
 		return s.RAC.Port
 	}
 	return ""
 }
 
-func (s *Settings) RAC_Host() string {
+func (s *Settings) RACHost() string {
 	if s.RAC != nil {
 		return s.RAC.Host
 	}
 	return ""
 }
 
-func (s *Settings) RAC_Login() string {
+func (s *Settings) RACLogin() string {
 	if s.RAC != nil {
 		return s.RAC.Login
 	}
 	return ""
 }
 
-func (s *Settings) RAC_Pass() string {
+func (s *Settings) RACPass() string {
 	if s.RAC != nil {
 		return s.RAC.Pass
 	}
 	return ""
 }
 
-func (s *Settings) RAC_Cluster() string {
+func (s *Settings) RACCluster() string {
 	if s.RAC != nil {
 		return strings.TrimSpace(s.RAC.Cluster)
 	}
@@ -177,8 +176,8 @@ func (s *Settings) GetMetricNamePrefix() string {
 
 func (s *Settings) GetRASHostPort() string {
 
-	rasHostPort := s.RAC_Host() + ":"
-	rasPort := s.RAC_Port()
+	rasHostPort := s.RACHost() + ":"
+	rasPort := s.RACPort()
 	if rasPort == "" {
 		rasPort = "1545"
 	}
@@ -196,7 +195,7 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 		defer s.mx.Unlock()
 
 		logger.DefaultLogger.With("URL", s.DBCredentials.URL).Info("обращаемся к REST")
-		tlsConf := &tls.Config{InsecureSkipVerify: s.DBCredentials.TLSSkipVerify}
+		tlsConf := &tls.Config{InsecureSkipVerify: s.DBCredentials.TLSSkipVerify} // #nosec G402 -- значение управляется настройкой TLSSkipVerify
 		data, err := request(s.DBCredentials.URL, s.DBCredentials.User, s.DBCredentials.Password, tlsConf)
 		if err != nil {
 			logger.DefaultLogger.Error(errors.Wrap(err, "ошибка получения данных по БД"))
@@ -207,7 +206,7 @@ func (s *Settings) GetDBCredentials(ctx context.Context, cForce chan struct{}) {
 	}
 
 	// таймер для периодического обновления кредов БД
-	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // разброс по задержке (2-8 часа), что бы не получилось так, что все экспортеры (если их несколько) разом ломануться в REST
+	timer := time.NewTicker(time.Hour * time.Duration(rand.Intn(6)+2)) // #nosec G404 -- разброс по задержке (2-8 часа), что бы не получилось так, что все экспортеры (если их несколько) разом ломануться в REST
 	get()
 
 	defer timer.Stop()
@@ -230,9 +229,8 @@ f:
 func (s *Settings) GetProperty(explorerName string, propertyName string, defaultValue interface{}) interface{} {
 	if v, ok := s.GetExporters()[explorerName][propertyName]; ok {
 		return v
-	} else {
-		return defaultValue
 	}
+	return defaultValue
 }
 
 func (s *Settings) GetExporters() map[string]map[string]interface{} {
@@ -256,15 +254,15 @@ func request(url, log, pass string, tlsConf *tls.Config) ([]byte, error) {
 		req.SetBasicAuth(log, pass)
 	}
 
-	if resp, err := cl.Do(req); err != nil {
+	resp, err := cl.Do(req)
+	if err != nil {
 		return nil, fmt.Errorf("произошла ошибка при обращении к REST: %w", err)
-	} else {
-		if !(resp.StatusCode >= http.StatusOK && resp.StatusCode <= http.StatusIMUsed) {
-			return nil, fmt.Errorf("REST вернул код возврата %d", resp.StatusCode)
-		}
-
-		body, _ := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		return body, nil
 	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("REST вернул код возврата %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return body, nil
 }
