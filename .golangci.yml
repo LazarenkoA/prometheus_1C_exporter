@@ -34,10 +34,7 @@ linters:
       sort: false  # Не сортировать теги
     misspell:
       locale: US            # Использовать американский вариант английского
-      ignore-words:
-        - cancelled         # Игнорировать слово "cancelled" (британское написание)
     revive:
-      ignore-generated-header: false # Не игнорировать сгенерированные заголовки файлов
       severity: "warning"            # Уровень сообщений по умолчанию — предупреждение
       confidence: 0.0                # Минимальный порог уверенности для срабатывания правил
       rules:
@@ -65,7 +62,7 @@ linters:
         - name: constant-logical-expr  # Находит логические выражения с константным результатом
         - name: bool-literal-in-expr   # Запрещает сравнение булевых значений с true/false
         - name: redefines-builtin-id   # Запрещает переопределять встроенные идентификаторы (len, cap, new и т.д.)
-        - name: imports-blacklist      # Запрещает импорт пакетов из чёрного списка
+        - name: imports-blocklist     # Запрещает импорты пакетов из чёрного списка
         - name: range-val-in-closure   # Предупреждает об использовании переменной range в замыкании
         - name: range-val-address      # Предупреждает о взятии адреса переменной range
         - name: waitgroup-by-value     # sync.WaitGroup не должен передаваться по значению
