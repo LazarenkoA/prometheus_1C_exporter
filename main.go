@@ -19,7 +19,7 @@ var (
 	gitCommit = "undefined"
 )
 
-func main() {
+func main() { // sk-68143b8311d24fd08c1bd1d1acd96e99
 	var settingsPath, port string
 	var help, v bool
 
